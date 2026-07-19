@@ -1,8 +1,9 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Send, Copy, Check, MessageCircle, X } from "lucide-react";
 import { digitos } from "@/lib/clientes";
 import { aplicarMascara } from "@/lib/mascaras";
 import { TIPOS_ENVIO, getFicha, nomeCurto, type Tipo } from "@/data/anamnese";
+import { PAINEL_URL } from "@/data/services";
 
 // Painel para gerar e compartilhar o link de uma ficha (anamnese) — link
 // genérico (qualquer cliente abre e preenche do zero) ou convite com
@@ -24,7 +25,6 @@ export function EnviarFicha({
   convitePadrao?: boolean;
   onFechar?: () => void;
 }) {
-  const [origin, setOrigin] = useState("");
   const [tipo, setTipo] = useState<Tipo>(tipoInicial ?? "cadastro");
   const [copiado, setCopiado] = useState(false);
   const [convite, setConvite] = useState(convitePadrao);
@@ -33,23 +33,19 @@ export function EnviarFicha({
     celularInicial ? aplicarMascara("telefone", celularInicial) : "",
   );
 
-  useEffect(() => {
-    setOrigin(window.location.origin);
-  }, []);
-
   const nomeLimpo = nome.trim();
   const celularDigitos = digitos(celular);
   const celularCompleto = celularDigitos.length >= 10;
 
   const link =
     convite && (nomeLimpo || celularDigitos)
-      ? `${origin}/avaliacao/${tipo}?${[
+      ? `${PAINEL_URL}/avaliacao/${tipo}?${[
           nomeLimpo && `nome=${encodeURIComponent(nomeLimpo)}`,
           celularDigitos && `whatsapp=${celularDigitos}`,
         ]
           .filter(Boolean)
           .join("&")}`
-      : `${origin}/avaliacao/${tipo}`;
+      : `${PAINEL_URL}/avaliacao/${tipo}`;
 
   const primeiroNome = nomeLimpo.split(" ")[0];
   const nomeFicha = (getFicha(tipo)?.nome ?? tipo).toLowerCase();

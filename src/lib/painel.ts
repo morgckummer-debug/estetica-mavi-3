@@ -592,6 +592,27 @@ export async function urlContratoPdf(caminho: string): Promise<string> {
   return `${SUPABASE_URL}/storage/v1${data.signedURL}`;
 }
 
+// Exclui um contrato salvo por engano (ex.: a Marina cancelou a impressão
+// depois que o registro já tinha sido criado). Apaga também o PDF anexado
+// no Storage, se houver — sem travar a exclusão caso esse passo falhe.
+export async function excluirContrato(contrato: {
+  id: string;
+  pdf_path: string | null;
+}): Promise<void> {
+  if (contrato.pdf_path) {
+    await apiStorage(`object/contratos/${contrato.pdf_path}`, { method: "DELETE" }).catch(() => {});
+  }
+  const res = await apiRest(`contratos?id=eq.${encodeURIComponent(contrato.id)}`, {
+    method: "DELETE",
+    headers: { Prefer: "return=representation" },
+  });
+  if (!res.ok) throw new Error("Não foi possível excluir o contrato.");
+  const apagados = (await res.json().catch(() => [])) as unknown[];
+  if (!Array.isArray(apagados) || apagados.length === 0) {
+    throw new Error("A exclusão não foi salva no banco (permissão de excluir contratos ausente).");
+  }
+}
+
 // ------------------------------------------------------------
 // Sessões de atendimento (o "caderninho" digital de cada ficha).
 // A Marina registra data + áreas + observação; a cliente confirma

@@ -4,6 +4,7 @@ import { Loader2, Inbox, MessageCircle, Clock } from "lucide-react";
 import { listarSessoesPendentes, type SessaoPendente } from "@/lib/painel";
 import { FICHAS, nomeCurto } from "@/data/anamnese";
 import { linkWhatsappConfirmacao } from "@/lib/whatsapp";
+import { PAINEL_URL } from "@/data/services";
 
 export const Route = createFileRoute("/painel/pendentes")({
   component: PaginaPendentes,
@@ -27,10 +28,8 @@ function diasEspera(iso: string): number {
 function PaginaPendentes() {
   const [sessoes, setSessoes] = useState<SessaoPendente[] | null>(null);
   const [erro, setErro] = useState<string | null>(null);
-  const [origin, setOrigin] = useState("");
 
   useEffect(() => {
-    setOrigin(window.location.origin);
     listarSessoesPendentes()
       .then(setSessoes)
       .catch((e) => setErro(e instanceof Error ? e.message : "Erro ao carregar."));
@@ -109,7 +108,7 @@ function PaginaPendentes() {
                 </span>
                 <a
                   href={linkWhatsappConfirmacao({
-                    origin,
+                    origin: PAINEL_URL,
                     token: s.token,
                     telefone: s.ficha.telefone,
                     nomeCliente: s.ficha.nome,

@@ -26,6 +26,7 @@ import {
   excluirClienteDefinitivamente,
   anexarContratoPdf,
   urlContratoPdf,
+  excluirContrato,
   type Cliente,
   type Ficha,
   type Contrato,
@@ -488,14 +489,58 @@ function AnexoContratoPdf({
   );
 }
 
+// Exclui um contrato da lista — pra desfazer um registro criado sem
+// querer (ex.: a Marina cancelou a impressão, mas o contrato já tinha
+// sido salvo). Confirmação simples: nada aqui tem "assinatura" da cliente
+// como as sessões já confirmadas, não precisa do reforço extra.
+function ExcluirContrato({
+  contrato,
+  onExcluido,
+}: {
+  contrato: Contrato;
+  onExcluido: (id: string) => void;
+}) {
+  const [excluindo, setExcluindo] = useState(false);
+
+  const excluir = async () => {
+    if (!window.confirm("Excluir este contrato? Essa ação não pode ser desfeita.")) return;
+    setExcluindo(true);
+    try {
+      await excluirContrato({ id: contrato.id, pdf_path: contrato.pdf_path });
+      onExcluido(contrato.id);
+    } catch (e) {
+      window.alert(e instanceof Error ? e.message : "Erro ao excluir o contrato.");
+      setExcluindo(false);
+    }
+  };
+
+  return (
+    <button
+      type="button"
+      onClick={excluir}
+      disabled={excluindo}
+      title="Excluir contrato"
+      className="p-1.5 text-painel-muted/60 hover:text-painel-alert-text disabled:opacity-40 transition-colors"
+    >
+      {excluindo ? (
+        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+      ) : (
+        <Trash2 className="h-3.5 w-3.5" />
+      )}
+    </button>
+  );
+}
+
 function AbaContratos({
   clienteId,
   contratos,
   onAtualizado,
+  onExcluido,
 }: {
   clienteId: string;
   contratos: Contrato[] | null;
   onAtualizado: (c: Contrato) => void;
+  onExcluido: (id: string) => void;
 }) {
   return (
     <div className="rounded-[14px] border border-painel-border bg-white p-5 sm:p-6">
@@ -538,7 +583,10 @@ function AbaContratos({
                   {c.forma_pagamento ? ` · ${c.forma_pagamento}` : ""}
                 </p>
               </div>
-              <AnexoContratoPdf contrato={c} clienteId={clienteId} onAnexado={onAtualizado} />
+              <div className="flex items-center gap-1 shrink-0">
+                <AnexoContratoPdf contrato={c} clienteId={clienteId} onAnexado={onAtualizado} />
+                <ExcluirContrato contrato={c} onExcluido={onExcluido} />
+              </div>
             </li>
           ))}
         </ul>
@@ -727,6 +775,7 @@ function PaginaCliente() {
                 (prev ?? []).map((c) => (c.id === atualizado.id ? atualizado : c)),
               )
             }
+            onExcluido={(id) => setContratos((prev) => (prev ?? []).filter((c) => c.id !== id))}
           />
         )}
       </div>

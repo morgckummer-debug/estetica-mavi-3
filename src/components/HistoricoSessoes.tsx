@@ -33,6 +33,7 @@ import {
 } from "@/lib/painel";
 import { linkConfirmacao, linkWhatsappConfirmacao, linkWhatsappRelatorio } from "@/lib/whatsapp";
 import { EnviarFicha } from "@/components/EnviarFicha";
+import { PAINEL_URL } from "@/data/services";
 
 const CINCO_MINUTOS_MS = 5 * 60 * 1000;
 
@@ -646,7 +647,6 @@ export function HistoricoSessoes({
 }) {
   const [sessoes, setSessoes] = useState<SessaoAtendimento[] | null>(null);
   const [erro, setErro] = useState<string | null>(null);
-  const [origin, setOrigin] = useState("");
 
   const [abrindo, setAbrindo] = useState(false);
   const [fichaId, setFichaId] = useState(fichas[0]?.id ?? "");
@@ -796,7 +796,6 @@ export function HistoricoSessoes({
   }, [abrindo, editandoSessaoId, enviandoSessaoId]);
 
   useEffect(() => {
-    setOrigin(window.location.origin);
     listarSessoesDeFichas(ids)
       .then(setSessoes)
       .catch((e) => setErro(e instanceof Error ? e.message : "Erro ao carregar sessões."));
@@ -1036,7 +1035,7 @@ export function HistoricoSessoes({
 
   const copiar = async (sessaoId: string, token: string) => {
     try {
-      await navigator.clipboard.writeText(linkConfirmacao(origin, token));
+      await navigator.clipboard.writeText(linkConfirmacao(PAINEL_URL, token));
       setCopiadoId(sessaoId);
       setTimeout(() => setCopiadoId((c) => (c === sessaoId ? null : c)), 2000);
     } catch {
@@ -1046,7 +1045,7 @@ export function HistoricoSessoes({
 
   const whatsappDe = (token: string, data: string) =>
     linkWhatsappConfirmacao({
-      origin,
+      origin: PAINEL_URL,
       token,
       telefone: telefoneCliente,
       nomeCliente,
@@ -1592,7 +1591,7 @@ export function HistoricoSessoes({
       setLinkRelatorioPronto({
         item: g.item,
         url: linkWhatsappRelatorio({
-          origin,
+          origin: PAINEL_URL,
           token,
           telefone: telefoneCliente,
           nomeCliente,
