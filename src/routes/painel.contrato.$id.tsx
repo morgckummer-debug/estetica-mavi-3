@@ -186,20 +186,31 @@ function GerarContrato() {
       .replace(/[\\/:*?"<>|]/g, "-");
 
     try {
-      // Import dinâmico: html2pdf.js mexe com document/canvas — não pode
-      // carregar durante o SSR da rota (esse app roda com ssr: true), só
-      // aqui, quando a Marina já clicou e está no navegador de verdade.
-      const { default: html2pdf } = await import("html2pdf.js");
-      await html2pdf()
-        .set({
-          filename: `${nomeArquivo}.pdf`,
-          margin: 0,
-          image: { type: "jpeg", quality: 0.98 },
-          html2canvas: { scale: 2, useCORS: true },
-          jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
-        })
-        .from(pdfExportRef.current)
-        .save();
+      // Imports dinâmicos: mexem com document/canvas — não podem carregar
+      // durante o SSR da rota (esse app roda com ssr: true), só aqui,
+      // quando a Marina já clicou e está no navegador de verdade.
+      const [{ default: html2canvas }, { jsPDF }] = await Promise.all([
+        import("html2canvas-pro"),
+        import("jspdf"),
+      ]);
+
+      // Uma página do PDF por .contrato-pagina, cada uma "fotografada"
+      // separadamente e esticada pra ocupar a folha A4 inteira — em vez de
+      // tirar um print da coluna toda e deixar o jsPDF cortar por altura
+      // fixa. Esse corte automático arredonda pra cima (Math.ceil) quando a
+      // altura real passa só um pouquinho de 2 páginas — o que sobra vira
+      // uma 3ª folha praticamente em branco. Página por página, o total
+      // sempre bate com o número de folhas reais do contrato.
+      const paginas = Array.from(
+        pdfExportRef.current.querySelectorAll<HTMLElement>(".contrato-pagina"),
+      );
+      const pdf = new jsPDF({ unit: "mm", format: "a4", orientation: "portrait" });
+      for (let i = 0; i < paginas.length; i++) {
+        const canvas = await html2canvas(paginas[i], { scale: 2, useCORS: true });
+        if (i > 0) pdf.addPage();
+        pdf.addImage(canvas.toDataURL("image/jpeg", 0.98), "JPEG", 0, 0, 210, 297);
+      }
+      pdf.save(`${nomeArquivo}.pdf`);
     } catch (e) {
       setErroSalvar(e instanceof Error ? e.message : "Erro ao gerar o PDF do contrato.");
       setSalvando(false);
