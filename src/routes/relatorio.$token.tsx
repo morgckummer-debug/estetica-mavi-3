@@ -137,6 +137,31 @@ function RelatorioPage() {
               </ul>
             </div>
 
+            {relatorio.brindes.length > 0 && (
+              <div className="mt-5 rounded-2xl border border-border bg-card p-5">
+                <p className="text-xs uppercase tracking-widest text-muted-foreground mb-3">
+                  🎁 Brinde da promoção
+                </p>
+                <ul className="space-y-2.5">
+                  {relatorio.brindes.map((b, idx) => (
+                    <li
+                      key={`${b.item}-${b.data}-${idx}`}
+                      className="text-sm border-b border-border/60 pb-2.5 last:border-0 last:pb-0"
+                    >
+                      <p className="text-foreground">
+                        {b.item} — realizado em {formatarDataBR(b.data)}
+                      </p>
+                      <p className="text-muted-foreground text-xs mt-0.5">
+                        {b.confirmado && b.confirmado_em
+                          ? `Confirmado por você em ${formatarQuando(b.confirmado_em)}`
+                          : "Aguardando sua confirmação"}
+                      </p>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
             <div className="mt-5 text-center">
               {relatorio.concluido ? (
                 <p className="inline-flex items-center gap-2 text-base font-medium text-primary">

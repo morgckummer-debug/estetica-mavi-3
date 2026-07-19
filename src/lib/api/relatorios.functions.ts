@@ -14,12 +14,22 @@ export type SessaoRelatorio = {
   confirmado_em: string | null;
 };
 
+export type BrindeRelatorio = {
+  item: string;
+  data: string; // "YYYY-MM-DD"
+  confirmado: boolean;
+  confirmado_em: string | null;
+};
+
 export type RelatorioPacotePublico = {
   cliente_nome: string;
   item: string;
   pacote_total: number;
   concluido: boolean;
   sessoes: SessaoRelatorio[];
+  // Brinde(s) de outro procedimento ganho junto com este pacote (ex.:
+  // comprou Virilha, ganhou Hidragloss de brinde), com o dia realizado.
+  brindes: BrindeRelatorio[];
 };
 
 // Dados mínimos para montar a tela do relatório. Retorna null se o token
