@@ -207,11 +207,11 @@ export const getService = (slug: string) => services.find((s) => s.slug === slug
 
 export const SITE_URL = "https://www.maviestetica.com.br";
 
-// Domínio publicado do painel (Lovable) — usado para montar links de
+// Domínio publicado do painel (Vercel) — usado para montar links de
 // confirmação/avaliação mandados pra cliente, em vez de
 // window.location.origin, que pega o domínio de preview temporário
 // quando a Marina acessa o painel por lá em vez do link publicado.
-export const PAINEL_URL = "https://maviestetica3.lovable.app";
+export const PAINEL_URL = "https://maviestetica.vercel.app";
 
 const WHATSAPP_NUMBER = "https://wa.me/5531971671266";
 const WHATSAPP_MSG = encodeURIComponent(
