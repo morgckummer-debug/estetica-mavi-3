@@ -54,9 +54,9 @@
     "date-fns": "^4.1.0",
     "embla-carousel-react": "^8.6.0",
     "html2canvas-pro": "^2.2.4",
-    "html2pdf.js": "^0.14.0",
     "input-otp": "^1.4.2",
     "jimp": "^1.6.1",
+    "jspdf": "^4.2.1",
     "lucide-react": "^0.575.0",
     "motion": "^12.40.0",
     "react": "^19.2.0",
@@ -91,8 +91,5 @@
     "typescript": "^5.8.3",
     "typescript-eslint": "^8.56.1",
     "vite": "^8.0.16"
-  },
-  "overrides": {
-    "html2canvas": "npm:html2canvas-pro@^2.2.4"
   }
 }
