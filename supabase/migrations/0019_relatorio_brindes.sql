@@ -9,7 +9,12 @@
 alter table public.relatorios_pacote
   add column if not exists brindes jsonb not null default '[]'::jsonb;
 
-create or replace function public.relatorio_pacote_por_token(p_token text)
+-- Postgres não deixa trocar o retorno de uma função existente com "create or
+-- replace" quando ele é definido por parâmetros OUT (como aqui) — precisa
+-- apagar antes de recriar com a coluna nova.
+drop function if exists public.relatorio_pacote_por_token(text);
+
+create function public.relatorio_pacote_por_token(p_token text)
 returns table (
   cliente_nome  text,
   item          text,
