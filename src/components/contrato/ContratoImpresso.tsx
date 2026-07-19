@@ -64,13 +64,23 @@ function Pagina({ children }: { children: React.ReactNode }) {
   );
 }
 
-export function ContratoImpresso({ dados }: { dados: DadosContrato }) {
+export function ContratoImpresso({
+  dados,
+  id = "contrato-imprimir",
+}: {
+  dados: DadosContrato;
+  // Sobrescrito quando esse componente é renderizado uma segunda vez fora
+  // da tela só pra gerar o PDF (ver painel/contrato/$id) — dois elementos
+  // com o mesmo id quebraria o seletor #contrato-imprimir do CSS de
+  // impressão.
+  id?: string;
+}) {
   const itensValidos = dados.itens.filter((i) => i.descricao.trim() && i.quantidade.trim());
   const mesPorExtenso = MESES_PT[Number(dados.dataMes) - 1] ?? dados.dataMes;
   let contador = 0; // letra sequencial (a, b, c...) através das 4 cláusulas
 
   return (
-    <div id="contrato-imprimir">
+    <div id={id}>
       <Pagina>
         <h1 className="text-center font-bold text-[13.5pt] mb-3">
           CONTRATO DE PRESTAÇÃO DE SERVIÇOS ESTÉTICOS
