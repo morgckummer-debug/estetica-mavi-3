@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createFileRoute, Link, useParams, useNavigate } from "@tanstack/react-router";
 import { ArrowLeft, Camera, CameraOff, Download, Loader2, Plus, Trash2 } from "lucide-react";
-import html2pdf from "html2pdf.js";
 import { obterCliente, criarContrato, type Cliente } from "@/lib/painel";
 import { OPCOES_SESSAO, TIPOS, nomeCurto, type Tipo } from "@/data/anamnese";
 import { aplicarMascara, formatarDataBRBarra } from "@/lib/mascaras";
@@ -187,6 +186,10 @@ function GerarContrato() {
       .replace(/[\\/:*?"<>|]/g, "-");
 
     try {
+      // Import dinâmico: html2pdf.js mexe com document/canvas — não pode
+      // carregar durante o SSR da rota (esse app roda com ssr: true), só
+      // aqui, quando a Marina já clicou e está no navegador de verdade.
+      const { default: html2pdf } = await import("html2pdf.js");
       await html2pdf()
         .set({
           filename: `${nomeArquivo}.pdf`,
