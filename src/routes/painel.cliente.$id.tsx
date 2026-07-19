@@ -490,23 +490,30 @@ function AnexoContratoPdf({
   };
 
   // Manda o PDF anexado direto pro diálogo de impressão, sem precisar
-  // abrir o PDF numa aba primeiro — carrega num iframe invisível e chama
-  // print() nele assim que carrega (o navegador quem decide, aqui não dá
-  // pra saber quando a Marina fecha o diálogo, então o iframe só é
-  // removido depois de um tempo).
+  // abrir o PDF numa aba primeiro. O link assinado do Supabase é de outro
+  // domínio — colocado direto num iframe, o navegador bloqueia o
+  // print() por segurança (cross-origin) e falha calado, sem erro
+  // nenhum. Por isso baixa o PDF primeiro (fetch + blob) e usa um link
+  // local (blob:), que aí sim é do mesmo domínio da página.
   const imprimir = async () => {
     if (!contrato.pdf_path) return;
     setImprimindo(true);
     setErro(null);
     try {
       const url = await urlContratoPdf(contrato.pdf_path);
+      const resposta = await fetch(url);
+      if (!resposta.ok) throw new Error("Não foi possível baixar o PDF pra imprimir.");
+      const blobUrl = URL.createObjectURL(await resposta.blob());
       const iframe = document.createElement("iframe");
       iframe.style.display = "none";
       iframe.onload = () => {
         iframe.contentWindow?.print();
-        setTimeout(() => iframe.remove(), 60_000);
+        setTimeout(() => {
+          iframe.remove();
+          URL.revokeObjectURL(blobUrl);
+        }, 60_000);
       };
-      iframe.src = url;
+      iframe.src = blobUrl;
       document.body.appendChild(iframe);
     } catch (e) {
       setErro(e instanceof Error ? e.message : "Erro ao imprimir o PDF.");
