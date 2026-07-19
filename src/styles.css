@@ -1,0 +1,252 @@
+@import "tailwindcss" source(none);
+@source "../src";
+@import "tw-animate-css";
+
+@import "@fontsource/cormorant-garamond/400.css";
+@import "@fontsource/cormorant-garamond/500.css";
+@import "@fontsource/cormorant-garamond/600.css";
+@import "@fontsource/inter/400.css";
+@import "@fontsource/inter/500.css";
+@import "@fontsource/inter/600.css";
+
+@custom-variant dark (&:is(.dark *));
+
+/*
+ * Design system definition.
+ *
+ * The @theme inline block maps CSS custom properties to Tailwind utility
+ * classes (e.g. --color-primary -> bg-primary, text-primary).
+ *
+ * The :root and .dark blocks define the actual color values using oklch.
+ * All colors MUST use oklch format.
+ *
+ * To add a new semantic color:
+ * 1. Add the variable to :root (light value) and .dark (dark value)
+ * 2. Register it in @theme inline as --color-<name>: var(--<name>)
+ */
+
+@theme inline {
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 8px);
+  --radius-3xl: calc(var(--radius) + 12px);
+  --radius-4xl: calc(var(--radius) + 16px);
+  --font-display: "Cormorant Garamond", ui-serif, Georgia, serif;
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-ring-offset-background: var(--background);
+  --color-lavender: var(--lavender);
+  --color-lavender-soft: var(--lavender-soft);
+  --color-rose: var(--rose);
+  --color-cream: var(--cream);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+
+  /* Painel admin — redesign "Lilás Atelier". Tokens à parte (não usados no
+     resto do site) para reproduzir as cores exatas do handoff de design. */
+  --color-painel-bg: var(--painel-bg);
+  --color-painel-border: var(--painel-border);
+  --color-painel-primary: var(--painel-primary);
+  --color-painel-primary-deep: var(--painel-primary-deep);
+  --color-painel-title: var(--painel-title);
+  --color-painel-muted: var(--painel-muted);
+  --color-painel-muted-2: var(--painel-muted-2);
+  --color-painel-chip-text: var(--painel-chip-text);
+  --color-painel-badge-bg: var(--painel-badge-bg);
+  --color-painel-icon-muted: var(--painel-icon-muted);
+  --color-painel-gold: var(--painel-gold);
+  --color-painel-green: var(--painel-green);
+  --color-painel-alert-bg: var(--painel-alert-bg);
+  --color-painel-alert-border: var(--painel-alert-border);
+  --color-painel-alert-text: var(--painel-alert-text);
+  --color-painel-hero-bg: var(--painel-hero-bg);
+  --color-painel-gold-soft: var(--painel-gold-soft);
+  --color-painel-lilac-soft: var(--painel-lilac-soft);
+}
+
+:root {
+  --radius: 1rem;
+  /* MAVI palette: warm off-white, lavender, roxo (do ícone de laser), rose
+     accent. Hue 296 = roxo vívido da marca (extraído de icone-laser.png),
+     no lugar do 310 antigo (lia mais bordô/ameixa que roxo). */
+  --background: oklch(0.985 0.005 60);
+  --foreground: oklch(0.32 0.09 296);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.32 0.09 296);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.32 0.09 296);
+  --primary: oklch(0.38 0.13 296);
+  --primary-foreground: oklch(0.98 0.005 60);
+  --secondary: oklch(0.93 0.05 296);
+  --secondary-foreground: oklch(0.32 0.09 296);
+  --muted: oklch(0.95 0.015 60);
+  --muted-foreground: oklch(0.52 0.05 296);
+  --accent: oklch(0.7 0.12 10);
+  --accent-foreground: oklch(0.98 0.005 60);
+  --destructive: oklch(0.577 0.245 27.325);
+  --destructive-foreground: oklch(0.984 0.003 247.858);
+  --success: oklch(0.627 0.194 149.214);
+  --success-foreground: oklch(0.982 0.018 155.826);
+  --border: oklch(0.9 0.03 296);
+  --input: oklch(0.9 0.03 296);
+  --ring: oklch(0.6 0.1 296);
+  --lavender: oklch(0.78 0.09 296);
+  --lavender-soft: oklch(0.93 0.05 296);
+  --rose: oklch(0.7 0.12 10);
+  --cream: oklch(0.97 0.012 70);
+  --chart-1: oklch(0.646 0.222 41.116);
+  --chart-2: oklch(0.6 0.118 184.704);
+  --chart-3: oklch(0.398 0.07 227.392);
+  --chart-4: oklch(0.828 0.189 84.429);
+  --chart-5: oklch(0.769 0.188 70.08);
+  --sidebar: oklch(0.984 0.003 247.858);
+  --sidebar-foreground: oklch(0.129 0.042 264.695);
+  --sidebar-primary: oklch(0.208 0.042 265.755);
+  --sidebar-primary-foreground: oklch(0.984 0.003 247.858);
+  --sidebar-accent: oklch(0.968 0.007 247.896);
+  --sidebar-accent-foreground: oklch(0.208 0.042 265.755);
+  --sidebar-border: oklch(0.929 0.013 255.508);
+  --sidebar-ring: oklch(0.704 0.04 256.788);
+
+  /* Painel admin — redesign "Lilás Atelier" (hifi, cores exatas do handoff
+     em design_handoff_painel_lilas_atelier/). Hex direto (não oklch) de
+     propósito: são os valores exatos do design, escopados só ao painel. */
+  --painel-bg: #faf6fb;
+  --painel-border: #ecdff4;
+  --painel-primary: #9a6fb0;
+  --painel-primary-deep: #6d4d84;
+  --painel-title: #4a3559;
+  --painel-muted: #a685bb;
+  --painel-muted-2: #b7a3c6;
+  --painel-chip-text: #7a638c;
+  --painel-badge-bg: #f1e4f5;
+  --painel-icon-muted: #d9c8e8;
+  --painel-gold: #b3924c;
+  --painel-green: #5a9c6f;
+  --painel-alert-bg: #f6dde3;
+  --painel-alert-border: #eabfca;
+  --painel-alert-text: #a45d6f;
+  --painel-hero-bg: #231a2c;
+  --painel-gold-soft: #f0d59a;
+  --painel-lilac-soft: #e0bdf0;
+}
+
+.dark {
+  --background: oklch(0.129 0.042 264.695);
+  --foreground: oklch(0.984 0.003 247.858);
+  --card: oklch(0.208 0.042 265.755);
+  --card-foreground: oklch(0.984 0.003 247.858);
+  --popover: oklch(0.208 0.042 265.755);
+  --popover-foreground: oklch(0.984 0.003 247.858);
+  --primary: oklch(0.929 0.013 255.508);
+  --primary-foreground: oklch(0.208 0.042 265.755);
+  --secondary: oklch(0.279 0.041 260.031);
+  --secondary-foreground: oklch(0.984 0.003 247.858);
+  --muted: oklch(0.279 0.041 260.031);
+  --muted-foreground: oklch(0.704 0.04 256.788);
+  --accent: oklch(0.279 0.041 260.031);
+  --accent-foreground: oklch(0.984 0.003 247.858);
+  --destructive: oklch(0.704 0.191 22.216);
+  --destructive-foreground: oklch(0.984 0.003 247.858);
+  --border: oklch(1 0 0 / 10%);
+  --input: oklch(1 0 0 / 15%);
+  --ring: oklch(0.551 0.027 264.364);
+  --chart-1: oklch(0.488 0.243 264.376);
+  --chart-2: oklch(0.696 0.17 162.48);
+  --chart-3: oklch(0.769 0.188 70.08);
+  --chart-4: oklch(0.627 0.265 303.9);
+  --chart-5: oklch(0.645 0.246 16.439);
+  --sidebar: oklch(0.208 0.042 265.755);
+  --sidebar-foreground: oklch(0.984 0.003 247.858);
+  --sidebar-primary: oklch(0.488 0.243 264.376);
+  --sidebar-primary-foreground: oklch(0.984 0.003 247.858);
+  --sidebar-accent: oklch(0.279 0.041 260.031);
+  --sidebar-accent-foreground: oklch(0.984 0.003 247.858);
+  --sidebar-border: oklch(1 0 0 / 10%);
+  --sidebar-ring: oklch(0.551 0.027 264.364);
+}
+
+@layer base {
+  * {
+    border-color: var(--color-border);
+  }
+
+  body {
+    background-color: var(--color-background);
+    color: var(--color-foreground);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    font-family: var(--font-display);
+    letter-spacing: -0.01em;
+  }
+}
+
+/* Impressão do contrato de prestação de serviços (/painel/contrato/$id):
+   esconde todo o resto da página, deixando só a folha do contrato — cada
+   .contrato-pagina vira uma página impressa separada. */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  #contrato-imprimir,
+  #contrato-imprimir * {
+    visibility: visible;
+  }
+  #contrato-imprimir {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+  }
+  .contrato-pagina {
+    page-break-after: always;
+  }
+  .contrato-pagina:last-child {
+    page-break-after: auto;
+  }
+  /* A pré-visualização encolhe pra caber na coluna (ver
+     ContratoPreviewEscalado em painel.contrato.$id.tsx) — na impressão de
+     verdade, sempre em tamanho real. */
+  .contrato-preview-escala {
+    transform: none !important;
+  }
+}

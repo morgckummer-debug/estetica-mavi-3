@@ -1,0 +1,63 @@
+{
+  "version": 1,
+  "sdk_version": "0.22.2",
+  "path": "/mcp",
+  "auth": {
+    "type": "oauth",
+    "issuer": "https://jjkmgkorqzbroebhksca.supabase.co/auth/v1",
+    "accepted_audiences": [
+      "authenticated"
+    ]
+  },
+  "mcp": {
+    "server": {
+      "name": "mavi-mcp",
+      "version": "0.1.0",
+      "title": "MAVI — Painel de Clientes"
+    },
+    "tools": [
+      {
+        "name": "listar_fichas",
+        "title": "Listar fichas de clientes",
+        "description": "Busca fichas de clientes por parte do nome ou telefone; sem busca, retorna as mais recentes. Retorna nome, telefone, tipo (corporal/facial/laser), data de criação e se está arquivada. Não expõe respostas de anamnese nem dados clínicos.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "busca": {
+              "type": "string",
+              "description": "Trecho do nome ou telefone. Opcional."
+            },
+            "limite": {
+              "type": "integer",
+              "description": "Máximo de fichas retornadas (1–50). Padrão 20."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "sessoes_pendentes_confirmacao",
+        "title": "Sessões pendentes de confirmação",
+        "description": "Lista sessões de atendimento realizadas há pelo menos 15 dias que ainda não foram confirmadas pela cliente pelo WhatsApp. Retorna nome, telefone, data e áreas atendidas.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {}
+        },
+        "outputSchema": null
+      }
+    ]
+  }
+}

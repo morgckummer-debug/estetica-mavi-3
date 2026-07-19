@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" fill="none">
+  <defs>
+    <linearGradient id="cadastroGradiente" x1="40" y1="20" x2="160" y2="185" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#C9A9EA" />
+      <stop offset="1" stop-color="#5B3FA6" />
+    </linearGradient>
+  </defs>
+  <g stroke="url(#cadastroGradiente)" stroke-width="5" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M79 32h42a8 8 0 0 1 8 8v6H71v-6a8 8 0 0 1 8-8Z" />
+    <rect x="55" y="40" width="90" height="130" rx="12" />
+    <path d="M76 88h48" />
+    <path d="M76 108h48" />
+    <path d="M76 128h30" />
+    <path d="m73 148 8 8 14-16" />
+  </g>
+</svg>
