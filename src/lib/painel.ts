@@ -831,6 +831,10 @@ export type NovoRelatorioPacote = {
   pacoteTotal: number;
   concluido: boolean;
   sessoes: { data: string; confirmado: boolean; confirmado_em: string | null }[];
+  // Brinde(s) de outro procedimento vinculado a este pacote (ex.: comprou
+  // pacote de Virilha, ganhou Hidragloss de brinde) — pra aparecer também
+  // no relatório que a cliente pede, junto com o dia em que foi realizado.
+  brindes: { item: string; data: string; confirmado: boolean; confirmado_em: string | null }[];
 };
 
 export async function enviarRelatorioPacote(dados: NovoRelatorioPacote): Promise<string> {
@@ -845,6 +849,7 @@ export async function enviarRelatorioPacote(dados: NovoRelatorioPacote): Promise
       pacote_total: dados.pacoteTotal,
       concluido: dados.concluido,
       sessoes: dados.sessoes,
+      brindes: dados.brindes,
       atualizado_em: new Date().toISOString(),
     }),
   });

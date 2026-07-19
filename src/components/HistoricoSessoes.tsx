@@ -1207,9 +1207,14 @@ export function HistoricoSessoes({
   const bonusRealizados = useMemo(() => {
     const lista: {
       chave: string;
+      sessaoId: string;
+      token: string;
+      observacao: string | null;
       tipo: Tipo;
       item: string;
       data: string;
+      confirmado: boolean;
+      confirmado_em: string | null;
       origemFichaId?: string;
       origemItem?: string;
     }[] = [];
@@ -1224,9 +1229,14 @@ export function HistoricoSessoes({
           seg.linhas.forEach((l) =>
             lista.push({
               chave: `${chave}::${l.sessaoId}`,
+              sessaoId: l.sessaoId,
+              token: l.token,
+              observacao: l.observacao,
               tipo: f.tipo,
               item,
               data: l.data,
+              confirmado: l.confirmado,
+              confirmado_em: l.confirmado_em,
               origemFichaId: pacote?.origemFichaId,
               origemItem: pacote?.origemItem,
             }),
@@ -1568,13 +1578,21 @@ export function HistoricoSessoes({
 
   // Gera (ou atualiza) o relatório público desse pacote e deixa o link do
   // WhatsApp pronto pra abrir — a cliente confere sozinha data por data e a
-  // contagem que falta, em vez de precisar confiar de memória.
+  // contagem que falta, em vez de precisar confiar de memória. Se esse
+  // pacote deu origem a brinde(s) de outro item (ver bonusAninhadoPorOrigem),
+  // eles entram junto no relatório, com o dia em que foram realizados.
   const enviarRelatorio = async (g: GrupoItem, seg: Segmento) => {
     if (seg.pacoteTotal === undefined) return;
     const chave = `${g.chave}::${seg.numero}`;
     setEnviandoRelatorioChave(chave);
     setErroRelatorioChave((prev) => ({ ...prev, [chave]: "" }));
     try {
+      const brindes = (bonusAninhadoPorOrigem.get(g.chave)?.realizados ?? []).map((b) => ({
+        item: b.item,
+        data: b.data,
+        confirmado: b.confirmado,
+        confirmado_em: b.confirmado_em,
+      }));
       const token = await enviarRelatorioPacote({
         fichaId: g.fichaId,
         item: g.item,
@@ -1587,6 +1605,7 @@ export function HistoricoSessoes({
           confirmado: l.confirmado,
           confirmado_em: l.confirmado_em,
         })),
+        brindes,
       });
       setLinkRelatorioPronto({
         item: g.item,
@@ -1714,12 +1733,20 @@ export function HistoricoSessoes({
               </li>
             ))}
             {bonusRealizadosSemOrigem.map((b) => (
-              <li key={b.chave} className="flex items-center gap-1.5 text-xs text-painel-chip-text">
-                <Check className="h-3.5 w-3.5 text-painel-gold shrink-0" />
-                <span>
-                  Brinde {b.item} — realizado em {dataBR(b.data)}
-                </span>
-              </li>
+              <LinhaSessaoView
+                key={b.chave}
+                id={b.sessaoId}
+                texto={`Brinde ${b.item} — realizado em ${dataBR(b.data)} (${b.confirmado ? "confirmado" : "aguardando confirmação"})`}
+                data={b.data}
+                observacao={b.observacao}
+                confirmado={b.confirmado}
+                confirmadoEm={b.confirmado_em}
+                copiado={copiadoId === b.sessaoId}
+                onCopiar={() => copiar(b.sessaoId, b.token)}
+                arquivar={arquivarState}
+                edicao={edicaoSessao}
+                envio={envioSessao}
+              />
             ))}
           </ul>
           {erroBonusPendente && (
@@ -2273,11 +2300,26 @@ export function HistoricoSessoes({
               {bonusAninhado &&
                 (bonusAninhado.pendentes.length > 0 || bonusAninhado.realizados.length > 0) && (
                   <div className="mt-3 pt-2.5 border-t border-painel-border/70 space-y-1.5">
-                    {bonusAninhado.realizados.map((b) => (
-                      <p key={b.chave} className="text-xs text-painel-gold">
-                        🎁 Brinde: {b.item} — realizado em {dataBR(b.data)}
-                      </p>
-                    ))}
+                    {bonusAninhado.realizados.length > 0 && (
+                      <ul className="space-y-1">
+                        {bonusAninhado.realizados.map((b) => (
+                          <LinhaSessaoView
+                            key={b.chave}
+                            id={b.sessaoId}
+                            texto={`🎁 Brinde: ${b.item} — realizado em ${dataBR(b.data)} (${b.confirmado ? "confirmado" : "aguardando confirmação"})`}
+                            data={b.data}
+                            observacao={b.observacao}
+                            confirmado={b.confirmado}
+                            confirmadoEm={b.confirmado_em}
+                            copiado={copiadoId === b.sessaoId}
+                            onCopiar={() => copiar(b.sessaoId, b.token)}
+                            arquivar={arquivarState}
+                            edicao={edicaoSessao}
+                            envio={envioSessao}
+                          />
+                        ))}
+                      </ul>
+                    )}
                     {bonusAninhado.pendentes.map((b) => (
                       <div key={b.chave} className="flex flex-col gap-1.5 text-xs text-painel-gold">
                         <div className="flex flex-wrap items-center gap-2">
