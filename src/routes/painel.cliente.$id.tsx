@@ -12,6 +12,7 @@ import {
   Loader2,
   Paperclip,
   Pencil,
+  Printer,
   Send,
   Trash2,
   X,
@@ -457,6 +458,7 @@ function AnexoContratoPdf({
 }) {
   const [enviando, setEnviando] = useState(false);
   const [abrindo, setAbrindo] = useState(false);
+  const [imprimindo, setImprimindo] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
 
   const anexar = async (arquivo: File | undefined) => {
@@ -487,22 +489,63 @@ function AnexoContratoPdf({
     }
   };
 
+  // Manda o PDF anexado direto pro diálogo de impressão, sem precisar
+  // abrir o PDF numa aba primeiro — carrega num iframe invisível e chama
+  // print() nele assim que carrega (o navegador quem decide, aqui não dá
+  // pra saber quando a Marina fecha o diálogo, então o iframe só é
+  // removido depois de um tempo).
+  const imprimir = async () => {
+    if (!contrato.pdf_path) return;
+    setImprimindo(true);
+    setErro(null);
+    try {
+      const url = await urlContratoPdf(contrato.pdf_path);
+      const iframe = document.createElement("iframe");
+      iframe.style.display = "none";
+      iframe.onload = () => {
+        iframe.contentWindow?.print();
+        setTimeout(() => iframe.remove(), 60_000);
+      };
+      iframe.src = url;
+      document.body.appendChild(iframe);
+    } catch (e) {
+      setErro(e instanceof Error ? e.message : "Erro ao imprimir o PDF.");
+    } finally {
+      setImprimindo(false);
+    }
+  };
+
   return (
     <div className="flex flex-col items-end gap-1 shrink-0">
       {contrato.pdf_path ? (
-        <button
-          type="button"
-          onClick={abrir}
-          disabled={abrindo}
-          className="inline-flex items-center gap-1.5 rounded-full border border-painel-border px-3 py-1.5 text-xs font-medium text-painel-title hover:border-painel-primary/40 transition-colors disabled:opacity-40"
-        >
-          {abrindo ? (
-            <Loader2 className="h-3.5 w-3.5 animate-spin" />
-          ) : (
-            <FileText className="h-3.5 w-3.5" />
-          )}
-          Ver PDF
-        </button>
+        <div className="flex items-center gap-1.5">
+          <button
+            type="button"
+            onClick={abrir}
+            disabled={abrindo}
+            className="inline-flex items-center gap-1.5 rounded-full border border-painel-border px-3 py-1.5 text-xs font-medium text-painel-title hover:border-painel-primary/40 transition-colors disabled:opacity-40"
+          >
+            {abrindo ? (
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            ) : (
+              <FileText className="h-3.5 w-3.5" />
+            )}
+            Ver PDF
+          </button>
+          <button
+            type="button"
+            onClick={imprimir}
+            disabled={imprimindo}
+            title="Imprimir PDF"
+            className="p-1.5 text-painel-muted/60 hover:text-painel-primary disabled:opacity-40 transition-colors"
+          >
+            {imprimindo ? (
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            ) : (
+              <Printer className="h-3.5 w-3.5" />
+            )}
+          </button>
+        </div>
       ) : (
         <label className="inline-flex items-center gap-1.5 rounded-full border border-painel-border px-3 py-1.5 text-xs font-medium text-painel-title hover:border-painel-primary/40 transition-colors cursor-pointer disabled:opacity-40">
           {enviando ? (
