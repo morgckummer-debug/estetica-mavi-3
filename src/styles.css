@@ -250,3 +250,11 @@
     transform: none !important;
   }
 }
+
+/* Fora do @media print de propósito — o html2pdf.js (geração do PDF pra
+   baixar, ver painel/contrato/$id) lê o break-after fora de um contexto de
+   impressão real, então essa regra não pode ficar só lá dentro. Não afeta
+   a tela: break-after só tem efeito em mídia paginada. */
+#contrato-pdf-export .contrato-pagina:not(:last-child) {
+  break-after: page;
+}

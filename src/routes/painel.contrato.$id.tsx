@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { createFileRoute, Link, useParams } from "@tanstack/react-router";
-import { ArrowLeft, Camera, CameraOff, Loader2, Plus, Printer, Trash2 } from "lucide-react";
+import { createFileRoute, Link, useParams, useNavigate } from "@tanstack/react-router";
+import { ArrowLeft, Camera, CameraOff, Download, Loader2, Plus, Trash2 } from "lucide-react";
+import html2pdf from "html2pdf.js";
 import { obterCliente, criarContrato, type Cliente } from "@/lib/painel";
 import { OPCOES_SESSAO, TIPOS, nomeCurto, type Tipo } from "@/data/anamnese";
 import { aplicarMascara, formatarDataBRBarra } from "@/lib/mascaras";
@@ -78,6 +79,8 @@ function ContratoPreviewEscalado({ children }: { children: React.ReactNode }) {
 
 function GerarContrato() {
   const { id } = useParams({ from: "/painel/contrato/$id" });
+  const navigate = useNavigate();
+  const pdfExportRef = useRef<HTMLDivElement>(null);
   const [cliente, setCliente] = useState<Cliente | null>(null);
   const [naoEncontrada, setNaoEncontrada] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
@@ -145,11 +148,14 @@ function GerarContrato() {
   const removerItem = (chave: string) =>
     setItens((prev) => (prev.length > 1 ? prev.filter((i) => i.chave !== chave) : prev));
 
-  // Salva o contrato (aba "Contratos" da cliente) e só então abre a
-  // impressão — se o salvamento falhar, avisa mas não trava a impressão,
-  // já que ela pode precisar do papel na hora mesmo assim.
-  const imprimir = async () => {
-    if (!cliente) return;
+  // Salva o contrato (aba "Contratos" da cliente), gera o PDF a partir da
+  // cópia oculta fora da tela (pdfExportRef — a visível na pré-visualização
+  // está com escala reduzida pra caber na coluna, não dá pra gerar o PDF
+  // direto dela) e baixa automaticamente, sem passar pela janela de
+  // impressão do navegador. Se o salvamento falhar, avisa mas gera o PDF
+  // do mesmo jeito — a Marina pode precisar dele na hora mesmo assim.
+  const baixarContrato = async () => {
+    if (!cliente || !pdfExportRef.current) return;
     setSalvando(true);
     setErroSalvar(null);
     const ano = Number(dataAno) || new Date().getFullYear();
@@ -167,13 +173,8 @@ function GerarContrato() {
       });
     } catch (e) {
       setErroSalvar(e instanceof Error ? e.message : "Erro ao salvar o contrato.");
-    } finally {
-      setSalvando(false);
     }
-    // O navegador sugere o <title> da página como nome do arquivo ao
-    // "Salvar como PDF" na impressão — troca por "Contrato - cliente -
-    // procedimento(s) - data" nessa hora, sem mudar o título da aba fora
-    // disso.
+
     const nomeItens = itens
       .filter((i) => i.descricao.trim() && i.quantidade.trim())
       .map((i) => i.descricao)
@@ -185,10 +186,29 @@ function GerarContrato() {
       // caracteres inválidos em nome de arquivo (Windows/macOS)
       .replace(/[\\/:*?"<>|]/g, "-");
 
-    const tituloOriginal = document.title;
-    document.title = nomeArquivo;
-    window.print();
-    document.title = tituloOriginal;
+    try {
+      await html2pdf()
+        .set({
+          filename: `${nomeArquivo}.pdf`,
+          margin: 0,
+          image: { type: "jpeg", quality: 0.98 },
+          html2canvas: { scale: 2, useCORS: true },
+          jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
+        })
+        .from(pdfExportRef.current)
+        .save();
+    } catch (e) {
+      setErroSalvar(e instanceof Error ? e.message : "Erro ao gerar o PDF do contrato.");
+      setSalvando(false);
+      return;
+    }
+
+    setSalvando(false);
+    navigate({
+      to: "/painel/cliente/$id",
+      params: { id: cliente.id },
+      search: { aba: "contratos" },
+    });
   };
 
   const dados = {
@@ -502,24 +522,32 @@ function GerarContrato() {
 
           <button
             type="button"
-            onClick={imprimir}
+            onClick={baixarContrato}
             disabled={salvando}
             className="w-full inline-flex items-center justify-center gap-2 rounded-full bg-painel-primary text-white px-6 py-3 text-sm font-semibold hover:bg-painel-primary/90 transition-colors disabled:opacity-60"
           >
             {salvando ? (
               <Loader2 className="h-4 w-4 animate-spin" />
             ) : (
-              <Printer className="h-4 w-4" />
+              <Download className="h-4 w-4" />
             )}
-            Imprimir contrato
+            Baixar contrato (PDF)
           </button>
         </div>
 
-        {/* Pré-visualização — o que sai na impressão (3 folhas) */}
+        {/* Pré-visualização — o que sai no PDF (2 folhas) */}
         <div className="rounded-[14px] border border-painel-border bg-painel-bg p-4 overflow-auto max-h-[85vh]">
           <ContratoPreviewEscalado>
             <ContratoImpresso dados={dados} />
           </ContratoPreviewEscalado>
+        </div>
+      </div>
+
+      {/* Cópia sem escala, fora da tela — só pra gerar o PDF (a de cima é
+          reduzida pra caber na coluna e não serve de fonte pro html2pdf). */}
+      <div style={{ position: "fixed", left: "-99999px", top: 0 }} aria-hidden="true">
+        <div ref={pdfExportRef}>
+          <ContratoImpresso dados={dados} id="contrato-pdf-export" />
         </div>
       </div>
     </div>

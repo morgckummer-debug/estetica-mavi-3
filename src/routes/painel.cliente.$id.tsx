@@ -1,5 +1,5 @@
 import { Fragment, useEffect, useMemo, useState } from "react";
-import { createFileRoute, Link, useParams, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, useParams, useNavigate, useSearch } from "@tanstack/react-router";
 import {
   ArrowLeft,
   AlertTriangle,
@@ -39,10 +39,6 @@ import { EnviarFicha } from "@/components/EnviarFicha";
 import { RamosWatermark } from "@/components/RamosWatermark";
 import { PainelModal } from "@/components/PainelModal";
 
-export const Route = createFileRoute("/painel/cliente/$id")({
-  component: PaginaCliente,
-});
-
 const ABAS = [
   { id: "cadastro", label: "Cadastro" },
   { id: "fichas", label: "Fichas" },
@@ -50,6 +46,19 @@ const ABAS = [
   { id: "contratos", label: "Contratos" },
 ] as const;
 type AbaId = (typeof ABAS)[number]["id"];
+const ABA_IDS = ABAS.map((a) => a.id);
+
+export const Route = createFileRoute("/painel/cliente/$id")({
+  component: PaginaCliente,
+  // ?aba=contratos — usado ao voltar de "Gerar contrato" pra já abrir na
+  // aba certa, em vez de cair sempre no Cadastro.
+  validateSearch: (s: Record<string, unknown>): { aba?: AbaId } => ({
+    aba:
+      typeof s.aba === "string" && (ABA_IDS as string[]).includes(s.aba)
+        ? (s.aba as AbaId)
+        : undefined,
+  }),
+});
 
 function formatarData(iso: string): string {
   try {
@@ -70,6 +79,24 @@ function formatarData(iso: string): string {
 function formatarDataSemHora(data: string): string {
   const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(data.trim());
   return m ? `${m[3]}/${m[2]}/${m[1]}` : data;
+}
+
+// "Contrato de 10 sessões de axila - Tatiana Mendes - 19.07.2026" — pra
+// identificar o contrato de relance na lista, em vez de um "Contrato"
+// genérico igual pra todo mundo.
+function tituloContrato(c: Contrato, nomeCliente: string): string {
+  const itensValidos = c.itens.filter((i) => (i.descricao || i.tipo) && i.quantidade);
+  const partesItens = itensValidos.map((i) => {
+    const sessao = Number(i.quantidade) === 1 ? "sessão" : "sessões";
+    return `${i.quantidade} ${sessao} de ${i.descricao || i.tipo}`;
+  });
+  const dataTitulo = formatarDataSemHora(c.data_contrato).replace(/\//g, ".");
+  const partes = [
+    partesItens.length > 0 ? `Contrato de ${partesItens.join(", ")}` : "Contrato",
+    nomeCliente,
+    dataTitulo,
+  ].filter(Boolean);
+  return partes.join(" - ");
 }
 
 // Ida e volta entre as colunas da tabela `clientes` e os ids dos campos de
@@ -542,11 +569,13 @@ function ExcluirContrato({
 
 function AbaContratos({
   clienteId,
+  nomeCliente,
   contratos,
   onAtualizado,
   onExcluido,
 }: {
   clienteId: string;
+  nomeCliente: string;
   contratos: Contrato[] | null;
   onAtualizado: (c: Contrato) => void;
   onExcluido: (id: string) => void;
@@ -581,16 +610,10 @@ function AbaContratos({
               className="flex items-center justify-between gap-3 rounded-xl border border-painel-border px-4 py-3 text-sm"
             >
               <div className="min-w-0">
-                <p className="text-painel-title truncate">
-                  {c.itens
-                    .map((i) => i.descricao || i.tipo)
-                    .filter(Boolean)
-                    .join(", ") || "Contrato"}
-                </p>
-                <p className="text-painel-muted-2 text-xs">
-                  {formatarDataSemHora(c.data_contrato)}
-                  {c.forma_pagamento ? ` · ${c.forma_pagamento}` : ""}
-                </p>
+                <p className="text-painel-title truncate">{tituloContrato(c, nomeCliente)}</p>
+                {c.forma_pagamento && (
+                  <p className="text-painel-muted-2 text-xs truncate">{c.forma_pagamento}</p>
+                )}
               </div>
               <div className="flex items-center gap-1 shrink-0">
                 <AnexoContratoPdf contrato={c} clienteId={clienteId} onAnexado={onAtualizado} />
@@ -606,13 +629,14 @@ function AbaContratos({
 
 function PaginaCliente() {
   const { id } = useParams({ from: "/painel/cliente/$id" });
+  const { aba: abaInicial } = useSearch({ from: "/painel/cliente/$id" });
   const navigate = useNavigate();
   const [cliente, setCliente] = useState<Cliente | null>(null);
   const [fichas, setFichas] = useState<Ficha[] | null>(null);
   const [contratos, setContratos] = useState<Contrato[] | null>(null);
   const [erro, setErro] = useState<string | null>(null);
   const [naoEncontrada, setNaoEncontrada] = useState(false);
-  const [aba, setAba] = useState<AbaId>("cadastro");
+  const [aba, setAba] = useState<AbaId>(abaInicial ?? "cadastro");
 
   useEffect(() => {
     obterCliente(id)
@@ -778,6 +802,7 @@ function PaginaCliente() {
         {aba === "contratos" && (
           <AbaContratos
             clienteId={cliente.id}
+            nomeCliente={cliente.nome}
             contratos={contratos}
             onAtualizado={(atualizado) =>
               setContratos((prev) =>
