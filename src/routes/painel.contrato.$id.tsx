@@ -152,10 +152,10 @@ function GerarContrato() {
     if (!cliente) return;
     setSalvando(true);
     setErroSalvar(null);
+    const ano = Number(dataAno) || new Date().getFullYear();
+    const mes = String(Number(dataMes) || new Date().getMonth() + 1).padStart(2, "0");
+    const dia = String(Number(dataDia) || new Date().getDate()).padStart(2, "0");
     try {
-      const ano = Number(dataAno) || new Date().getFullYear();
-      const mes = String(Number(dataMes) || new Date().getMonth() + 1).padStart(2, "0");
-      const dia = String(Number(dataDia) || new Date().getDate()).padStart(2, "0");
       await criarContrato({
         clienteId: cliente.id,
         profissao: profissao.trim() || null,
@@ -171,10 +171,22 @@ function GerarContrato() {
       setSalvando(false);
     }
     // O navegador sugere o <title> da página como nome do arquivo ao
-    // "Salvar como PDF" na impressão — troca pelo nome da cliente nessa
-    // hora, sem mudar o título da aba fora disso.
+    // "Salvar como PDF" na impressão — troca por "Contrato - cliente -
+    // procedimento(s) - data" nessa hora, sem mudar o título da aba fora
+    // disso.
+    const nomeItens = itens
+      .filter((i) => i.descricao.trim() && i.quantidade.trim())
+      .map((i) => i.descricao)
+      .join(", ");
+    const dataArquivo = `${dia}-${mes}-${ano}`;
+    const nomeArquivo = ["Contrato", cliente.nome, nomeItens, dataArquivo]
+      .filter(Boolean)
+      .join(" - ")
+      // caracteres inválidos em nome de arquivo (Windows/macOS)
+      .replace(/[\\/:*?"<>|]/g, "-");
+
     const tituloOriginal = document.title;
-    document.title = `Contrato - ${cliente.nome}`;
+    document.title = nomeArquivo;
     window.print();
     document.title = tituloOriginal;
   };

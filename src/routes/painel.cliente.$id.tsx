@@ -63,6 +63,15 @@ function formatarData(iso: string): string {
   }
 }
 
+// Só pra colunas `date` puras (sem hora/fuso), tipo `data_contrato` — usar
+// formatarData() aqui mostraria o dia anterior: "YYYY-MM-DD" sem hora é
+// interpretado como UTC pelo Date(), e no fuso do Brasil isso volta pro
+// dia de trás. Lê os números direto da string em vez de passar por Date.
+function formatarDataSemHora(data: string): string {
+  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(data.trim());
+  return m ? `${m[3]}/${m[2]}/${m[1]}` : data;
+}
+
 // Ida e volta entre as colunas da tabela `clientes` e os ids dos campos de
 // CAMPOS_CADASTRO (mesmos ids usados nas respostas da ficha) — "whatsapp"
 // vira "telefone", "estadoCivil" vira "estado_civil" etc.
@@ -579,7 +588,7 @@ function AbaContratos({
                     .join(", ") || "Contrato"}
                 </p>
                 <p className="text-painel-muted-2 text-xs">
-                  {formatarData(c.data_contrato)}
+                  {formatarDataSemHora(c.data_contrato)}
                   {c.forma_pagamento ? ` · ${c.forma_pagamento}` : ""}
                 </p>
               </div>
