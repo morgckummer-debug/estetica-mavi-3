@@ -607,12 +607,12 @@ function AbaContratos({
           {contratos.map((c) => (
             <li
               key={c.id}
-              className="flex items-center justify-between gap-3 rounded-xl border border-painel-border px-4 py-3 text-sm"
+              className="flex items-start justify-between gap-3 rounded-xl border border-painel-border px-4 py-3 text-sm"
             >
               <div className="min-w-0">
-                <p className="text-painel-title truncate">{tituloContrato(c, nomeCliente)}</p>
+                <p className="text-painel-title">{tituloContrato(c, nomeCliente)}</p>
                 {c.forma_pagamento && (
-                  <p className="text-painel-muted-2 text-xs truncate">{c.forma_pagamento}</p>
+                  <p className="text-painel-muted-2 text-xs">{c.forma_pagamento}</p>
                 )}
               </div>
               <div className="flex items-center gap-1 shrink-0">
