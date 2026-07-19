@@ -732,17 +732,14 @@ export function HistoricoSessoes({
   const [enviandoRelatorioChave, setEnviandoRelatorioChave] = useState<string | null>(null);
   const [erroRelatorioChave, setErroRelatorioChave] = useState<Record<string, string>>({});
 
-  // Links prontos pra abrir no WhatsApp depois de salvar (brinde confirmado
-  // / relatório gerado) — não abrem sozinhos (window.open depois de um
-  // await esbarra no bloqueador de popup do navegador), ficam aqui como um
-  // <a> de verdade pra Marina clicar.
+  // Link pronto pra abrir no WhatsApp depois de salvar o brinde confirmado
+  // — não abre sozinho (window.open depois de um await esbarra no
+  // bloqueador de popup do navegador), fica aqui como um <a> de verdade pra
+  // Marina clicar. O relatório de pacote não usa mais esse card: abre
+  // direto (ver enviarRelatorio).
   const [linkBonusPronto, setLinkBonusPronto] = useState<{ item: string; url: string } | null>(
     null,
   );
-  const [linkRelatorioPronto, setLinkRelatorioPronto] = useState<{
-    item: string;
-    url: string;
-  } | null>(null);
 
   const fichaPorId = useMemo(() => {
     const m = new Map<string, Procedimento>();
@@ -1576,14 +1573,18 @@ export function HistoricoSessoes({
     }
   };
 
-  // Gera (ou atualiza) o relatório público desse pacote e deixa o link do
-  // WhatsApp pronto pra abrir — a cliente confere sozinha data por data e a
-  // contagem que falta, em vez de precisar confiar de memória. Se esse
-  // pacote deu origem a brinde(s) de outro item (ver bonusAninhadoPorOrigem),
-  // eles entram junto no relatório, com o dia em que foram realizados.
+  // Gera (ou atualiza) o relatório público desse pacote e já abre direto no
+  // WhatsApp — sem card intermediário pra clicar de novo. A aba é aberta em
+  // branco aqui, ainda de forma síncrona dentro do clique (senão o
+  // navegador bloqueia o pop-up, já que abrir só depois do await não conta
+  // mais como resposta direta a um clique); a URL entra assim que o
+  // relatório terminar de salvar. Se esse pacote deu origem a brinde(s) de
+  // outro item (ver bonusAninhadoPorOrigem), eles entram junto no
+  // relatório, com o dia em que foram realizados.
   const enviarRelatorio = async (g: GrupoItem, seg: Segmento) => {
     if (seg.pacoteTotal === undefined) return;
     const chave = `${g.chave}::${seg.numero}`;
+    const janela = window.open("", "whatsapp");
     setEnviandoRelatorioChave(chave);
     setErroRelatorioChave((prev) => ({ ...prev, [chave]: "" }));
     try {
@@ -1607,17 +1608,17 @@ export function HistoricoSessoes({
         })),
         brindes,
       });
-      setLinkRelatorioPronto({
+      const url = linkWhatsappRelatorio({
+        origin: PAINEL_URL,
+        token,
+        telefone: telefoneCliente,
+        nomeCliente,
         item: g.item,
-        url: linkWhatsappRelatorio({
-          origin: PAINEL_URL,
-          token,
-          telefone: telefoneCliente,
-          nomeCliente,
-          item: g.item,
-        }),
       });
+      if (janela) janela.location.href = url;
+      else window.open(url, "whatsapp", "noreferrer");
     } catch (e) {
+      janela?.close();
       setErroRelatorioChave((prev) => ({
         ...prev,
         [chave]: e instanceof Error ? e.message : "Não foi possível gerar o relatório.",
@@ -1646,22 +1647,16 @@ export function HistoricoSessoes({
         Registre o atendimento e envie o link para a cliente confirmar.
       </p>
 
-      {(linkBonusPronto || linkRelatorioPronto) && (
+      {linkBonusPronto && (
         <div className="mb-5 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-painel-lilac-soft/40 bg-painel-badge-bg/60 px-4 py-3">
           <p className="text-xs font-medium text-painel-title">
-            {linkBonusPronto
-              ? `Brinde de ${linkBonusPronto.item} registrado!`
-              : `Relatório de ${linkRelatorioPronto!.item} gerado!`}{" "}
-            Clique pra abrir o WhatsApp com o link.
+            Brinde de {linkBonusPronto.item} registrado! Clique pra abrir o WhatsApp com o link.
           </p>
           <a
-            href={(linkBonusPronto ?? linkRelatorioPronto)!.url}
+            href={linkBonusPronto.url}
             target="whatsapp"
             rel="noreferrer"
-            onClick={() => {
-              setLinkBonusPronto(null);
-              setLinkRelatorioPronto(null);
-            }}
+            onClick={() => setLinkBonusPronto(null)}
             className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-painel-primary text-white px-3.5 py-1.5 text-xs font-medium hover:bg-painel-primary/90 transition-colors"
           >
             <MessageCircle className="h-3.5 w-3.5" />
