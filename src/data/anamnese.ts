@@ -244,6 +244,43 @@ const ETAPA_DADOS: Etapa = {
 // passa a acontecer no Cadastro, não mais dentro de cada ficha.
 export const CAMPOS_CADASTRO: Campo[] = ETAPA_DADOS.campos;
 
+// Etapa mínima de identificação — usada nas fichas de tratamento (corporal,
+// facial, depilação). O resto dos dados pessoais (endereço, nascimento,
+// e-mail...) já foi coletado no Cadastro da cliente; pedir tudo de novo
+// aqui só duplicaria o que a Marina já tem. Nome/CPF/celular bastam pra
+// achar ou criar a cliente (encontrar_ou_criar_cliente, 0012_clientes.sql).
+const ETAPA_IDENTIFICACAO: Etapa = {
+  titulo: "Seus dados",
+  descricao: "Pra Marina te identificar rapidinho.",
+  campos: [
+    {
+      tipo: "texto",
+      id: "nome",
+      label: "Nome completo",
+      placeholder: "Seu nome",
+      obrigatorio: true,
+    },
+    {
+      tipo: "texto",
+      id: "cpf",
+      label: "CPF",
+      placeholder: "254.654.325-86",
+      inputMode: "numeric",
+      mascara: "cpf",
+      obrigatorio: true,
+    },
+    {
+      tipo: "texto",
+      id: "whatsapp",
+      label: "WhatsApp",
+      placeholder: "(31)93998-3485",
+      inputMode: "tel",
+      mascara: "telefone",
+      obrigatorio: true,
+    },
+  ],
+};
+
 // ---------- CADASTRO (só dados pessoais, sem anamnese clínica) ----------
 // Link que a Marina manda pra uma cliente nova se cadastrar antes de
 // escolher/agendar um tratamento — mesma etapa de dados das outras fichas,
@@ -281,7 +318,7 @@ const CORPORAL: DefinicaoFicha = {
     { id: "panturrilhaEsq", label: "Panturrilha Esq." },
   ],
   etapas: [
-    ETAPA_DADOS,
+    ETAPA_IDENTIFICACAO,
     {
       titulo: "Rotina e hábitos",
       campos: [
@@ -541,7 +578,7 @@ const FACIAL: DefinicaoFicha = {
     },
   ],
   etapas: [
-    ETAPA_DADOS,
+    ETAPA_IDENTIFICACAO,
     {
       titulo: "Rotina e hábitos",
       campos: [
@@ -711,104 +748,13 @@ const FACIAL: DefinicaoFicha = {
 };
 
 // ---------- DEPILAÇÃO (transcrita do papel da Mavi) ----------
-// Dados pessoais próprios da ficha de depilação (inclui Sexo, como no papel).
-const ETAPA_DADOS_DEPILACAO: Etapa = {
-  titulo: "Seus dados",
-  descricao: "Para a Marina te receber com cuidado e segurança.",
-  campos: [
-    {
-      tipo: "texto",
-      id: "nome",
-      label: "Nome completo",
-      placeholder: "Seu nome",
-      obrigatorio: true,
-    },
-    {
-      tipo: "texto",
-      id: "cpf",
-      label: "CPF",
-      placeholder: "254.654.325-86",
-      inputMode: "numeric",
-      mascara: "cpf",
-      obrigatorio: true,
-    },
-    { tipo: "texto", id: "nascimento", label: "Data de nascimento", inputMode: "date" },
-    {
-      tipo: "texto",
-      id: "profissao",
-      label: "Profissão (opcional)",
-      placeholder: "Sua profissão",
-    },
-    {
-      tipo: "selecao",
-      id: "estadoCivil",
-      label: "Estado civil (opcional)",
-      opcoes: [...ESTADOS_CIVIS],
-    },
-    {
-      tipo: "selecao",
-      id: "sexo",
-      label: "Gênero",
-      opcoes: ["Feminino", "Masculino"],
-      obrigatorio: true,
-    },
-    {
-      tipo: "texto",
-      id: "cep",
-      label: "CEP",
-      placeholder: "35700-000",
-      inputMode: "numeric",
-      mascara: "cep",
-      obrigatorio: true,
-    },
-    {
-      tipo: "texto",
-      id: "endereco",
-      label: "Rua",
-      placeholder: "Preenchido automaticamente pelo CEP",
-      obrigatorio: true,
-    },
-    {
-      tipo: "texto",
-      id: "numero",
-      label: "Número",
-      placeholder: "123",
-      inputMode: "numeric",
-      obrigatorio: true,
-    },
-    {
-      tipo: "texto",
-      id: "bairro",
-      label: "Bairro",
-      placeholder: "Preenchido automaticamente pelo CEP",
-      obrigatorio: true,
-    },
-    {
-      tipo: "texto",
-      id: "complemento",
-      label: "Complemento (opcional)",
-      placeholder: "Apto, bloco, casa...",
-    },
-    { tipo: "texto", id: "cidade", label: "Cidade", placeholder: "Sete Lagoas", obrigatorio: true },
-    {
-      tipo: "texto",
-      id: "whatsapp",
-      label: "Celular",
-      placeholder: "(31)93998-3485",
-      inputMode: "tel",
-      mascara: "telefone",
-      obrigatorio: true,
-    },
-  ],
-};
-
 const LASER: DefinicaoFicha = {
   tipo: "laser",
   nome: "Anamnese Depilação",
   emoji: "🔆",
   camposMedidas: [],
   etapas: [
-    ETAPA_DADOS_DEPILACAO,
+    ETAPA_IDENTIFICACAO,
     {
       titulo: "Sobre sua pele",
       campos: [
