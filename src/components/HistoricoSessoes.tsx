@@ -1454,6 +1454,36 @@ export function HistoricoSessoes({
     return (semFicha?.tipo as Tipo) ?? null;
   };
 
+  // Um bônus do MESMO item que está sendo editado (ex.: "comprou 10 de
+  // Virilha, ganhou +3 de Virilha de brinde") só faz sentido pendurado num
+  // pacote pago — ou o que está sendo declarado nesta mesma leva
+  // (`pagoTamanho`), ou um que já esteja em andamento pra esse item. Sem
+  // isso, vira um pacotinho de bônus solto, sem sessão paga nenhuma por
+  // trás — e como não dá pra escolher qual sessão é a "de brinde", o app
+  // pegaria a PRÓXIMA sessão registrada pra esse item pra dentro dele, o
+  // que já confundiu a Marina uma vez (uma sessão avulsa virou "pacote"
+  // sem ela ter escolhido isso). Bônus de OUTRO item não tem esse problema
+  // (nunca existia sessão prévia dele pra "engolir" por engano).
+  const bonusDoMesmoItemSemPacotePago = (
+    fId: string,
+    item: string,
+    pagoTamanho: number | null,
+    linhas: LinhaBonus[],
+  ): boolean => {
+    if (pagoTamanho) return false;
+    const tipoItem = tipoPorFicha.get(fId);
+    const temBonusMesmoItem = linhas.some(
+      (b) =>
+        b.tipo === tipoItem && b.item === item && b.tipo && b.item && parseInt(b.quantidade, 10) > 0,
+    );
+    if (!temBonusMesmoItem) return false;
+    const jaTemPacoteAtivo = temPacoteEmAberto(
+      faixasDePacotes(pacotesDoItem(fId, item)),
+      linhasPorChave.get(`${fId}::${item}`) ?? 0,
+    );
+    return !jaTemPacoteAtivo;
+  };
+
   // Salva um pacote pago (opcional) + os bônus anexados a ele numa única
   // leva de PATCHes (uma por ficha afetada — bônus podem ser de fichas
   // diferentes da do pacote pago, ex.: limpeza de pele de brinde numa
@@ -1525,6 +1555,13 @@ export function HistoricoSessoes({
       (b) => b.tipo && b.item && parseInt(b.quantidade, 10) > 0,
     );
     if (n <= 0 && !temBonusValido) return;
+
+    if (bonusDoMesmoItemSemPacotePago(fId, item, n > 0 ? n : null, bonusForm)) {
+      setErroPacote(
+        `Brinde do mesmo item (${item}) precisa vir junto com o tamanho do pacote pago — preencha "quantas sessões". Se ela já tem um pacote em andamento nesse item, cancele essa edição e use "+ Adicionar brinde" nele em vez de criar um novo.`,
+      );
+      return;
+    }
 
     const tipoFaltante = tipoBonusSemFicha(bonusForm);
     if (tipoFaltante) {
