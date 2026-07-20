@@ -22,7 +22,7 @@ export function linkWhatsappConfirmacao(params: {
   dataBR: string;
 }): string {
   const primeiro = params.nomeCliente.trim().split(" ")[0] || "";
-  const msg = `Oi ${primeiro}! 💜 Confirme seu atendimento na MAVI do dia ${params.dataBR} — é rapidinho: ${linkConfirmacao(params.origin, params.token)}`;
+  const msg = `Oi ${primeiro}! 💜 Confirme seu atendimento na MAVI do dia ${params.dataBR} — é rapidinho 😊: ${linkConfirmacao(params.origin, params.token)}`;
   const numero = numeroWhatsapp(params.telefone);
   return `https://wa.me/${numero}?text=${encodeURIComponent(msg)}`;
 }
