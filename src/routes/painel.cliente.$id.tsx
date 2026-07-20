@@ -163,12 +163,10 @@ function formatarValorCampo(campoId: string, val: string): string {
 
 function AbaCadastro({
   cliente,
-  tipoSugerido,
   onAtualizado,
   onExcluido,
 }: {
   cliente: Cliente;
-  tipoSugerido: Tipo;
   onAtualizado: (c: Cliente) => void;
   onExcluido: () => void;
 }) {
@@ -176,7 +174,6 @@ function AbaCadastro({
   const [form, setForm] = useState<Record<string, string>>({});
   const [salvando, setSalvando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
-  const [enviandoFicha, setEnviandoFicha] = useState(false);
   const [confirmandoExclusao, setConfirmandoExclusao] = useState(false);
   const [excluindo, setExcluindo] = useState<"arquivar" | "definitivo" | null>(null);
   const [erroExclusao, setErroExclusao] = useState<string | null>(null);
@@ -389,6 +386,46 @@ function AbaCadastro({
           })}
         </dl>
       )}
+    </div>
+  );
+}
+
+function AbaFichas({
+  fichas,
+  cliente,
+  tipoSugerido,
+}: {
+  fichas: Ficha[];
+  cliente: Cliente;
+  tipoSugerido: Tipo;
+}) {
+  const [enviandoFicha, setEnviandoFicha] = useState(false);
+
+  return (
+    <div className="rounded-[14px] border border-painel-border bg-white p-5 sm:p-6">
+      <div className="flex flex-wrap gap-2">
+        {fichas.length === 0 && <p className="text-sm text-painel-muted">Nenhuma ficha ainda.</p>}
+        {fichas.map((f) => (
+          <Link
+            key={f.id}
+            to="/painel/$id"
+            params={{ id: f.id }}
+            title={`${nomeTipo(f.tipo)} · enviada em ${formatarData(f.created_at)}`}
+            className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[12px] font-medium bg-painel-badge-bg text-painel-title transition-opacity hover:opacity-90 ${
+              f.arquivada ? "opacity-60" : ""
+            }`}
+          >
+            <span>{FICHAS[f.tipo]?.emoji ?? ""}</span>
+            <span>{nomeCurto(f.tipo)}</span>
+            <span className="opacity-70">{formatarData(f.created_at).slice(0, 5)}</span>
+            {f.alertas.length > 0 && (
+              <span className="inline-flex items-center justify-center h-4 min-w-4 rounded-full bg-white/90 px-1 text-[10px] font-bold text-painel-alert-text">
+                {f.alertas.length}
+              </span>
+            )}
+          </Link>
+        ))}
+      </div>
 
       <div className="mt-5 pt-5 border-t border-painel-border">
         {!enviandoFicha && (
@@ -406,41 +443,12 @@ function AbaCadastro({
             nomeInicial={cliente.nome}
             celularInicial={cliente.telefone}
             tipoInicial={tipoSugerido}
+            tipos={TIPOS}
             convitePadrao
             onFechar={() => setEnviandoFicha(false)}
           />
         )}
       </div>
-    </div>
-  );
-}
-
-function AbaFichas({ fichas }: { fichas: Ficha[] }) {
-  return (
-    <div
-      className={`flex flex-wrap gap-2 rounded-[14px] border border-painel-border bg-white p-5 sm:p-6`}
-    >
-      {fichas.length === 0 && <p className="text-sm text-painel-muted">Nenhuma ficha ainda.</p>}
-      {fichas.map((f) => (
-        <Link
-          key={f.id}
-          to="/painel/$id"
-          params={{ id: f.id }}
-          title={`${nomeTipo(f.tipo)} · enviada em ${formatarData(f.created_at)}`}
-          className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[12px] font-medium bg-painel-badge-bg text-painel-title transition-opacity hover:opacity-90 ${
-            f.arquivada ? "opacity-60" : ""
-          }`}
-        >
-          <span>{FICHAS[f.tipo]?.emoji ?? ""}</span>
-          <span>{nomeCurto(f.tipo)}</span>
-          <span className="opacity-70">{formatarData(f.created_at).slice(0, 5)}</span>
-          {f.alertas.length > 0 && (
-            <span className="inline-flex items-center justify-center h-4 min-w-4 rounded-full bg-white/90 px-1 text-[10px] font-bold text-painel-alert-text">
-              {f.alertas.length}
-            </span>
-          )}
-        </Link>
-      ))}
     </div>
   );
 }
@@ -836,12 +844,13 @@ function PaginaCliente() {
         {aba === "cadastro" && (
           <AbaCadastro
             cliente={cliente}
-            tipoSugerido={tipoSugerido}
             onAtualizado={setCliente}
             onExcluido={() => navigate({ to: "/painel" })}
           />
         )}
-        {aba === "fichas" && <AbaFichas fichas={fichas} />}
+        {aba === "fichas" && (
+          <AbaFichas fichas={fichas} cliente={cliente} tipoSugerido={tipoSugerido} />
+        )}
         {aba === "historico" && (
           <HistoricoSessoes
             fichas={procedimentos}

@@ -16,16 +16,20 @@ export function EnviarFicha({
   nomeInicial = "",
   celularInicial = "",
   tipoInicial,
+  tipos = TIPOS_ENVIO,
   convitePadrao = false,
   onFechar,
 }: {
   nomeInicial?: string;
   celularInicial?: string | null;
   tipoInicial?: Tipo;
+  // Quais tipos aparecem pra escolher (ex.: só corporal/facial/laser na aba
+  // Fichas, já que o cadastro puro é enviado pelo painel geral).
+  tipos?: Tipo[];
   convitePadrao?: boolean;
   onFechar?: () => void;
 }) {
-  const [tipo, setTipo] = useState<Tipo>(tipoInicial ?? "cadastro");
+  const [tipo, setTipo] = useState<Tipo>(tipoInicial ?? tipos[0] ?? "cadastro");
   const [copiado, setCopiado] = useState(false);
   const [convite, setConvite] = useState(convitePadrao);
   const [nome, setNome] = useState(nomeInicial);
@@ -105,7 +109,7 @@ export function EnviarFicha({
         </div>
 
         <div className="flex flex-wrap gap-2 mb-4">
-          {TIPOS_ENVIO.map((t) => (
+          {tipos.map((t) => (
             <button
               key={t}
               type="button"
