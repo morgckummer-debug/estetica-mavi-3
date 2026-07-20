@@ -732,15 +732,6 @@ export function HistoricoSessoes({
   const [enviandoRelatorioChave, setEnviandoRelatorioChave] = useState<string | null>(null);
   const [erroRelatorioChave, setErroRelatorioChave] = useState<Record<string, string>>({});
 
-  // Link pronto pra abrir no WhatsApp depois de salvar o brinde confirmado
-  // — não abre sozinho (window.open depois de um await esbarra no
-  // bloqueador de popup do navegador), fica aqui como um <a> de verdade pra
-  // Marina clicar. O relatório de pacote não usa mais esse card: abre
-  // direto (ver enviarRelatorio).
-  const [linkBonusPronto, setLinkBonusPronto] = useState<{ item: string; url: string } | null>(
-    null,
-  );
-
   const fichaPorId = useMemo(() => {
     const m = new Map<string, Procedimento>();
     fichas.forEach((f) => m.set(f.id, f));
@@ -1302,17 +1293,25 @@ export function HistoricoSessoes({
     const data = dataBonusPendente[subChave] || hojeISO();
     if (
       !window.confirm(
-        `Confirma que a cliente usou o brinde de ${b.item} em ${dataBR(data)}? Isso registra a sessão e deixa o link de confirmação por WhatsApp pronto pra abrir.`,
+        `Confirma que a cliente usou o brinde de ${b.item} em ${dataBR(data)}? Isso registra a sessão e já abre o WhatsApp com o link de confirmação.`,
       )
     )
       return;
+    // Aba aberta em branco aqui, ainda dentro do clique (o window.confirm
+    // logo acima é síncrono — não conta como "await" pro navegador) — abrir
+    // só depois do await esbarraria no bloqueador de pop-up. A URL entra
+    // assim que a sessão terminar de salvar.
+    const janela = window.open("", "whatsapp");
     setConfirmandoBonusChave(subChave);
     setErroBonusPendente(null);
     try {
       const nova = await criarSessao(b.fichaId, { data, areas: [b.item], observacao: "" });
       setSessoes((prev) => [nova, ...(prev ?? [])]);
-      setLinkBonusPronto({ item: b.item, url: whatsappDe(nova.token, nova.data) });
+      const url = whatsappDe(nova.token, nova.data);
+      if (janela) janela.location.href = url;
+      else window.open(url, "whatsapp", "noreferrer");
     } catch (e) {
+      janela?.close();
       setErroBonusPendente(e instanceof Error ? e.message : "Erro ao registrar o brinde usado.");
     } finally {
       setConfirmandoBonusChave(null);
@@ -1683,24 +1682,6 @@ export function HistoricoSessoes({
       <p className="text-sm text-painel-muted mb-5">
         Registre o atendimento e envie o link para a cliente confirmar.
       </p>
-
-      {linkBonusPronto && (
-        <div className="mb-5 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-painel-lilac-soft/40 bg-painel-badge-bg/60 px-4 py-3">
-          <p className="text-xs font-medium text-painel-title">
-            Brinde de {linkBonusPronto.item} registrado! Clique pra abrir o WhatsApp com o link.
-          </p>
-          <a
-            href={linkBonusPronto.url}
-            target="whatsapp"
-            rel="noreferrer"
-            onClick={() => setLinkBonusPronto(null)}
-            className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-painel-primary text-white px-3.5 py-1.5 text-xs font-medium hover:bg-painel-primary/90 transition-colors"
-          >
-            <MessageCircle className="h-3.5 w-3.5" />
-            Abrir WhatsApp
-          </a>
-        </div>
-      )}
 
       {(bonusPendentesSemOrigem.length > 0 || bonusRealizadosSemOrigem.length > 0) && (
         <div className="mb-5 rounded-xl border border-painel-gold/40 bg-painel-gold/10 p-3.5">
