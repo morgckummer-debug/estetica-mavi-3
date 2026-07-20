@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { createFileRoute, useNavigate, useParams, Link } from "@tanstack/react-router";
 import { motion, AnimatePresence } from "motion/react";
 import { ArrowLeft, ArrowRight, AlertTriangle, Sparkles, Loader2 } from "lucide-react";
-import { SITE_URL } from "@/data/services";
+import { SITE_URL, PAINEL_URL } from "@/data/services";
 import {
   getFicha,
   TERMO_TEXTO,
@@ -34,14 +34,17 @@ export const Route = createFileRoute("/avaliacao/$tipo")({
         { property: "og:description", content: descricao },
         { property: "og:type", content: "website" },
         // Cadastro não tem imagem própria de compartilhamento (só as 3
-        // fichas de tratamento têm og/ficha-*.png).
+        // fichas de tratamento têm og/ficha-*.png). URL absoluta em
+        // PAINEL_URL (não SITE_URL) — é o domínio onde a ficha de fato é
+        // servida; SITE_URL (domínio institucional) ainda não está no ar,
+        // então a imagem não carregava no preview do WhatsApp.
         ...(def && def.tipo !== "cadastro"
           ? [
-              { property: "og:image", content: `${SITE_URL}/og/ficha-${def.tipo}.png` },
+              { property: "og:image", content: `${PAINEL_URL}/og/ficha-${def.tipo}.png` },
               { property: "og:image:width", content: "1200" },
               { property: "og:image:height", content: "630" },
               { name: "twitter:card", content: "summary_large_image" },
-              { name: "twitter:image", content: `${SITE_URL}/og/ficha-${def.tipo}.png` },
+              { name: "twitter:image", content: `${PAINEL_URL}/og/ficha-${def.tipo}.png` },
             ]
           : []),
       ],
