@@ -748,6 +748,37 @@ export async function atualizarSessao(
   }
 }
 
+// Atribui o mesmo `lote_token` a várias sessões — usado para confirmar
+// num link só vários procedimentos feitos no mesmo dia (ex.: axila +
+// abdome + queixo, ou depilação + drenagem). Marina é autenticada, então
+// escreve direto na tabela via PATCH; a leitura/confirmação pública usa
+// as funções SECURITY DEFINER da migração 0021_confirmacao_lote.sql.
+export async function atribuirLoteSessoes(
+  ids: string[],
+  loteToken: string,
+): Promise<void> {
+  if (ids.length === 0) return;
+  const filtro = ids.map((x) => `"${x.replace(/"/g, '\\"')}"`).join(",");
+  const res = await apiRest(`sessoes?id=in.(${encodeURIComponent(filtro)})`, {
+    method: "PATCH",
+    headers: { Prefer: "return=representation" },
+    body: JSON.stringify({ lote_token: loteToken }),
+  });
+  if (!res.ok) {
+    const detalhe = await res.text().catch(() => "");
+    if (/column .*lote_token.* does not exist/i.test(detalhe)) {
+      throw new Error(
+        "Rode a migração db/0021_confirmacao_lote.sql no Supabase (SQL Editor) para ativar a confirmação em lote.",
+      );
+    }
+    throw new Error("Não foi possível preparar o link de confirmação do dia.");
+  }
+  const alteradas = (await res.json().catch(() => [])) as unknown[];
+  if (!Array.isArray(alteradas) || alteradas.length !== ids.length) {
+    throw new Error("Nem todas as sessões foram vinculadas ao link — tente de novo.");
+  }
+}
+
 // Arquiva (ou restaura) uma sessão em vez de apagar de verdade — nada é
 // perdido, a sessão só some da lista ativa e pode ser restaurada depois em
 // "Sessões arquivadas". Ver migração 0008_arquivar_sessoes.sql.
