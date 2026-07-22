@@ -28,10 +28,16 @@ import {
   atualizarSessao,
   atualizarFicha,
   enviarRelatorioPacote,
+  atribuirLoteSessoes,
   type SessaoAtendimento,
   type PacoteItem,
 } from "@/lib/painel";
-import { linkConfirmacao, linkWhatsappConfirmacao, linkWhatsappRelatorio } from "@/lib/whatsapp";
+import {
+  linkConfirmacao,
+  linkWhatsappConfirmacao,
+  linkWhatsappConfirmacaoLote,
+  linkWhatsappRelatorio,
+} from "@/lib/whatsapp";
 import { EnviarFicha } from "@/components/EnviarFicha";
 import { PAINEL_URL } from "@/data/services";
 
@@ -684,6 +690,18 @@ export function HistoricoSessoes({
   // do navegador barra chamadas que não vêm direto de um clique).
   const [linkEnvioPronto, setLinkEnvioPronto] = useState<string | null>(null);
 
+  // Confirmação em LOTE: quando a cliente fez vários procedimentos no
+  // mesmo dia (ex.: depilação de axila + abdome + queixo, ou depilação +
+  // drenagem), a Marina pode mandar UM link só em vez de N. Aqui guarda
+  // qual dia está sendo agrupado e quais sessões daquele dia entram no
+  // lote. `loteLinkPronto` segue o mesmo padrão de `linkEnvioPronto`:
+  // vira um <a> pra Marina clicar (evita bloqueador de popup).
+  const [loteData, setLoteData] = useState<string | null>(null);
+  const [loteSelecionadas, setLoteSelecionadas] = useState<Set<string>>(new Set());
+  const [loteSalvando, setLoteSalvando] = useState(false);
+  const [loteErro, setLoteErro] = useState<string | null>(null);
+  const [loteLinkPronto, setLoteLinkPronto] = useState<string | null>(null);
+
   // Pacotes salvos nesta sessão do painel (além dos que já vieram nas
   // fichas), pra refletir na hora sem precisar recarregar a página.
   const [pacotesOverride, setPacotesOverride] = useState<Record<string, PacoteItem[]>>({});
@@ -1121,6 +1139,80 @@ export function HistoricoSessoes({
   // de progresso/pacote) — só aparecem na seção "Sessões arquivadas".
   const sessoesAtivas = useMemo(() => (sessoes ?? []).filter((s) => !s.arquivado), [sessoes]);
   const sessoesArquivadas = useMemo(() => (sessoes ?? []).filter((s) => s.arquivado), [sessoes]);
+
+  // --- Confirmação em lote (várias sessões do mesmo dia, um link só) ---
+  // Dias em que há 2+ sessões pendentes de confirmação — só nesses casos
+  // faz sentido oferecer o lote (com 1 sessão só, o link individual já
+  // resolve).
+  const diasComVariasPendentes = useMemo(() => {
+    const porDia = new Map<string, SessaoAtendimento[]>();
+    for (const s of sessoesAtivas) {
+      if (s.confirmado) continue;
+      const arr = porDia.get(s.data) ?? [];
+      arr.push(s);
+      porDia.set(s.data, arr);
+    }
+    return [...porDia.entries()]
+      .filter(([, arr]) => arr.length >= 2)
+      .map(([data, arr]) => ({ data, sessoes: arr }))
+      .sort((a, b) => b.data.localeCompare(a.data));
+  }, [sessoesAtivas]);
+
+  const abrirLote = (data: string) => {
+    const dia = diasComVariasPendentes.find((d) => d.data === data);
+    if (!dia) return;
+    setLoteData(data);
+    // Pré-seleciona todas — o caso mais comum é confirmar tudo do dia.
+    setLoteSelecionadas(new Set(dia.sessoes.map((s) => s.id)));
+    setLoteErro(null);
+    setLoteLinkPronto(null);
+  };
+
+  const fecharLote = () => {
+    setLoteData(null);
+    setLoteSelecionadas(new Set());
+    setLoteErro(null);
+    setLoteLinkPronto(null);
+  };
+
+  const toggleLoteSessao = (id: string) => {
+    setLoteSelecionadas((prev) => {
+      const n = new Set(prev);
+      if (n.has(id)) n.delete(id);
+      else n.add(id);
+      return n;
+    });
+  };
+
+  const gerarLinkLote = async () => {
+    if (!loteData) return;
+    const ids = [...loteSelecionadas];
+    if (ids.length < 2) {
+      setLoteErro("Selecione pelo menos 2 sessões para gerar um link único.");
+      return;
+    }
+    // Token curto e aleatório, mesmo formato dos tokens de sessão (hex).
+    const loteToken = crypto.randomUUID().replace(/-/g, "");
+    setLoteSalvando(true);
+    setLoteErro(null);
+    try {
+      await atribuirLoteSessoes(ids, loteToken);
+      setLoteLinkPronto(
+        linkWhatsappConfirmacaoLote({
+          origin: PAINEL_URL,
+          loteToken,
+          telefone: telefoneCliente,
+          nomeCliente,
+          dataBR: dataBR(loteData),
+          quantidade: ids.length,
+        }),
+      );
+    } catch (e) {
+      setLoteErro(e instanceof Error ? e.message : "Não foi possível gerar o link.");
+    } finally {
+      setLoteSalvando(false);
+    }
+  };
 
   // Agrupado por item (área/procedimento), para o histórico compacto.
   const { grupos, semItem } = useMemo(
@@ -1990,6 +2082,132 @@ export function HistoricoSessoes({
       {sessoes && sessoesAtivas.length === 0 && !abrindo && (
         <p className="text-sm text-painel-muted py-2">Nenhuma sessão registrada ainda.</p>
       )}
+
+      {/* Confirmação em lote: dias em que a cliente fez vários
+          procedimentos e a Marina pode mandar 1 link só, em vez de N. */}
+      {diasComVariasPendentes.length > 0 && (
+        <div className="mb-3 rounded-2xl border border-painel-border bg-painel-badge-bg/40 p-4">
+          <div className="flex items-start gap-2 mb-2.5">
+            <Send className="h-4 w-4 mt-0.5 text-painel-primary shrink-0" />
+            <div className="min-w-0">
+              <h4 className="text-sm font-semibold text-painel-title">
+                Confirmar vários procedimentos num link só
+              </h4>
+              <p className="text-xs text-painel-muted mt-0.5">
+                Se a cliente fez mais de um procedimento no mesmo dia, envie um link único
+                em vez de vários pelo WhatsApp.
+              </p>
+            </div>
+          </div>
+
+          <ul className="flex flex-col gap-2">
+            {diasComVariasPendentes.map((dia) => {
+              const aberto = loteData === dia.data;
+              return (
+                <li
+                  key={dia.data}
+                  className="rounded-xl border border-painel-border bg-white/70 p-3"
+                >
+                  <div className="flex items-center justify-between gap-2 flex-wrap">
+                    <div className="text-sm text-painel-chip-text">
+                      <span className="font-medium">{dataBR(dia.data)}</span>
+                      <span className="text-painel-muted-2 ml-1.5">
+                        · {dia.sessoes.length} sessões pendentes
+                      </span>
+                    </div>
+                    {!aberto ? (
+                      <button
+                        type="button"
+                        onClick={() => abrirLote(dia.data)}
+                        className="inline-flex items-center gap-1.5 rounded-full bg-painel-primary text-white px-3.5 py-1.5 text-xs font-medium hover:bg-painel-primary/90 transition-colors"
+                      >
+                        <Send className="h-3.5 w-3.5" />
+                        Enviar confirmação do dia
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={fecharLote}
+                        className="rounded-full border border-painel-border px-3 py-1.5 text-xs text-painel-chip-text hover:border-painel-primary/40 transition-colors"
+                      >
+                        Fechar
+                      </button>
+                    )}
+                  </div>
+
+                  {aberto && (
+                    <div className="mt-3 border-t border-painel-border pt-3">
+                      {loteLinkPronto ? (
+                        <div className="flex flex-col gap-2">
+                          <p className="text-xs text-painel-muted">
+                            Link pronto — clique para abrir o WhatsApp com a mensagem
+                            preenchida:
+                          </p>
+                          <a
+                            href={loteLinkPronto}
+                            target="whatsapp"
+                            rel="noreferrer"
+                            onClick={fecharLote}
+                            className="inline-flex items-center justify-center gap-1.5 rounded-full bg-painel-primary text-white px-4 py-2 text-xs font-medium hover:bg-painel-primary/90 transition-colors"
+                          >
+                            <MessageCircle className="h-3.5 w-3.5" />
+                            Abrir WhatsApp
+                          </a>
+                        </div>
+                      ) : (
+                        <>
+                          <p className="text-xs text-painel-muted mb-2">
+                            Selecione quais sessões entram no link:
+                          </p>
+                          <ul className="flex flex-col gap-1.5 mb-3">
+                            {dia.sessoes.map((s) => {
+                              const marcada = loteSelecionadas.has(s.id);
+                              const rotulo =
+                                s.areas.length > 0
+                                  ? s.areas.join(", ")
+                                  : (s.observacao?.trim() || "Sessão sem detalhes");
+                              return (
+                                <li key={s.id}>
+                                  <label className="flex items-start gap-2 text-xs text-painel-chip-text cursor-pointer">
+                                    <input
+                                      type="checkbox"
+                                      checked={marcada}
+                                      onChange={() => toggleLoteSessao(s.id)}
+                                      className="mt-0.5 accent-painel-primary"
+                                    />
+                                    <span>{rotulo}</span>
+                                  </label>
+                                </li>
+                              );
+                            })}
+                          </ul>
+                          {loteErro && (
+                            <p className="text-xs text-painel-alert-text mb-2">{loteErro}</p>
+                          )}
+                          <button
+                            type="button"
+                            onClick={gerarLinkLote}
+                            disabled={loteSalvando || loteSelecionadas.size < 2}
+                            className="inline-flex items-center gap-1.5 rounded-full bg-painel-primary text-white px-3.5 py-1.5 text-xs font-medium hover:bg-painel-primary/90 transition-colors disabled:opacity-40"
+                          >
+                            {loteSalvando ? (
+                              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                            ) : (
+                              <Check className="h-3.5 w-3.5" />
+                            )}
+                            Gerar link único ({loteSelecionadas.size})
+                          </button>
+                        </>
+                      )}
+                    </div>
+                  )}
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      )}
+
 
       <div className="flex flex-col gap-3">
         {grupos.map((g) => {

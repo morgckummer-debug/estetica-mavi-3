@@ -30,6 +30,7 @@ import { Route as Char91DotwellKnownChar93OauthProtectedResourceRouteImport } fr
 import { Route as Char91DotmcpChar93ListToolsRouteImport } from './routes/[.mcp]/list-tools'
 import { Route as PainelContratoIdRouteImport } from './routes/painel.contrato.$id'
 import { Route as PainelClienteIdRouteImport } from './routes/painel.cliente.$id'
+import { Route as ConfirmarLoteTokenRouteImport } from './routes/confirmar.lote.$token'
 import { Route as Char91DotmcpChar93InvokeToolToolRouteImport } from './routes/[.mcp]/invoke-tool/$tool'
 import { Route as DotlovableOauthConsentRouteImport } from './routes/[.]lovable.oauth.consent'
 
@@ -140,6 +141,11 @@ const PainelClienteIdRoute = PainelClienteIdRouteImport.update({
   path: '/cliente/$id',
   getParentRoute: () => PainelRoute,
 } as any)
+const ConfirmarLoteTokenRoute = ConfirmarLoteTokenRouteImport.update({
+  id: '/confirmar/lote/$token',
+  path: '/confirmar/lote/$token',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const Char91DotmcpChar93InvokeToolToolRoute =
   Char91DotmcpChar93InvokeToolToolRouteImport.update({
     id: '/.mcp/invoke-tool/$tool',
@@ -174,6 +180,7 @@ export interface FileRoutesByFullPath {
   '/painel/': typeof PainelIndexRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
+  '/confirmar/lote/$token': typeof ConfirmarLoteTokenRoute
   '/painel/cliente/$id': typeof PainelClienteIdRoute
   '/painel/contrato/$id': typeof PainelContratoIdRoute
 }
@@ -198,6 +205,7 @@ export interface FileRoutesByTo {
   '/painel': typeof PainelIndexRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
+  '/confirmar/lote/$token': typeof ConfirmarLoteTokenRoute
   '/painel/cliente/$id': typeof PainelClienteIdRoute
   '/painel/contrato/$id': typeof PainelContratoIdRoute
 }
@@ -224,6 +232,7 @@ export interface FileRoutesById {
   '/painel/': typeof PainelIndexRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
+  '/confirmar/lote/$token': typeof ConfirmarLoteTokenRoute
   '/painel/cliente/$id': typeof PainelClienteIdRoute
   '/painel/contrato/$id': typeof PainelContratoIdRoute
 }
@@ -251,6 +260,7 @@ export interface FileRouteTypes {
     | '/painel/'
     | '/.lovable/oauth/consent'
     | '/.mcp/invoke-tool/$tool'
+    | '/confirmar/lote/$token'
     | '/painel/cliente/$id'
     | '/painel/contrato/$id'
   fileRoutesByTo: FileRoutesByTo
@@ -275,6 +285,7 @@ export interface FileRouteTypes {
     | '/painel'
     | '/.lovable/oauth/consent'
     | '/.mcp/invoke-tool/$tool'
+    | '/confirmar/lote/$token'
     | '/painel/cliente/$id'
     | '/painel/contrato/$id'
   id:
@@ -300,6 +311,7 @@ export interface FileRouteTypes {
     | '/painel/'
     | '/.lovable/oauth/consent'
     | '/.mcp/invoke-tool/$tool'
+    | '/confirmar/lote/$token'
     | '/painel/cliente/$id'
     | '/painel/contrato/$id'
   fileRoutesById: FileRoutesById
@@ -322,6 +334,7 @@ export interface RootRouteChildren {
   AvaliacaoIndexRoute: typeof AvaliacaoIndexRoute
   DotlovableOauthConsentRoute: typeof DotlovableOauthConsentRoute
   Char91DotmcpChar93InvokeToolToolRoute: typeof Char91DotmcpChar93InvokeToolToolRoute
+  ConfirmarLoteTokenRoute: typeof ConfirmarLoteTokenRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -473,6 +486,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PainelClienteIdRouteImport
       parentRoute: typeof PainelRoute
     }
+    '/confirmar/lote/$token': {
+      id: '/confirmar/lote/$token'
+      path: '/confirmar/lote/$token'
+      fullPath: '/confirmar/lote/$token'
+      preLoaderRoute: typeof ConfirmarLoteTokenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/.mcp/invoke-tool/$tool': {
       id: '/.mcp/invoke-tool/$tool'
       path: '/.mcp/invoke-tool/$tool'
@@ -530,6 +550,7 @@ const rootRouteChildren: RootRouteChildren = {
   AvaliacaoIndexRoute: AvaliacaoIndexRoute,
   DotlovableOauthConsentRoute: DotlovableOauthConsentRoute,
   Char91DotmcpChar93InvokeToolToolRoute: Char91DotmcpChar93InvokeToolToolRoute,
+  ConfirmarLoteTokenRoute: ConfirmarLoteTokenRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
