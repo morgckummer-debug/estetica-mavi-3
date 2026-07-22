@@ -944,6 +944,8 @@ export const AREAS_DEPILACAO: string[] = [
   "Tórax",
   "Abdômen",
   "Pescoço",
+  "Linha Alba Supra",
+  "Linha Alba Infra",
 ];
 
 // Botões de "o que foi feito" no registro de sessão, por tipo de ficha.
