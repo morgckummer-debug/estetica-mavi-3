@@ -28,10 +28,16 @@ import {
   atualizarSessao,
   atualizarFicha,
   enviarRelatorioPacote,
+  atribuirLoteSessoes,
   type SessaoAtendimento,
   type PacoteItem,
 } from "@/lib/painel";
-import { linkConfirmacao, linkWhatsappConfirmacao, linkWhatsappRelatorio } from "@/lib/whatsapp";
+import {
+  linkConfirmacao,
+  linkWhatsappConfirmacao,
+  linkWhatsappConfirmacaoLote,
+  linkWhatsappRelatorio,
+} from "@/lib/whatsapp";
 import { EnviarFicha } from "@/components/EnviarFicha";
 import { PAINEL_URL } from "@/data/services";
 
