@@ -2083,6 +2083,132 @@ export function HistoricoSessoes({
         <p className="text-sm text-painel-muted py-2">Nenhuma sessão registrada ainda.</p>
       )}
 
+      {/* Confirmação em lote: dias em que a cliente fez vários
+          procedimentos e a Marina pode mandar 1 link só, em vez de N. */}
+      {diasComVariasPendentes.length > 0 && (
+        <div className="mb-3 rounded-2xl border border-painel-border bg-painel-badge-bg/40 p-4">
+          <div className="flex items-start gap-2 mb-2.5">
+            <Send className="h-4 w-4 mt-0.5 text-painel-primary shrink-0" />
+            <div className="min-w-0">
+              <h4 className="text-sm font-semibold text-painel-title">
+                Confirmar vários procedimentos num link só
+              </h4>
+              <p className="text-xs text-painel-muted mt-0.5">
+                Se a cliente fez mais de um procedimento no mesmo dia, envie um link único
+                em vez de vários pelo WhatsApp.
+              </p>
+            </div>
+          </div>
+
+          <ul className="flex flex-col gap-2">
+            {diasComVariasPendentes.map((dia) => {
+              const aberto = loteData === dia.data;
+              return (
+                <li
+                  key={dia.data}
+                  className="rounded-xl border border-painel-border bg-white/70 p-3"
+                >
+                  <div className="flex items-center justify-between gap-2 flex-wrap">
+                    <div className="text-sm text-painel-chip-text">
+                      <span className="font-medium">{dataBR(dia.data)}</span>
+                      <span className="text-painel-muted-2 ml-1.5">
+                        · {dia.sessoes.length} sessões pendentes
+                      </span>
+                    </div>
+                    {!aberto ? (
+                      <button
+                        type="button"
+                        onClick={() => abrirLote(dia.data)}
+                        className="inline-flex items-center gap-1.5 rounded-full bg-painel-primary text-white px-3.5 py-1.5 text-xs font-medium hover:bg-painel-primary/90 transition-colors"
+                      >
+                        <Send className="h-3.5 w-3.5" />
+                        Enviar confirmação do dia
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={fecharLote}
+                        className="rounded-full border border-painel-border px-3 py-1.5 text-xs text-painel-chip-text hover:border-painel-primary/40 transition-colors"
+                      >
+                        Fechar
+                      </button>
+                    )}
+                  </div>
+
+                  {aberto && (
+                    <div className="mt-3 border-t border-painel-border pt-3">
+                      {loteLinkPronto ? (
+                        <div className="flex flex-col gap-2">
+                          <p className="text-xs text-painel-muted">
+                            Link pronto — clique para abrir o WhatsApp com a mensagem
+                            preenchida:
+                          </p>
+                          <a
+                            href={loteLinkPronto}
+                            target="whatsapp"
+                            rel="noreferrer"
+                            onClick={fecharLote}
+                            className="inline-flex items-center justify-center gap-1.5 rounded-full bg-painel-primary text-white px-4 py-2 text-xs font-medium hover:bg-painel-primary/90 transition-colors"
+                          >
+                            <MessageCircle className="h-3.5 w-3.5" />
+                            Abrir WhatsApp
+                          </a>
+                        </div>
+                      ) : (
+                        <>
+                          <p className="text-xs text-painel-muted mb-2">
+                            Selecione quais sessões entram no link:
+                          </p>
+                          <ul className="flex flex-col gap-1.5 mb-3">
+                            {dia.sessoes.map((s) => {
+                              const marcada = loteSelecionadas.has(s.id);
+                              const rotulo =
+                                s.areas.length > 0
+                                  ? s.areas.join(", ")
+                                  : (s.observacao?.trim() || "Sessão sem detalhes");
+                              return (
+                                <li key={s.id}>
+                                  <label className="flex items-start gap-2 text-xs text-painel-chip-text cursor-pointer">
+                                    <input
+                                      type="checkbox"
+                                      checked={marcada}
+                                      onChange={() => toggleLoteSessao(s.id)}
+                                      className="mt-0.5 accent-painel-primary"
+                                    />
+                                    <span>{rotulo}</span>
+                                  </label>
+                                </li>
+                              );
+                            })}
+                          </ul>
+                          {loteErro && (
+                            <p className="text-xs text-painel-alert-text mb-2">{loteErro}</p>
+                          )}
+                          <button
+                            type="button"
+                            onClick={gerarLinkLote}
+                            disabled={loteSalvando || loteSelecionadas.size < 2}
+                            className="inline-flex items-center gap-1.5 rounded-full bg-painel-primary text-white px-3.5 py-1.5 text-xs font-medium hover:bg-painel-primary/90 transition-colors disabled:opacity-40"
+                          >
+                            {loteSalvando ? (
+                              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                            ) : (
+                              <Check className="h-3.5 w-3.5" />
+                            )}
+                            Gerar link único ({loteSelecionadas.size})
+                          </button>
+                        </>
+                      )}
+                    </div>
+                  )}
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      )}
+
+
       <div className="flex flex-col gap-3">
         {grupos.map((g) => {
           const pacotes = pacotesDoItem(g.fichaId, g.item);
