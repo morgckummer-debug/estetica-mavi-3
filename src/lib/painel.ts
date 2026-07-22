@@ -758,8 +758,8 @@ export async function atribuirLoteSessoes(
   loteToken: string,
 ): Promise<void> {
   if (ids.length === 0) return;
-  const filtro = ids.map((x) => `"${x.replace(/"/g, '\\"')}"`).join(",");
-  const res = await apiRest(`sessoes?id=in.(${encodeURIComponent(filtro)})`, {
+  const filtro = ids.map((x) => encodeURIComponent(x)).join(",");
+  const res = await apiRest(`sessoes?id=in.(${filtro})`, {
     method: "PATCH",
     headers: { Prefer: "return=representation" },
     body: JSON.stringify({ lote_token: loteToken }),
