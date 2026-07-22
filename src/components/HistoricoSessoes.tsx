@@ -1140,6 +1140,80 @@ export function HistoricoSessoes({
   const sessoesAtivas = useMemo(() => (sessoes ?? []).filter((s) => !s.arquivado), [sessoes]);
   const sessoesArquivadas = useMemo(() => (sessoes ?? []).filter((s) => s.arquivado), [sessoes]);
 
+  // --- Confirmação em lote (várias sessões do mesmo dia, um link só) ---
+  // Dias em que há 2+ sessões pendentes de confirmação — só nesses casos
+  // faz sentido oferecer o lote (com 1 sessão só, o link individual já
+  // resolve).
+  const diasComVariasPendentes = useMemo(() => {
+    const porDia = new Map<string, SessaoAtendimento[]>();
+    for (const s of sessoesAtivas) {
+      if (s.confirmado) continue;
+      const arr = porDia.get(s.data) ?? [];
+      arr.push(s);
+      porDia.set(s.data, arr);
+    }
+    return [...porDia.entries()]
+      .filter(([, arr]) => arr.length >= 2)
+      .map(([data, arr]) => ({ data, sessoes: arr }))
+      .sort((a, b) => b.data.localeCompare(a.data));
+  }, [sessoesAtivas]);
+
+  const abrirLote = (data: string) => {
+    const dia = diasComVariasPendentes.find((d) => d.data === data);
+    if (!dia) return;
+    setLoteData(data);
+    // Pré-seleciona todas — o caso mais comum é confirmar tudo do dia.
+    setLoteSelecionadas(new Set(dia.sessoes.map((s) => s.id)));
+    setLoteErro(null);
+    setLoteLinkPronto(null);
+  };
+
+  const fecharLote = () => {
+    setLoteData(null);
+    setLoteSelecionadas(new Set());
+    setLoteErro(null);
+    setLoteLinkPronto(null);
+  };
+
+  const toggleLoteSessao = (id: string) => {
+    setLoteSelecionadas((prev) => {
+      const n = new Set(prev);
+      if (n.has(id)) n.delete(id);
+      else n.add(id);
+      return n;
+    });
+  };
+
+  const gerarLinkLote = async () => {
+    if (!loteData) return;
+    const ids = [...loteSelecionadas];
+    if (ids.length < 2) {
+      setLoteErro("Selecione pelo menos 2 sessões para gerar um link único.");
+      return;
+    }
+    // Token curto e aleatório, mesmo formato dos tokens de sessão (hex).
+    const loteToken = crypto.randomUUID().replace(/-/g, "");
+    setLoteSalvando(true);
+    setLoteErro(null);
+    try {
+      await atribuirLoteSessoes(ids, loteToken);
+      setLoteLinkPronto(
+        linkWhatsappConfirmacaoLote({
+          origin: PAINEL_URL,
+          loteToken,
+          telefone: telefoneCliente,
+          nomeCliente,
+          dataBR: dataBR(loteData),
+          quantidade: ids.length,
+        }),
+      );
+    } catch (e) {
+      setLoteErro(e instanceof Error ? e.message : "Não foi possível gerar o link.");
+    } finally {
+      setLoteSalvando(false);
+    }
+  };
+
   // Agrupado por item (área/procedimento), para o histórico compacto.
   const { grupos, semItem } = useMemo(
     () => agruparPorItem(sessoesAtivas, tipoPorFicha),
