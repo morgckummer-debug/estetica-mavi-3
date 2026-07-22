@@ -27,6 +27,27 @@ export function linkWhatsappConfirmacao(params: {
   return `https://wa.me/${numero}?text=${encodeURIComponent(msg)}`;
 }
 
+// Confirmação em LOTE: um link só para vários procedimentos feitos no
+// mesmo dia (ex.: depilação axila + abdome + queixo, ou depilação +
+// drenagem). A cliente confirma tudo de uma vez em /confirmar/lote/<token>.
+export function linkConfirmacaoLote(origin: string, loteToken: string): string {
+  return `${origin}/confirmar/lote/${loteToken}`;
+}
+
+export function linkWhatsappConfirmacaoLote(params: {
+  origin: string;
+  loteToken: string;
+  telefone: string | null | undefined;
+  nomeCliente: string;
+  dataBR: string;
+  quantidade: number;
+}): string {
+  const primeiro = params.nomeCliente.trim().split(" ")[0] || "";
+  const msg = `Oi ${primeiro}! 💜 Confirme seus ${params.quantidade} atendimentos na MAVI do dia ${params.dataBR} — é rapidinho, tudo num link só 😊: ${linkConfirmacaoLote(params.origin, params.loteToken)}`;
+  const numero = numeroWhatsapp(params.telefone);
+  return `https://wa.me/${numero}?text=${encodeURIComponent(msg)}`;
+}
+
 export function linkRelatorio(origin: string, token: string): string {
   return `${origin}/relatorio/${token}`;
 }

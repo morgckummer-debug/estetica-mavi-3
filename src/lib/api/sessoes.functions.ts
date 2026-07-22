@@ -33,3 +33,32 @@ export const confirmarSessao = createServerFn({ method: "POST" })
     const quando = (await rpc("confirmar_sessao", { p_token: data.token })) as string | null;
     return { confirmado_em: quando };
   });
+
+// Confirmação em LOTE: várias sessões da mesma cliente feitas no mesmo dia
+// (ex.: depilação de axila + abdome + queixo) confirmadas por um único
+// link. Compartilha o mesmo modelo de segurança do fluxo individual: só
+// devolve/altera as linhas do lote_token informado (SECURITY DEFINER em
+// 0021_confirmacao_lote.sql).
+export type SessaoLoteItem = {
+  sessao_id: string;
+  primeiro_nome: string;
+  data: string; // "YYYY-MM-DD"
+  areas: string[];
+  observacao: string | null;
+  confirmado: boolean;
+  confirmado_em: string | null;
+};
+
+export const obterLotePublico = createServerFn({ method: "POST" })
+  .inputValidator(z.object({ token: z.string().min(1) }))
+  .handler(async ({ data }) => {
+    const rows = (await rpc("sessoes_por_lote", { p_lote_token: data.token })) as SessaoLoteItem[];
+    return Array.isArray(rows) ? rows : [];
+  });
+
+export const confirmarLote = createServerFn({ method: "POST" })
+  .inputValidator(z.object({ token: z.string().min(1) }))
+  .handler(async ({ data }) => {
+    const quando = (await rpc("confirmar_lote", { p_lote_token: data.token })) as string | null;
+    return { confirmado_em: quando };
+  });
