@@ -690,6 +690,18 @@ export function HistoricoSessoes({
   // do navegador barra chamadas que não vêm direto de um clique).
   const [linkEnvioPronto, setLinkEnvioPronto] = useState<string | null>(null);
 
+  // Confirmação em LOTE: quando a cliente fez vários procedimentos no
+  // mesmo dia (ex.: depilação de axila + abdome + queixo, ou depilação +
+  // drenagem), a Marina pode mandar UM link só em vez de N. Aqui guarda
+  // qual dia está sendo agrupado e quais sessões daquele dia entram no
+  // lote. `loteLinkPronto` segue o mesmo padrão de `linkEnvioPronto`:
+  // vira um <a> pra Marina clicar (evita bloqueador de popup).
+  const [loteData, setLoteData] = useState<string | null>(null);
+  const [loteSelecionadas, setLoteSelecionadas] = useState<Set<string>>(new Set());
+  const [loteSalvando, setLoteSalvando] = useState(false);
+  const [loteErro, setLoteErro] = useState<string | null>(null);
+  const [loteLinkPronto, setLoteLinkPronto] = useState<string | null>(null);
+
   // Pacotes salvos nesta sessão do painel (além dos que já vieram nas
   // fichas), pra refletir na hora sem precisar recarregar a página.
   const [pacotesOverride, setPacotesOverride] = useState<Record<string, PacoteItem[]>>({});
