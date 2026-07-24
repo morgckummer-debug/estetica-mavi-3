@@ -38,11 +38,18 @@ function novoItem(): ItemContratado {
 // largura da coluna, sem cortar nem precisar rolar de lado. Não afeta a
 // impressão de verdade — o @media print em styles.css (.contrato-preview-
 // escala) desfaz a escala nesse momento.
+//
+// O wrapper externo precisa ter a largura JÁ escalada (não a largura real da
+// folha) pra "mx-auto" centralizar de verdade — com a largura real (maior
+// que a coluna), o navegador não tem margem sobrando pros dois lados e o
+// conteúdo nasce colado à esquerda; a partir daí, encolher com
+// transform-origin "center" só troca o corte de lado, nunca centraliza.
 function ContratoPreviewEscalado({ children }: { children: React.ReactNode }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const conteudoRef = useRef<HTMLDivElement>(null);
   const [escala, setEscala] = useState(1);
   const [alturaEscalada, setAlturaEscalada] = useState<number | undefined>(undefined);
+  const [larguraEscalada, setLarguraEscalada] = useState<number | undefined>(undefined);
 
   useEffect(() => {
     const atualizar = () => {
@@ -54,6 +61,7 @@ function ContratoPreviewEscalado({ children }: { children: React.ReactNode }) {
       const novaEscala = Math.min(1, container.clientWidth / largura);
       setEscala(novaEscala);
       setAlturaEscalada(conteudo.scrollHeight * novaEscala);
+      setLarguraEscalada(largura * novaEscala);
     };
     atualizar();
     const ro = new ResizeObserver(atualizar);
@@ -63,11 +71,14 @@ function ContratoPreviewEscalado({ children }: { children: React.ReactNode }) {
 
   return (
     <div ref={containerRef} className="w-full">
-      <div style={{ height: alturaEscalada }}>
+      <div
+        className="mx-auto overflow-hidden"
+        style={{ height: alturaEscalada, width: larguraEscalada }}
+      >
         <div
           ref={conteudoRef}
-          className="contrato-preview-escala mx-auto w-fit"
-          style={{ transform: `scale(${escala})`, transformOrigin: "top center" }}
+          className="contrato-preview-escala"
+          style={{ transform: `scale(${escala})`, transformOrigin: "top left" }}
         >
           {children}
         </div>
