@@ -2371,7 +2371,12 @@ export function HistoricoSessoes({
               <div className="space-y-3">
                 {segmentos.map((seg) => {
                   const chaveSeg = `${g.chave}::${seg.numero}`;
-                  const aberto = expandidos[chaveSeg] ?? !seg.completo;
+                  // Só colapsa sozinho quando o pacote está completo E todas as
+                  // sessões já confirmadas — senão o botão de WhatsApp de
+                  // confirmação fica escondido atrás de "Detalhes" sem a Marina
+                  // perceber (ela só vê o "Enviar Relatório", que fica sempre à mostra).
+                  const temPendente = seg.linhas.some((l) => !l.confirmado);
+                  const aberto = expandidos[chaveSeg] ?? (!seg.completo || temPendente);
                   // Mais de um segmento (ex.: sessão avulsa + pacote comprado
                   // depois) = a sessão avulsa vira um card próprio, claro,
                   // bem separado do card escuro do pacote (ver abaixo) — uma
@@ -2481,8 +2486,12 @@ export function HistoricoSessoes({
                         <button
                           type="button"
                           onClick={() => enviarRelatorio(g, seg)}
-                          disabled={enviandoRelatorioChave === chaveSeg}
-                          title="Gerar link do relatório desse pacote e enviar por WhatsApp"
+                          disabled={enviandoRelatorioChave === chaveSeg || temPendente}
+                          title={
+                            temPendente
+                              ? "Relatório disponível só depois que a cliente confirmar as sessões pelo WhatsApp"
+                              : "Gerar link do relatório desse pacote e enviar por WhatsApp"
+                          }
                           aria-label="Enviar Relatório"
                           className="shrink-0 inline-flex items-center gap-1 rounded-full bg-white/10 text-painel-lilac-soft px-2.5 py-1.5 sm:py-1 text-[11px] font-medium hover:bg-white/15 transition-colors disabled:opacity-40"
                         >
@@ -2494,10 +2503,17 @@ export function HistoricoSessoes({
                           <span className="hidden sm:inline">Enviar Relatório</span>
                         </button>
                       </div>
-                      {erroRelatorioChave[chaveSeg] && (
-                        <p className="relative text-[11px] text-painel-alert-text mb-2">
-                          {erroRelatorioChave[chaveSeg]}
+                      {temPendente ? (
+                        <p className="relative text-[11px] text-painel-lilac-soft/70 mb-2">
+                          Relatório disponível após a cliente confirmar{" "}
+                          {seg.linhas.length > 1 ? "todas as sessões" : "a sessão"} pelo WhatsApp.
                         </p>
+                      ) : (
+                        erroRelatorioChave[chaveSeg] && (
+                          <p className="relative text-[11px] text-painel-alert-text mb-2">
+                            {erroRelatorioChave[chaveSeg]}
+                          </p>
+                        )
                       )}
                       {aberto && (
                         <ul className="relative space-y-1">
