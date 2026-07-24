@@ -291,6 +291,7 @@ export async function atualizarFicha(
       | "telefone"
       | "nome"
       | "autoriza_foto"
+      | "alertas"
     >
   >,
 ): Promise<void> {

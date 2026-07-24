@@ -1047,6 +1047,26 @@ export function calcularAlertas(tipo: string, respostas: Respostas): string[] {
   return alertas;
 }
 
+export type AlertaCampo = { campo: Campo; mensagem: string };
+
+// Igual a calcularAlertas, mas devolve também o campo de origem de cada
+// alerta (não só o texto) — usado no painel pra saber, ao marcar liberação
+// médica, em qual pergunta/resposta guardar isso. Reflete o estado atual das
+// respostas (ao contrário de `fichas.alertas`, que é o retrato do envio).
+export function alertasComCampo(tipo: string, respostas: Respostas): AlertaCampo[] {
+  const def = getFicha(tipo);
+  if (!def) return [];
+  const alertas: AlertaCampo[] = [];
+  for (const etapa of def.etapas) {
+    for (const campo of etapa.campos) {
+      if (campo.tipo === "simnao" && campo.alertaSeSim && respostas[campo.id] === true) {
+        alertas.push({ campo, mensagem: campo.alertaSeSim });
+      }
+    }
+  }
+  return alertas;
+}
+
 // Rótulo legível de um campo (para o painel da Marina)
 export function rotuloCampo(tipo: string, id: string): string {
   const def = getFicha(tipo);
