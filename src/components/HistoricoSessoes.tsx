@@ -735,6 +735,16 @@ export function HistoricoSessoes({
   // que estavam nele não são apagadas — voltam a contar como avulsas.
   const [removendoPacoteChave, setRemovendoPacoteChave] = useState<string | null>(null);
 
+  // "Editar sessões do pacote": corrige o número de sessões do último pacote
+  // já fechado desse item (ex.: a Marina digitou errado, ou a cliente
+  // negociou sessões extras depois). Só o último pacote pode ser editado
+  // (mesma regra de removerPacote) — os anteriores já estão concluídos e
+  // mexer no tamanho deles bagunçaria a faixa dos pacotes seguintes.
+  const [editandoTamanhoChave, setEditandoTamanhoChave] = useState<string | null>(null);
+  const [tamanhoValor, setTamanhoValor] = useState("");
+  const [salvandoTamanho, setSalvandoTamanho] = useState(false);
+  const [erroTamanho, setErroTamanho] = useState<string | null>(null);
+
   // Arquivar sessão: se já foi confirmada pela cliente, pede confirmação
   // reforçada (ver ArquivarConfirmada) em vez do window.confirm simples.
   const [arquivandoId, setArquivandoId] = useState<string | null>(null);
@@ -1701,6 +1711,56 @@ export function HistoricoSessoes({
     }
   };
 
+  const iniciarEdicaoTamanho = (chave: string, tamanhoAtual: number) => {
+    setEditandoTamanhoChave(chave);
+    setTamanhoValor(String(tamanhoAtual));
+    setErroTamanho(null);
+  };
+
+  const cancelarEdicaoTamanho = () => {
+    setEditandoTamanhoChave(null);
+    setErroTamanho(null);
+  };
+
+  // Corrige o número de sessões do último pacote de um item, sem mexer nas
+  // sessões já registradas nele. `sessoesJaFeitas` vem da segmentação atual
+  // (ver segmentarPorPacote) — bloqueia reduzir abaixo do que já foi feito,
+  // pra não deixar sessão confirmada "sobrando" fora de qualquer pacote.
+  const salvarTamanhoPacote = async (
+    fId: string,
+    item: string,
+    chave: string,
+    sessoesJaFeitas: number,
+  ) => {
+    const n = parseInt(tamanhoValor, 10);
+    if (!n || n < 1) {
+      setErroTamanho("Informe um número válido de sessões.");
+      return;
+    }
+    if (n < sessoesJaFeitas) {
+      setErroTamanho(
+        `Esse pacote já tem ${sessoesJaFeitas} sessões registradas — não é possível reduzir para menos que isso.`,
+      );
+      return;
+    }
+    setSalvandoTamanho(true);
+    setErroTamanho(null);
+    try {
+      const atuais = pacotesDoItem(fId, item);
+      const ultimo = atuais[atuais.length - 1];
+      if (ultimo === undefined) return;
+      const nova = [...atuais.slice(0, -1), { ...ultimo, tamanho: n }];
+      const merge = { ...(fichaPorId.get(fId)?.pacotes ?? {}), [item]: nova };
+      await atualizarFicha(fId, { pacotes: merge });
+      setPacotesOverride((prev) => ({ ...prev, [`${fId}::${item}`]: nova }));
+      setEditandoTamanhoChave(null);
+    } catch (e) {
+      setErroTamanho(e instanceof Error ? e.message : "Erro ao salvar o pacote.");
+    } finally {
+      setSalvandoTamanho(false);
+    }
+  };
+
   // Gera (ou atualiza) o relatório público desse pacote e já abre direto no
   // WhatsApp — sem card intermediário pra clicar de novo. A aba é aberta em
   // branco aqui, ainda de forma síncrona dentro do clique (senão o
@@ -2213,6 +2273,12 @@ export function HistoricoSessoes({
         {grupos.map((g) => {
           const pacotes = pacotesDoItem(g.fichaId, g.item);
           const segmentos = segmentarPorPacote(g.linhas, pacotes);
+          // Sessões já registradas no último pacote (usado pra não deixar
+          // reduzir o tamanho dele abaixo do que já foi feito, ver
+          // salvarTamanhoPacote).
+          const sessoesNoUltimoPacote =
+            segmentos.find((s) => s.numero === pacotes.length && s.pacoteTotal !== undefined)
+              ?.linhas.length ?? 0;
           // Sem pacote em aberto pra esse item — ou nunca teve pacote, ou já
           // concluiu todos os anteriores. É quando faz sentido oferecer
           // "fechar pacote" (as sessões avulsas já feitas continuam de fora,
@@ -2365,6 +2431,47 @@ export function HistoricoSessoes({
                       onFechar={() => setTipoFaltandoAnamnese(null)}
                     />
                   )}
+                </div>
+              )}
+
+              {editandoTamanhoChave === g.chave && pacotes.length > 0 && (
+                <div className="flex flex-col gap-3 mb-3 rounded-lg border border-painel-border bg-white p-2.5">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <label className="text-xs text-painel-muted">
+                      Corrigir pacote {pacotes.length} para quantas sessões?
+                    </label>
+                    <input
+                      type="number"
+                      min={1}
+                      inputMode="numeric"
+                      autoFocus
+                      value={tamanhoValor}
+                      onChange={(e) => setTamanhoValor(e.target.value)}
+                      placeholder="nº de sessões"
+                      className="w-28 rounded-lg border border-painel-border bg-white px-2.5 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-painel-primary/40"
+                    />
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() =>
+                        salvarTamanhoPacote(g.fichaId, g.item, g.chave, sessoesNoUltimoPacote)
+                      }
+                      disabled={salvandoTamanho || !tamanhoValor.trim()}
+                      className="rounded-full bg-painel-primary text-white px-3.5 py-1.5 text-xs font-medium hover:bg-painel-primary/90 transition-colors disabled:opacity-40"
+                    >
+                      Salvar
+                    </button>
+                    <button
+                      type="button"
+                      onClick={cancelarEdicaoTamanho}
+                      disabled={salvandoTamanho}
+                      className="rounded-full border border-painel-border px-3.5 py-1.5 text-xs font-medium text-painel-chip-text hover:border-painel-primary/40 transition-colors disabled:opacity-40"
+                    >
+                      Cancelar
+                    </button>
+                  </div>
+                  {erroTamanho && <p className="text-xs text-painel-alert-text">{erroTamanho}</p>}
                 </div>
               )}
 
@@ -2628,38 +2735,53 @@ export function HistoricoSessoes({
                   </div>
                 )}
 
-              {(semPacoteAtivo || pacotes.length > 0) && editandoPacoteChave !== g.chave && (
-                <div className="flex items-center gap-4 mt-3 pt-2.5 border-t border-painel-border/70">
-                  {semPacoteAtivo && (
-                    <button
-                      type="button"
-                      onClick={() => iniciarEdicaoPacote(g.chave)}
-                      className="text-xs font-medium text-painel-primary"
-                    >
-                      {pacotes.length === 0 ? "Fechou um pacote?" : "+ Novo pacote"}
-                    </button>
-                  )}
-                  {!semPacoteAtivo && pacotes.length > 0 && (
-                    <button
-                      type="button"
-                      onClick={() => iniciarEdicaoPacote(g.chave)}
-                      className="text-xs font-medium text-painel-primary"
-                    >
-                      + Adicionar brinde
-                    </button>
-                  )}
-                  {pacotes.length > 0 && (
-                    <button
-                      type="button"
-                      onClick={() => removerPacote(g.fichaId, g.item, g.chave)}
-                      disabled={removendoPacoteChave === g.chave}
-                      className="text-xs font-medium text-painel-alert-text disabled:opacity-40"
-                    >
-                      {removendoPacoteChave === g.chave ? "Cancelando…" : "Cancelar pacote"}
-                    </button>
-                  )}
-                </div>
-              )}
+              {(semPacoteAtivo || pacotes.length > 0) &&
+                editandoPacoteChave !== g.chave &&
+                editandoTamanhoChave !== g.chave && (
+                  <div className="flex items-center gap-4 mt-3 pt-2.5 border-t border-painel-border/70">
+                    {semPacoteAtivo && (
+                      <button
+                        type="button"
+                        onClick={() => iniciarEdicaoPacote(g.chave)}
+                        className="text-xs font-medium text-painel-primary"
+                      >
+                        {pacotes.length === 0 ? "Fechou um pacote?" : "+ Novo pacote"}
+                      </button>
+                    )}
+                    {!semPacoteAtivo && pacotes.length > 0 && (
+                      <button
+                        type="button"
+                        onClick={() => iniciarEdicaoPacote(g.chave)}
+                        className="text-xs font-medium text-painel-primary"
+                      >
+                        + Adicionar brinde
+                      </button>
+                    )}
+                    {pacotes.length > 0 && (
+                      <button
+                        type="button"
+                        onClick={() =>
+                          iniciarEdicaoTamanho(g.chave, pacotes[pacotes.length - 1].tamanho)
+                        }
+                        title="Corrigir o número de sessões do pacote"
+                        className="inline-flex items-center gap-1 text-xs font-medium text-painel-chip-text hover:text-painel-primary transition-colors"
+                      >
+                        <Pencil className="h-3 w-3" />
+                        Editar sessões
+                      </button>
+                    )}
+                    {pacotes.length > 0 && (
+                      <button
+                        type="button"
+                        onClick={() => removerPacote(g.fichaId, g.item, g.chave)}
+                        disabled={removendoPacoteChave === g.chave}
+                        className="text-xs font-medium text-painel-alert-text disabled:opacity-40"
+                      >
+                        {removendoPacoteChave === g.chave ? "Cancelando…" : "Cancelar pacote"}
+                      </button>
+                    )}
+                  </div>
+                )}
             </div>
           );
         })}
