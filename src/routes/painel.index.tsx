@@ -14,6 +14,7 @@ import {
   ChevronRight,
   Send,
   FileText,
+  RefreshCw,
 } from "lucide-react";
 import {
   listarClientes,
@@ -85,35 +86,48 @@ function ListaFichas() {
   const [erroExcluidas, setErroExcluidas] = useState<string | null>(null);
   const [restaurandoId, setRestaurandoId] = useState<string | null>(null);
   const [erroRestaurar, setErroRestaurar] = useState<string | null>(null);
+  const [atualizando, setAtualizando] = useState(false);
 
-  useEffect(() => {
+  const carregar = (mostrarErro: boolean) => {
     listarClientes()
       .then(setClientesBase)
-      .catch((e) => setErro(e instanceof Error ? e.message : "Erro ao carregar."));
+      .catch((e) => mostrarErro && setErro(e instanceof Error ? e.message : "Erro ao carregar."));
     listarFichas()
       .then(setFichas)
-      .catch((e) => setErro(e instanceof Error ? e.message : "Erro ao carregar."));
+      .catch((e) => mostrarErro && setErro(e instanceof Error ? e.message : "Erro ao carregar."));
     listarUltimasSessoesPorFicha()
       .then(setUltimaSessaoPorFicha)
       .catch(() => {});
+  };
+
+  useEffect(() => {
+    carregar(true);
 
     // Auto-refresh: atualiza a lista sozinha a cada 5min (ex.: nova ficha
     // preenchida pela cliente), sem precisar recarregar a página. Falhas
     // aqui ficam em silêncio — não interrompe quem já está com a lista
     // carregada só por causa de uma soneca de rede.
-    const intervalo = setInterval(() => {
-      listarClientes()
-        .then(setClientesBase)
-        .catch(() => {});
-      listarFichas()
-        .then(setFichas)
-        .catch(() => {});
-      listarUltimasSessoesPorFicha()
-        .then(setUltimaSessaoPorFicha)
-        .catch(() => {});
-    }, CINCO_MINUTOS_MS);
+    const intervalo = setInterval(() => carregar(false), CINCO_MINUTOS_MS);
     return () => clearInterval(intervalo);
   }, []);
+
+  // Botão manual (pensado pro celular, onde o painel é usado como um app
+  // "instalado" na tela inicial e não tem o botão de refresh do navegador).
+  const atualizarAgora = async () => {
+    setAtualizando(true);
+    setErro(null);
+    try {
+      await Promise.all([
+        listarClientes().then(setClientesBase),
+        listarFichas().then(setFichas),
+        listarUltimasSessoesPorFicha().then(setUltimaSessaoPorFicha).catch(() => {}),
+      ]);
+    } catch (e) {
+      setErro(e instanceof Error ? e.message : "Erro ao carregar.");
+    } finally {
+      setAtualizando(false);
+    }
+  };
 
   // Junta cada cliente com as fichas dela (por cliente_id) e o que é
   // derivado disso (tipos, alertas, se está toda arquivada).
@@ -236,7 +250,18 @@ function ListaFichas() {
         {enviandoFicha && <EnviarFicha convitePadrao onFechar={() => setEnviandoFicha(false)} />}
 
         <div className="mb-5 flex items-baseline justify-between gap-3">
-          <h2 className="font-display text-[34px] text-painel-title">Clientes</h2>
+          <div className="flex items-center gap-2.5">
+            <h2 className="font-display text-[34px] text-painel-title">Clientes</h2>
+            <button
+              type="button"
+              onClick={atualizarAgora}
+              disabled={atualizando}
+              title="Atualizar"
+              className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-painel-muted hover:bg-painel-badge-bg/40 hover:text-painel-primary transition-colors disabled:opacity-40"
+            >
+              <RefreshCw className={`h-4 w-4 ${atualizando ? "animate-spin" : ""}`} />
+            </button>
+          </div>
           <p className="text-[13px] text-painel-muted">
             {clientesBase && fichas
               ? busca || filtroTipo !== "todas"
