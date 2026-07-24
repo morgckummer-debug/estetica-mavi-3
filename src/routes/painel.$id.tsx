@@ -10,7 +10,7 @@ import {
   Archive,
   Trash2,
 } from "lucide-react";
-import { getFicha, nomeTipo, type Campo } from "@/data/anamnese";
+import { getFicha, nomeTipo, alertasComCampo, type Campo } from "@/data/anamnese";
 import {
   obterFicha,
   atualizarFicha,
@@ -166,6 +166,27 @@ function DetalheFicha() {
       setFicha({ ...ficha, autoriza_foto: novo });
     } catch (e) {
       setErro(e instanceof Error ? e.message : "Erro ao atualizar a autorização de imagem.");
+    }
+  };
+
+  // Registra se a cliente já apresentou liberação médica para um alerta
+  // específico (ex.: cirurgia recente). "Sim" tira a mensagem da lista de
+  // alertas em aberto (some da caixa de atenção em toda a parte do painel,
+  // já que atualiza o mesmo array `alertas` gravado no banco); "Não" deixa a
+  // mensagem visível, mas registra que já foi perguntado.
+  const definirLiberacaoMedica = async (campo: Campo, mensagem: string, valor: boolean) => {
+    if (!ficha) return;
+    const novasRespostas = { ...ficha.respostas, [`${campo.id}__liberacaoMedica`]: valor };
+    const novosAlertas = valor
+      ? ficha.alertas.filter((a) => a !== mensagem)
+      : ficha.alertas.includes(mensagem)
+        ? ficha.alertas
+        : [...ficha.alertas, mensagem];
+    try {
+      await atualizarFicha(id, { respostas: novasRespostas, alertas: novosAlertas });
+      setFicha({ ...ficha, respostas: novasRespostas, alertas: novosAlertas });
+    } catch (e) {
+      setErro(e instanceof Error ? e.message : "Erro ao registrar a liberação médica.");
     }
   };
 
@@ -348,16 +369,55 @@ function DetalheFicha() {
           </div>
         )}
 
-        {ficha.alertas.length > 0 && (
-          <div className="flex gap-3 rounded-xl border border-rose/40 bg-rose/10 px-4 py-3.5 text-sm text-rose mb-6">
-            <AlertTriangle className="h-4 w-4 mt-0.5 shrink-0" />
-            <ul className="space-y-1">
-              {ficha.alertas.map((a, i) => (
-                <li key={i}>{a}</li>
-              ))}
-            </ul>
-          </div>
-        )}
+        {(() => {
+          const alertasAbertos = alertasComCampo(ficha.tipo, r).filter(
+            ({ campo }) => r[`${campo.id}__liberacaoMedica`] !== true,
+          );
+          if (alertasAbertos.length === 0) return null;
+          return (
+            <div className="flex gap-3 rounded-xl border border-rose/40 bg-rose/10 px-4 py-3.5 text-sm text-rose mb-6">
+              <AlertTriangle className="h-4 w-4 mt-0.5 shrink-0" />
+              <ul className="flex-1 space-y-2.5">
+                {alertasAbertos.map(({ campo, mensagem }) => {
+                  const liberacao = r[`${campo.id}__liberacaoMedica`];
+                  return (
+                    <li
+                      key={campo.id}
+                      className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1.5"
+                    >
+                      <span>{mensagem}</span>
+                      <span className="flex items-center gap-1.5 shrink-0">
+                        <span className="text-xs text-rose/70">Liberação médica?</span>
+                        <button
+                          type="button"
+                          onClick={() => definirLiberacaoMedica(campo, mensagem, true)}
+                          className={`rounded-full px-2.5 py-1 text-xs font-medium transition-colors ${
+                            liberacao === true
+                              ? "bg-success/20 text-success"
+                              : "border border-rose/40 text-rose hover:bg-rose/20"
+                          }`}
+                        >
+                          Sim
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => definirLiberacaoMedica(campo, mensagem, false)}
+                          className={`rounded-full px-2.5 py-1 text-xs font-medium transition-colors ${
+                            liberacao === false
+                              ? "bg-destructive/20 text-destructive"
+                              : "border border-rose/40 text-rose hover:bg-rose/20"
+                          }`}
+                        >
+                          Não
+                        </button>
+                      </span>
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+          );
+        })()}
 
         <div className="flex flex-wrap gap-3 mb-8 text-sm">
           <span
@@ -401,8 +461,17 @@ function DetalheFicha() {
                   c.tipo === "simnao" || c.tipo === "selecao"
                     ? valorResposta(r[`${c.id}__detalhe`])
                     : null;
-                const alerta = c.tipo === "simnao" && Boolean(c.alertaSeSim) && r[c.id] === true;
-                return { id: c.id, label: c.label, val, detalhe, alerta };
+                const liberacaoMedica = r[`${c.id}__liberacaoMedica`];
+                const liberada = liberacaoMedica === true;
+                const alerta =
+                  c.tipo === "simnao" && Boolean(c.alertaSeSim) && r[c.id] === true && !liberada;
+                const liberacaoNota =
+                  c.tipo === "simnao" &&
+                  Boolean(c.alertaSeSim) &&
+                  typeof liberacaoMedica === "boolean"
+                    ? `Liberação médica: ${liberacaoMedica ? "Sim" : "Não"}`
+                    : null;
+                return { id: c.id, label: c.label, val, detalhe, alerta, liberacaoNota };
               })
               .filter(
                 (
@@ -413,6 +482,7 @@ function DetalheFicha() {
                   val: string;
                   detalhe: string | null;
                   alerta: boolean;
+                  liberacaoNota: string | null;
                 } => x !== null,
               );
 
@@ -446,6 +516,11 @@ function DetalheFicha() {
                             }`}
                           >
                             {l.detalhe}
+                          </span>
+                        )}
+                        {l.liberacaoNota && (
+                          <span className="block font-normal text-muted-foreground">
+                            {l.liberacaoNota}
                           </span>
                         )}
                       </dd>
