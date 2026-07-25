@@ -17,12 +17,22 @@ import {
   Trash2,
   X,
 } from "lucide-react";
-import { CAMPOS_CADASTRO, FICHAS, TIPOS, nomeTipo, nomeCurto, type Tipo } from "@/data/anamnese";
+import {
+  CAMPOS_CADASTRO,
+  FICHAS,
+  TIPOS,
+  nomeTipo,
+  nomeCurto,
+  alertasComCampo,
+  type Tipo,
+  type Campo,
+} from "@/data/anamnese";
 import {
   obterCliente,
   listarFichasDoCliente,
   listarContratos,
   atualizarCliente,
+  atualizarFicha,
   excluirCliente,
   excluirClienteDefinitivamente,
   anexarContratoPdf,
@@ -33,7 +43,7 @@ import {
   type Contrato,
 } from "@/lib/painel";
 import { agregarFichas } from "@/lib/clientes";
-import { mascaraTelefone, mascaraCpf, formatarDataBR } from "@/lib/mascaras";
+import { mascaraTelefone, mascaraCpf, formatarDataBR, hojeISO } from "@/lib/mascaras";
 import { CampoView } from "@/components/FichaCampos";
 import { HistoricoSessoes, type Procedimento } from "@/components/HistoricoSessoes";
 import { EnviarFicha } from "@/components/EnviarFicha";
@@ -716,6 +726,53 @@ function PaginaCliente() {
 
   const agregado = useMemo(() => agregarFichas(fichas ?? []), [fichas]);
 
+  // Alertas em aberto de todas as fichas do cliente, com a ficha e o campo
+  // de origem de cada um — pra dar pra registrar a liberação médica direto
+  // daqui, sem precisar entrar em cada ficha. Mesma lógica de
+  // painel.$id.tsx, só que somando as fichas do cliente inteiro.
+  const alertasAbertos = useMemo(
+    () =>
+      (fichas ?? []).flatMap((f) =>
+        alertasComCampo(f.tipo, f.respostas)
+          .filter(({ campo }) => f.respostas[`${campo.id}__liberacaoMedica`] !== true)
+          .map(({ campo, mensagem }) => ({ ficha: f, campo, mensagem })),
+      ),
+    [fichas],
+  );
+
+  // Registra se a cliente já apresentou liberação médica para um alerta
+  // específico, na ficha de onde ele veio. "Sim" tira a mensagem da lista de
+  // alertas em aberto; "Não" mantém visível, mas registra que já foi
+  // perguntado (pra não ficar perguntando de novo a cada visita).
+  const definirLiberacaoMedica = async (
+    ficha: Ficha,
+    campo: Campo,
+    mensagem: string,
+    valor: boolean,
+  ) => {
+    const novasRespostas = {
+      ...ficha.respostas,
+      [`${campo.id}__liberacaoMedica`]: valor,
+      [`${campo.id}__liberacaoMedicaData`]: valor ? hojeISO() : null,
+    };
+    const novosAlertas = valor
+      ? ficha.alertas.filter((a) => a !== mensagem)
+      : ficha.alertas.includes(mensagem)
+        ? ficha.alertas
+        : [...ficha.alertas, mensagem];
+    try {
+      await atualizarFicha(ficha.id, { respostas: novasRespostas, alertas: novosAlertas });
+      setFichas(
+        (atual) =>
+          atual?.map((f) =>
+            f.id === ficha.id ? { ...f, respostas: novasRespostas, alertas: novosAlertas } : f,
+          ) ?? atual,
+      );
+    } catch (e) {
+      setErro(e instanceof Error ? e.message : "Erro ao registrar a liberação médica.");
+    }
+  };
+
   // Cadastro não é tratamento — não entra na lista de procedimentos do
   // histórico de sessões.
   const procedimentos: Procedimento[] = useMemo(
@@ -809,13 +866,49 @@ function PaginaCliente() {
           </div>
         </div>
 
-        {agregado.alertas > 0 && fichas.some((f) => f.alertas.length > 0) && (
+        {alertasAbertos.length > 0 && (
           <div className="flex gap-3 rounded-[14px] border border-painel-alert-border bg-painel-alert-bg px-[22px] py-[18px] text-sm text-painel-alert-text mb-8">
             <AlertTriangle className="h-4 w-4 mt-0.5 shrink-0" />
-            <ul className="space-y-1">
-              {[...new Set(fichas.flatMap((f) => f.alertas))].map((a, i) => (
-                <li key={i}>{a}</li>
-              ))}
+            <ul className="flex-1 space-y-2.5">
+              {alertasAbertos.map(({ ficha: f, campo, mensagem }) => {
+                const liberacao = f.respostas[`${campo.id}__liberacaoMedica`];
+                return (
+                  <li
+                    key={`${f.id}-${campo.id}`}
+                    className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1.5"
+                  >
+                    <span>
+                      {mensagem}
+                      <span className="text-painel-alert-text/70"> ({nomeCurto(f.tipo)})</span>
+                    </span>
+                    <span className="flex items-center gap-1.5 shrink-0">
+                      <span className="text-xs text-painel-alert-text/70">Liberação médica?</span>
+                      <button
+                        type="button"
+                        onClick={() => definirLiberacaoMedica(f, campo, mensagem, true)}
+                        className={`rounded-full px-2.5 py-1 text-xs font-medium transition-colors ${
+                          liberacao === true
+                            ? "bg-success/20 text-success"
+                            : "border border-painel-alert-border text-painel-alert-text hover:bg-painel-alert-border/40"
+                        }`}
+                      >
+                        Sim
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => definirLiberacaoMedica(f, campo, mensagem, false)}
+                        className={`rounded-full px-2.5 py-1 text-xs font-medium transition-colors ${
+                          liberacao === false
+                            ? "bg-destructive/20 text-destructive"
+                            : "border border-painel-alert-border text-painel-alert-text hover:bg-painel-alert-border/40"
+                        }`}
+                      >
+                        Não
+                      </button>
+                    </span>
+                  </li>
+                );
+              })}
             </ul>
           </div>
         )}

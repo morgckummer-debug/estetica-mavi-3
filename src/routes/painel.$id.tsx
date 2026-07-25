@@ -18,7 +18,13 @@ import {
   excluirFichaDefinitivamente,
   type Ficha,
 } from "@/lib/painel";
-import { mascaraTelefone, mascaraCpf, formatarDataBR } from "@/lib/mascaras";
+import {
+  mascaraTelefone,
+  mascaraCpf,
+  formatarDataBR,
+  formatarDataBRBarra,
+  hojeISO,
+} from "@/lib/mascaras";
 import { RamosWatermark } from "@/components/RamosWatermark";
 
 // Dados pessoais (nome, telefone, endereço...) não aparecem mais aqui —
@@ -176,7 +182,11 @@ function DetalheFicha() {
   // mensagem visível, mas registra que já foi perguntado.
   const definirLiberacaoMedica = async (campo: Campo, mensagem: string, valor: boolean) => {
     if (!ficha) return;
-    const novasRespostas = { ...ficha.respostas, [`${campo.id}__liberacaoMedica`]: valor };
+    const novasRespostas = {
+      ...ficha.respostas,
+      [`${campo.id}__liberacaoMedica`]: valor,
+      [`${campo.id}__liberacaoMedicaData`]: valor ? hojeISO() : null,
+    };
     const novosAlertas = valor
       ? ficha.alertas.filter((a) => a !== mensagem)
       : ficha.alertas.includes(mensagem)
@@ -463,13 +473,18 @@ function DetalheFicha() {
                     : null;
                 const liberacaoMedica = r[`${c.id}__liberacaoMedica`];
                 const liberada = liberacaoMedica === true;
+                const liberacaoData = r[`${c.id}__liberacaoMedicaData`];
                 const alerta =
                   c.tipo === "simnao" && Boolean(c.alertaSeSim) && r[c.id] === true && !liberada;
                 const liberacaoNota =
                   c.tipo === "simnao" &&
                   Boolean(c.alertaSeSim) &&
                   typeof liberacaoMedica === "boolean"
-                    ? `Liberação médica: ${liberacaoMedica ? "Sim" : "Não"}`
+                    ? `Liberação médica: ${liberacaoMedica ? "Sim" : "Não"}${
+                        liberada && typeof liberacaoData === "string"
+                          ? ` em ${formatarDataBRBarra(liberacaoData)}`
+                          : ""
+                      }`
                     : null;
                 return { id: c.id, label: c.label, val, detalhe, alerta, liberacaoNota };
               })

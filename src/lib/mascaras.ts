@@ -72,3 +72,10 @@ export function formatarDataBRBarra(v: string): string {
   if (m) return `${m[3]}/${m[2]}/${m[1]}`;
   return v;
 }
+
+// Data de hoje no formato "1977-12-30" (mesmo formato do <input type="date">),
+// pra registrar quando uma ação (ex.: liberação médica) foi feita.
+export function hojeISO(): string {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
