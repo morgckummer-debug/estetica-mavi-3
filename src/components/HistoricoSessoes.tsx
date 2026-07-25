@@ -2434,47 +2434,6 @@ export function HistoricoSessoes({
                 </div>
               )}
 
-              {editandoTamanhoChave === g.chave && pacotes.length > 0 && (
-                <div className="flex flex-col gap-3 mb-3 rounded-lg border border-painel-border bg-white p-2.5">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <label className="text-xs text-painel-muted">
-                      Corrigir pacote {pacotes.length} para quantas sessões?
-                    </label>
-                    <input
-                      type="number"
-                      min={1}
-                      inputMode="numeric"
-                      autoFocus
-                      value={tamanhoValor}
-                      onChange={(e) => setTamanhoValor(e.target.value)}
-                      placeholder="nº de sessões"
-                      className="w-28 rounded-lg border border-painel-border bg-white px-2.5 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-painel-primary/40"
-                    />
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <button
-                      type="button"
-                      onClick={() =>
-                        salvarTamanhoPacote(g.fichaId, g.item, g.chave, sessoesNoUltimoPacote)
-                      }
-                      disabled={salvandoTamanho || !tamanhoValor.trim()}
-                      className="rounded-full bg-painel-primary text-white px-3.5 py-1.5 text-xs font-medium hover:bg-painel-primary/90 transition-colors disabled:opacity-40"
-                    >
-                      Salvar
-                    </button>
-                    <button
-                      type="button"
-                      onClick={cancelarEdicaoTamanho}
-                      disabled={salvandoTamanho}
-                      className="rounded-full border border-painel-border px-3.5 py-1.5 text-xs font-medium text-painel-chip-text hover:border-painel-primary/40 transition-colors disabled:opacity-40"
-                    >
-                      Cancelar
-                    </button>
-                  </div>
-                  {erroTamanho && <p className="text-xs text-painel-alert-text">{erroTamanho}</p>}
-                </div>
-              )}
-
               <div className="space-y-3">
                 {segmentos.map((seg) => {
                   const chaveSeg = `${g.chave}::${seg.numero}`;
@@ -2532,6 +2491,10 @@ export function HistoricoSessoes({
                   // — deixa claro, de longe, que é um pacote pago (nunca se
                   // confunde com sessões avulsas). Colapsa quando concluído.
                   const pct = Math.min(100, (seg.linhas.length / seg.pacoteTotal) * 100);
+                  // Guardado numa const própria (fora do fechamento do botão
+                  // "Editar" abaixo) — dentro de uma closure o TS não mantém o
+                  // estreitamento de `seg.pacoteTotal` para `number`.
+                  const pacoteTotalSeg = seg.pacoteTotal;
                   return (
                     <div
                       key={chaveSeg}
@@ -2609,7 +2572,66 @@ export function HistoricoSessoes({
                           )}
                           <span className="hidden sm:inline">Enviar Relatório</span>
                         </button>
+                        {seg.numero === pacotes.length && (
+                          <button
+                            type="button"
+                            onClick={() => iniciarEdicaoTamanho(g.chave, pacoteTotalSeg)}
+                            title="Corrigir o número de sessões deste pacote"
+                            aria-label="Editar"
+                            className="shrink-0 inline-flex items-center gap-1 rounded-full bg-white/10 text-painel-lilac-soft px-2.5 py-1.5 sm:py-1 text-[11px] font-medium hover:bg-white/15 transition-colors"
+                          >
+                            <Pencil className="h-3 w-3" />
+                            <span className="hidden sm:inline">Editar</span>
+                          </button>
+                        )}
                       </div>
+                      {editandoTamanhoChave === g.chave && seg.numero === pacotes.length && (
+                        <div className="relative flex flex-col gap-3 mb-2 rounded-lg border border-painel-border bg-white p-2.5">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <label className="text-xs text-painel-muted">
+                              Corrigir este pacote para quantas sessões?
+                            </label>
+                            <input
+                              type="number"
+                              min={1}
+                              inputMode="numeric"
+                              autoFocus
+                              value={tamanhoValor}
+                              onChange={(e) => setTamanhoValor(e.target.value)}
+                              placeholder="nº de sessões"
+                              className="w-28 rounded-lg border border-painel-border bg-white px-2.5 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-painel-primary/40"
+                            />
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <button
+                              type="button"
+                              onClick={() =>
+                                salvarTamanhoPacote(
+                                  g.fichaId,
+                                  g.item,
+                                  g.chave,
+                                  sessoesNoUltimoPacote,
+                                )
+                              }
+                              disabled={salvandoTamanho || !tamanhoValor.trim()}
+                              className="rounded-full bg-painel-primary text-white px-3.5 py-1.5 text-xs font-medium hover:bg-painel-primary/90 transition-colors disabled:opacity-40"
+                            >
+                              Salvar
+                            </button>
+                            <button
+                              type="button"
+                              onClick={cancelarEdicaoTamanho}
+                              disabled={salvandoTamanho}
+                              className="rounded-full border border-painel-border px-3.5 py-1.5 text-xs font-medium text-painel-chip-text hover:border-painel-primary/40 transition-colors disabled:opacity-40"
+                            >
+                              Cancelar
+                            </button>
+                          </div>
+                          {erroTamanho && (
+                            <p className="text-xs text-painel-alert-text">{erroTamanho}</p>
+                          )}
+                        </div>
+                      )}
                       {temPendente ? (
                         <p className="relative text-[11px] text-painel-lilac-soft/70 mb-2">
                           Relatório disponível após a cliente confirmar{" "}
@@ -2755,19 +2777,6 @@ export function HistoricoSessoes({
                         className="text-xs font-medium text-painel-primary"
                       >
                         + Adicionar brinde
-                      </button>
-                    )}
-                    {pacotes.length > 0 && (
-                      <button
-                        type="button"
-                        onClick={() =>
-                          iniciarEdicaoTamanho(g.chave, pacotes[pacotes.length - 1].tamanho)
-                        }
-                        title="Corrigir o número de sessões do pacote"
-                        className="inline-flex items-center gap-1 text-xs font-medium text-painel-chip-text hover:text-painel-primary transition-colors"
-                      >
-                        <Pencil className="h-3 w-3" />
-                        Editar sessões
                       </button>
                     )}
                     {pacotes.length > 0 && (
