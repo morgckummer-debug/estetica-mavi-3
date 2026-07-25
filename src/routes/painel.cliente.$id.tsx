@@ -923,8 +923,10 @@ function PaginaCliente() {
                       <button
                         type="button"
                         onClick={() => definirLiberacaoMedica(f, campo, mensagem, true)}
-                        className={`rounded-full px-2.5 py-1 text-xs font-medium text-success-foreground bg-success transition-opacity ${
-                          liberada ? "opacity-100" : "opacity-60 hover:opacity-100"
+                        className={`rounded-full border px-2.5 py-1 text-xs font-medium transition-colors ${
+                          liberada
+                            ? "border-success bg-success text-success-foreground"
+                            : "border-success/40 bg-success/10 text-success hover:bg-success/25"
                         }`}
                       >
                         Sim
@@ -932,8 +934,10 @@ function PaginaCliente() {
                       <button
                         type="button"
                         onClick={() => definirLiberacaoMedica(f, campo, mensagem, false)}
-                        className={`rounded-full px-2.5 py-1 text-xs font-medium text-destructive-foreground bg-destructive transition-opacity ${
-                          negada ? "opacity-100" : "opacity-60 hover:opacity-100"
+                        className={`rounded-full border px-2.5 py-1 text-xs font-medium transition-colors ${
+                          negada
+                            ? "border-destructive bg-destructive text-destructive-foreground"
+                            : "border-destructive/40 bg-destructive/10 text-destructive hover:bg-destructive/25"
                         }`}
                       >
                         Não
