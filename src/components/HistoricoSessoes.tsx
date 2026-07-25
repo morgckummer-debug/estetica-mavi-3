@@ -2273,12 +2273,17 @@ export function HistoricoSessoes({
         {grupos.map((g) => {
           const pacotes = pacotesDoItem(g.fichaId, g.item);
           const segmentos = segmentarPorPacote(g.linhas, pacotes);
+          // Segmento do último pacote de fato — não é necessariamente o
+          // último segmento da lista, nem tem numero igual a
+          // pacotes.length: sessões avulsas antes, entre, ou depois dos
+          // pacotes viram segmentos próprios e empurram a numeração.
+          const ultimoSegmentoPacote = [...segmentos]
+            .reverse()
+            .find((s) => s.pacoteTotal !== undefined);
           // Sessões já registradas no último pacote (usado pra não deixar
           // reduzir o tamanho dele abaixo do que já foi feito, ver
           // salvarTamanhoPacote).
-          const sessoesNoUltimoPacote =
-            segmentos.find((s) => s.numero === pacotes.length && s.pacoteTotal !== undefined)
-              ?.linhas.length ?? 0;
+          const sessoesNoUltimoPacote = ultimoSegmentoPacote?.linhas.length ?? 0;
           // Sem pacote em aberto pra esse item — ou nunca teve pacote, ou já
           // concluiu todos os anteriores. É quando faz sentido oferecer
           // "fechar pacote" (as sessões avulsas já feitas continuam de fora,
@@ -2572,7 +2577,7 @@ export function HistoricoSessoes({
                           )}
                           <span className="hidden sm:inline">Enviar Relatório</span>
                         </button>
-                        {seg.numero === pacotes.length && (
+                        {seg === ultimoSegmentoPacote && (
                           <button
                             type="button"
                             onClick={() => iniciarEdicaoTamanho(g.chave, pacoteTotalSeg)}
@@ -2585,7 +2590,7 @@ export function HistoricoSessoes({
                           </button>
                         )}
                       </div>
-                      {editandoTamanhoChave === g.chave && seg.numero === pacotes.length && (
+                      {editandoTamanhoChave === g.chave && seg === ultimoSegmentoPacote && (
                         <div className="relative flex flex-col gap-3 mb-2 rounded-lg border border-painel-border bg-white p-2.5">
                           <div className="flex flex-wrap items-center gap-2">
                             <label className="text-xs text-painel-muted">
