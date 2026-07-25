@@ -182,8 +182,18 @@ function DetalheFicha() {
   // sem deixar rastro. "Sim" também tira a mensagem original da lista de
   // alertas em aberto (o array `alertas` gravado no banco, usado pelos
   // contadores/badges do painel); "Não" mantém a mensagem original lá.
+  // Se já havia uma resposta registrada e a Marina clica na opção oposta,
+  // pede confirmação — é fácil clicar sem querer e trocar um "sim" por um
+  // "não" (ou vice-versa) num dado sensível como esse.
   const definirLiberacaoMedica = async (campo: Campo, mensagem: string, valor: boolean) => {
     if (!ficha) return;
+    const atual = ficha.respostas[`${campo.id}__liberacaoMedica`];
+    if ((atual === true || atual === false) && atual !== valor) {
+      const pergunta = valor
+        ? "A cliente já tinha sido marcada como NÃO liberada. Mudar para liberada?"
+        : "A cliente já tinha sido marcada como liberada. Mudar para NÃO liberada?";
+      if (!window.confirm(pergunta)) return;
+    }
     const novasRespostas = {
       ...ficha.respostas,
       [`${campo.id}__liberacaoMedica`]: valor,
