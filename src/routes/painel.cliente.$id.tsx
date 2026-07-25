@@ -43,7 +43,13 @@ import {
   type Contrato,
 } from "@/lib/painel";
 import { agregarFichas } from "@/lib/clientes";
-import { mascaraTelefone, mascaraCpf, formatarDataBR, hojeISO } from "@/lib/mascaras";
+import {
+  mascaraTelefone,
+  mascaraCpf,
+  formatarDataBR,
+  formatarDataBRBarra,
+  hojeISO,
+} from "@/lib/mascaras";
 import { CampoView } from "@/components/FichaCampos";
 import { HistoricoSessoes, type Procedimento } from "@/components/HistoricoSessoes";
 import { EnviarFicha } from "@/components/EnviarFicha";
@@ -726,24 +732,30 @@ function PaginaCliente() {
 
   const agregado = useMemo(() => agregarFichas(fichas ?? []), [fichas]);
 
-  // Alertas em aberto de todas as fichas do cliente, com a ficha e o campo
-  // de origem de cada um — pra dar pra registrar a liberação médica direto
-  // daqui, sem precisar entrar em cada ficha. Mesma lógica de
-  // painel.$id.tsx, só que somando as fichas do cliente inteiro.
-  const alertasAbertos = useMemo(
+  // Alertas de todas as fichas do cliente, com a ficha e o campo de origem
+  // de cada um — pra dar pra registrar a liberação médica direto daqui, sem
+  // precisar entrar em cada ficha. Mesma lógica de painel.$id.tsx, só que
+  // somando as fichas do cliente inteiro. Continua incluindo os já
+  // respondidos (não só os em aberto) pra manter o card visível como
+  // registro, só mudando de cor/mensagem.
+  const alertasCliente = useMemo(
     () =>
       (fichas ?? []).flatMap((f) =>
-        alertasComCampo(f.tipo, f.respostas)
-          .filter(({ campo }) => f.respostas[`${campo.id}__liberacaoMedica`] !== true)
-          .map(({ campo, mensagem }) => ({ ficha: f, campo, mensagem })),
+        alertasComCampo(f.tipo, f.respostas).map(({ campo, mensagem }) => ({
+          ficha: f,
+          campo,
+          mensagem,
+        })),
       ),
     [fichas],
   );
 
   // Registra se a cliente já apresentou liberação médica para um alerta
-  // específico, na ficha de onde ele veio. "Sim" tira a mensagem da lista de
-  // alertas em aberto; "Não" mantém visível, mas registra que já foi
-  // perguntado (pra não ficar perguntando de novo a cada visita).
+  // específico, na ficha de onde ele veio, com a data. O card continua
+  // visível depois de respondido — só muda de cor e de mensagem — em vez de
+  // sumir sem deixar rastro. "Sim" também tira a mensagem original do array
+  // `alertas` gravado no banco (usado pelos contadores/badges do painel);
+  // "Não" mantém a mensagem original lá.
   const definirLiberacaoMedica = async (
     ficha: Ficha,
     campo: Campo,
@@ -753,7 +765,7 @@ function PaginaCliente() {
     const novasRespostas = {
       ...ficha.respostas,
       [`${campo.id}__liberacaoMedica`]: valor,
-      [`${campo.id}__liberacaoMedicaData`]: valor ? hojeISO() : null,
+      [`${campo.id}__liberacaoMedicaData`]: hojeISO(),
     };
     const novosAlertas = valor
       ? ficha.alertas.filter((a) => a !== mensagem)
@@ -866,30 +878,53 @@ function PaginaCliente() {
           </div>
         </div>
 
-        {alertasAbertos.length > 0 && (
-          <div className="flex gap-3 rounded-[14px] border border-painel-alert-border bg-painel-alert-bg px-[22px] py-[18px] text-sm text-painel-alert-text mb-8">
-            <AlertTriangle className="h-4 w-4 mt-0.5 shrink-0" />
-            <ul className="flex-1 space-y-2.5">
-              {alertasAbertos.map(({ ficha: f, campo, mensagem }) => {
-                const liberacao = f.respostas[`${campo.id}__liberacaoMedica`];
-                return (
-                  <li
-                    key={`${f.id}-${campo.id}`}
-                    className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1.5"
-                  >
-                    <span>
-                      {mensagem}
-                      <span className="text-painel-alert-text/70"> ({nomeCurto(f.tipo)})</span>
-                    </span>
+        {alertasCliente.length > 0 && (
+          <div className="flex flex-col gap-3 mb-8">
+            {alertasCliente.map(({ ficha: f, campo, mensagem }) => {
+              const liberacao = f.respostas[`${campo.id}__liberacaoMedica`];
+              const data = f.respostas[`${campo.id}__liberacaoMedicaData`];
+              const dataFmt = typeof data === "string" ? formatarDataBRBarra(data) : null;
+              const liberada = liberacao === true;
+              const negada = liberacao === false;
+              return (
+                <div
+                  key={`${f.id}-${campo.id}`}
+                  className={`flex gap-3 rounded-[14px] border px-[22px] py-[18px] text-sm ${
+                    liberada
+                      ? "border-success/40 bg-success/10 text-success"
+                      : "border-painel-alert-border bg-painel-alert-bg text-painel-alert-text"
+                  }`}
+                >
+                  {liberada ? (
+                    <Check className="h-4 w-4 mt-0.5 shrink-0" />
+                  ) : (
+                    <AlertTriangle className="h-4 w-4 mt-0.5 shrink-0" />
+                  )}
+                  <div className="flex-1 flex flex-wrap items-center justify-between gap-x-4 gap-y-1.5">
+                    <div>
+                      <p className="font-medium">
+                        {campo.label}
+                        <span
+                          className={liberada ? "text-success/70" : "text-painel-alert-text/70"}
+                        >
+                          {" "}
+                          ({nomeCurto(f.tipo)})
+                        </span>
+                      </p>
+                      <p className={liberada ? "text-success/80" : "text-painel-alert-text/80"}>
+                        {liberada
+                          ? `Liberação médica${dataFmt ? ` em ${dataFmt}` : ""}`
+                          : negada
+                            ? `Liberação médica negada${dataFmt ? ` em ${dataFmt}` : ""}`
+                            : mensagem}
+                      </p>
+                    </div>
                     <span className="flex items-center gap-1.5 shrink-0">
-                      <span className="text-xs text-painel-alert-text/70">Liberação médica?</span>
                       <button
                         type="button"
                         onClick={() => definirLiberacaoMedica(f, campo, mensagem, true)}
-                        className={`rounded-full px-2.5 py-1 text-xs font-medium transition-colors ${
-                          liberacao === true
-                            ? "bg-success/20 text-success"
-                            : "border border-painel-alert-border text-painel-alert-text hover:bg-painel-alert-border/40"
+                        className={`rounded-full px-2.5 py-1 text-xs font-medium text-success-foreground bg-success transition-opacity ${
+                          liberada ? "opacity-100" : "opacity-60 hover:opacity-100"
                         }`}
                       >
                         Sim
@@ -897,19 +932,17 @@ function PaginaCliente() {
                       <button
                         type="button"
                         onClick={() => definirLiberacaoMedica(f, campo, mensagem, false)}
-                        className={`rounded-full px-2.5 py-1 text-xs font-medium transition-colors ${
-                          liberacao === false
-                            ? "bg-destructive/20 text-destructive"
-                            : "border border-painel-alert-border text-painel-alert-text hover:bg-painel-alert-border/40"
+                        className={`rounded-full px-2.5 py-1 text-xs font-medium text-destructive-foreground bg-destructive transition-opacity ${
+                          negada ? "opacity-100" : "opacity-60 hover:opacity-100"
                         }`}
                       >
                         Não
                       </button>
                     </span>
-                  </li>
-                );
-              })}
-            </ul>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         )}
 
