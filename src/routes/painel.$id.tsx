@@ -176,16 +176,18 @@ function DetalheFicha() {
   };
 
   // Registra se a cliente já apresentou liberação médica para um alerta
-  // específico (ex.: cirurgia recente). "Sim" tira a mensagem da lista de
-  // alertas em aberto (some da caixa de atenção em toda a parte do painel,
-  // já que atualiza o mesmo array `alertas` gravado no banco); "Não" deixa a
-  // mensagem visível, mas registra que já foi perguntado.
+  // específico (ex.: cirurgia recente), com a data. O card do alerta
+  // continua visível depois de respondido — só muda de cor e de mensagem
+  // (vira o registro de quando foi liberada ou negada) — em vez de sumir
+  // sem deixar rastro. "Sim" também tira a mensagem original da lista de
+  // alertas em aberto (o array `alertas` gravado no banco, usado pelos
+  // contadores/badges do painel); "Não" mantém a mensagem original lá.
   const definirLiberacaoMedica = async (campo: Campo, mensagem: string, valor: boolean) => {
     if (!ficha) return;
     const novasRespostas = {
       ...ficha.respostas,
       [`${campo.id}__liberacaoMedica`]: valor,
-      [`${campo.id}__liberacaoMedicaData`]: valor ? hojeISO() : null,
+      [`${campo.id}__liberacaoMedicaData`]: hojeISO(),
     };
     const novosAlertas = valor
       ? ficha.alertas.filter((a) => a !== mensagem)
@@ -380,31 +382,47 @@ function DetalheFicha() {
         )}
 
         {(() => {
-          const alertasAbertos = alertasComCampo(ficha.tipo, r).filter(
-            ({ campo }) => r[`${campo.id}__liberacaoMedica`] !== true,
-          );
-          if (alertasAbertos.length === 0) return null;
+          const alertas = alertasComCampo(ficha.tipo, r);
+          if (alertas.length === 0) return null;
           return (
-            <div className="flex gap-3 rounded-xl border border-rose/40 bg-rose/10 px-4 py-3.5 text-sm text-rose mb-6">
-              <AlertTriangle className="h-4 w-4 mt-0.5 shrink-0" />
-              <ul className="flex-1 space-y-2.5">
-                {alertasAbertos.map(({ campo, mensagem }) => {
-                  const liberacao = r[`${campo.id}__liberacaoMedica`];
-                  return (
-                    <li
-                      key={campo.id}
-                      className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1.5"
-                    >
-                      <span>{mensagem}</span>
+            <div className="flex flex-col gap-3 mb-6">
+              {alertas.map(({ campo, mensagem }) => {
+                const liberacao = r[`${campo.id}__liberacaoMedica`];
+                const data = r[`${campo.id}__liberacaoMedicaData`];
+                const dataFmt = typeof data === "string" ? formatarDataBRBarra(data) : null;
+                const liberada = liberacao === true;
+                const negada = liberacao === false;
+                return (
+                  <div
+                    key={campo.id}
+                    className={`flex gap-3 rounded-xl border px-4 py-3.5 text-sm ${
+                      liberada
+                        ? "border-success/40 bg-success/10 text-success"
+                        : "border-rose/40 bg-rose/10 text-rose"
+                    }`}
+                  >
+                    {liberada ? (
+                      <Check className="h-4 w-4 mt-0.5 shrink-0" />
+                    ) : (
+                      <AlertTriangle className="h-4 w-4 mt-0.5 shrink-0" />
+                    )}
+                    <div className="flex-1 flex flex-wrap items-center justify-between gap-x-4 gap-y-1.5">
+                      <div>
+                        <p className="font-medium">{campo.label}</p>
+                        <p className={liberada ? "text-success/80" : "text-rose/80"}>
+                          {liberada
+                            ? `Liberação médica${dataFmt ? ` em ${dataFmt}` : ""}`
+                            : negada
+                              ? `Liberação médica negada${dataFmt ? ` em ${dataFmt}` : ""}`
+                              : mensagem}
+                        </p>
+                      </div>
                       <span className="flex items-center gap-1.5 shrink-0">
-                        <span className="text-xs text-rose/70">Liberação médica?</span>
                         <button
                           type="button"
                           onClick={() => definirLiberacaoMedica(campo, mensagem, true)}
-                          className={`rounded-full px-2.5 py-1 text-xs font-medium transition-colors ${
-                            liberacao === true
-                              ? "bg-success/20 text-success"
-                              : "border border-rose/40 text-rose hover:bg-rose/20"
+                          className={`rounded-full px-2.5 py-1 text-xs font-medium text-success-foreground bg-success transition-opacity ${
+                            liberada ? "opacity-100" : "opacity-60 hover:opacity-100"
                           }`}
                         >
                           Sim
@@ -412,19 +430,17 @@ function DetalheFicha() {
                         <button
                           type="button"
                           onClick={() => definirLiberacaoMedica(campo, mensagem, false)}
-                          className={`rounded-full px-2.5 py-1 text-xs font-medium transition-colors ${
-                            liberacao === false
-                              ? "bg-destructive/20 text-destructive"
-                              : "border border-rose/40 text-rose hover:bg-rose/20"
+                          className={`rounded-full px-2.5 py-1 text-xs font-medium text-destructive-foreground bg-destructive transition-opacity ${
+                            negada ? "opacity-100" : "opacity-60 hover:opacity-100"
                           }`}
                         >
                           Não
                         </button>
                       </span>
-                    </li>
-                  );
-                })}
-              </ul>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           );
         })()}
@@ -476,15 +492,17 @@ function DetalheFicha() {
                 const liberacaoData = r[`${c.id}__liberacaoMedicaData`];
                 const alerta =
                   c.tipo === "simnao" && Boolean(c.alertaSeSim) && r[c.id] === true && !liberada;
+                const dataFmt =
+                  typeof liberacaoData === "string"
+                    ? ` em ${formatarDataBRBarra(liberacaoData)}`
+                    : "";
                 const liberacaoNota =
                   c.tipo === "simnao" &&
                   Boolean(c.alertaSeSim) &&
                   typeof liberacaoMedica === "boolean"
-                    ? `Liberação médica: ${liberacaoMedica ? "Sim" : "Não"}${
-                        liberada && typeof liberacaoData === "string"
-                          ? ` em ${formatarDataBRBarra(liberacaoData)}`
-                          : ""
-                      }`
+                    ? liberacaoMedica
+                      ? `Liberação médica${dataFmt}`
+                      : `Liberação médica negada${dataFmt}`
                     : null;
                 return { id: c.id, label: c.label, val, detalhe, alerta, liberacaoNota };
               })
