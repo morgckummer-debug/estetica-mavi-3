@@ -546,12 +546,14 @@ function DetalheFicha() {
                         l.alerta ? "border-rose/30" : "border-border/50"
                       }`}
                     >
-                      <dt className={l.alerta ? "text-rose font-medium" : "text-muted-foreground"}>
+                      <dt
+                        className={`shrink-0 ${l.alerta ? "text-rose font-medium" : "text-muted-foreground"}`}
+                      >
                         {l.alerta && <AlertTriangle className="inline h-3.5 w-3.5 mr-1 -mt-0.5" />}
                         {l.label}
                       </dt>
                       <dd
-                        className={`text-right font-medium shrink-0 ${
+                        className={`min-w-0 flex-1 break-words text-right font-medium ${
                           l.alerta ? "text-rose" : "text-foreground"
                         }`}
                       >
