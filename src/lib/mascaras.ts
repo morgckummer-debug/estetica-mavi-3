@@ -79,3 +79,19 @@ export function hojeISO(): string {
   const d = new Date();
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
+
+// Idade a partir da data de nascimento ("1977-12-30", mesmo formato do
+// <input type="date">), calculada até hoje — considera se o aniversário
+// deste ano já passou. null se a data vier vazia ou num formato inesperado.
+export function calcularIdade(nascimentoISO: string): number | null {
+  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(nascimentoISO.trim());
+  if (!m) return null;
+  const nascimento = new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
+  const hoje = new Date();
+  let idade = hoje.getFullYear() - nascimento.getFullYear();
+  const aniversarioJaPassou =
+    hoje.getMonth() > nascimento.getMonth() ||
+    (hoje.getMonth() === nascimento.getMonth() && hoje.getDate() >= nascimento.getDate());
+  if (!aniversarioJaPassou) idade--;
+  return idade >= 0 ? idade : null;
+}
