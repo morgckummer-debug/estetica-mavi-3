@@ -7,6 +7,12 @@ import { SUPABASE_URL, SUPABASE_ANON_KEY } from "../supabase";
 // Usa a chave PÚBLICA (anon) — o banco só permite inserir, nunca ler
 // (policy do 0003_anon_insert.sql). Ler as fichas continua restrito à
 // Marina logada. Não precisa de chave secreta nem de config no hosting.
+//
+// Manda a chave só no header `apikey`, nunca em `Authorization: Bearer`:
+// as chaves novas (sb_publishable_...) não são JWT, e o Supabase rejeita
+// como "Invalid JWT" quem tenta autenticar com elas no Authorization —
+// foi por isso que nenhum cadastro feito pelo site público (nem fichas
+// nem clientes) chegava no banco desde a troca de chave (ver client.ts).
 
 const schema = z.object({
   tipo: z.enum(["corporal", "facial", "laser", "cadastro"]),
@@ -33,7 +39,6 @@ async function encontrarOuCriarCliente(
     headers: {
       "Content-Type": "application/json",
       apikey: SUPABASE_ANON_KEY!,
-      Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
     },
     body: JSON.stringify({
       p_nome: texto(respostas.nome) ?? "",
@@ -82,7 +87,6 @@ export const salvarFicha = createServerFn({ method: "POST" })
       headers: {
         "Content-Type": "application/json",
         apikey: SUPABASE_ANON_KEY,
-        Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
         Prefer: "return=minimal",
       },
       body: JSON.stringify({
