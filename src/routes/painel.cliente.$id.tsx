@@ -48,6 +48,7 @@ import {
   mascaraCpf,
   formatarDataBR,
   formatarDataBRBarra,
+  calcularIdade,
   hojeISO,
 } from "@/lib/mascaras";
 import { CampoView } from "@/components/FichaCampos";
@@ -169,11 +170,15 @@ function enderecoCompleto(c: Cliente): string {
     .join(" - ");
 }
 
-// Formata o valor exibido conforme o campo (celular, CPF, data de nascimento).
+// Formata o valor exibido conforme o campo (celular, CPF, data de nascimento
+// + idade calculada automaticamente a partir dela).
 function formatarValorCampo(campoId: string, val: string): string {
   if (campoId === "whatsapp") return mascaraTelefone(val);
   if (campoId === "cpf") return mascaraCpf(val);
-  if (campoId === "nascimento") return formatarDataBR(val);
+  if (campoId === "nascimento") {
+    const idade = calcularIdade(val);
+    return idade !== null ? `${formatarDataBR(val)} (${idade} anos)` : formatarDataBR(val);
+  }
   return val;
 }
 
