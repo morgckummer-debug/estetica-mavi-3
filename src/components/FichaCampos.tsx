@@ -63,6 +63,36 @@ export function YesNo({
 export const inputBase =
   "w-full rounded-xl border border-border bg-background px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring";
 
+// Dica explícita de autocomplete por campo — sem isso, o teclado do celular
+// (QuickType do Safari, sugestões do Chrome) tenta adivinhar o que preencher
+// em cada campo e pode oferecer o rótulo/valor de um campo vizinho como
+// sugestão pro campo errado (ex.: "Data nascimento" sugerido dentro do campo
+// Nome, logo acima dele no formulário).
+function autoCompleteDoCampo(id: string): string {
+  switch (id) {
+    case "nome":
+      return "name";
+    case "nascimento":
+      return "bday";
+    case "profissao":
+      return "organization-title";
+    case "whatsapp":
+      return "tel";
+    case "email":
+      return "email";
+    case "cep":
+      return "postal-code";
+    case "endereco":
+      return "address-line1";
+    case "complemento":
+      return "address-line2";
+    case "cidade":
+      return "address-level2";
+    default:
+      return "off";
+  }
+}
+
 export function CampoView({
   campo,
   respostas,
@@ -120,9 +150,13 @@ export function CampoView({
 
     return (
       <div>
-        <label className="block text-sm font-medium mb-2">{campo.label}</label>
+        <label htmlFor={campo.id} className="block text-sm font-medium mb-2">
+          {campo.label}
+        </label>
         {campo.multiline ? (
           <textarea
+            id={campo.id}
+            autoComplete="off"
             value={(respostas[campo.id] as string) ?? ""}
             onChange={(e) => set(campo.id, e.target.value)}
             placeholder={campo.placeholder}
@@ -134,6 +168,7 @@ export function CampoView({
             <input
               id={campo.id}
               type={campo.inputMode === "date" ? "date" : "text"}
+              autoComplete={autoCompleteDoCampo(campo.id)}
               inputMode={
                 campo.inputMode === "tel"
                   ? "tel"
