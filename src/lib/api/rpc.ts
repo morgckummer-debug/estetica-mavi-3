@@ -3,6 +3,10 @@ import { SUPABASE_URL, SUPABASE_ANON_KEY } from "../supabase";
 // Chama uma função SECURITY DEFINER do Postgres com a chave PÚBLICA (anon).
 // Usado pelas telas públicas (confirmação de sessão, relatório de pacote):
 // nunca expõe as tabelas, só o que a função devolve.
+//
+// A chave só vai no header `apikey`, nunca em `Authorization: Bearer` — as
+// chaves novas (sb_publishable_...) não são JWT, e o Supabase rejeita como
+// "Invalid JWT" quem tenta autenticar com elas no Authorization.
 export async function rpc(fn: string, args: Record<string, unknown>): Promise<unknown> {
   if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
     throw new Error("Supabase não configurado (falta a chave pública).");
@@ -12,7 +16,6 @@ export async function rpc(fn: string, args: Record<string, unknown>): Promise<un
     headers: {
       "Content-Type": "application/json",
       apikey: SUPABASE_ANON_KEY,
-      Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
     },
     body: JSON.stringify(args),
   });
