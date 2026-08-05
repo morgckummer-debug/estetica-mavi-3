@@ -245,10 +245,13 @@ const ETAPA_DADOS: Etapa = {
 export const CAMPOS_CADASTRO: Campo[] = ETAPA_DADOS.campos;
 
 // Etapa mínima de identificação — usada nas fichas de tratamento (corporal,
-// facial, depilação). O resto dos dados pessoais (endereço, nascimento,
-// e-mail...) já foi coletado no Cadastro da cliente; pedir tudo de novo
-// aqui só duplicaria o que a Marina já tem. Nome/CPF/celular bastam pra
-// achar ou criar a cliente (encontrar_ou_criar_cliente, 0012_clientes.sql).
+// facial, depilação). O resto dos dados pessoais (endereço, e-mail...) já
+// foi coletado no Cadastro da cliente; pedir tudo de novo aqui só
+// duplicaria o que a Marina já tem. Nome/nascimento/CPF/celular bastam pra
+// achar ou criar a cliente (encontrar_ou_criar_cliente, 0012_clientes.sql) —
+// a data de nascimento entra aqui também pra não ficar faltando na aba
+// Cadastro quando a cliente se registra direto por uma ficha de tratamento
+// (sem passar pelo link de "Cadastro" completo).
 const ETAPA_IDENTIFICACAO: Etapa = {
   titulo: "Seus dados",
   descricao: "Pra Marina te identificar rapidinho.",
@@ -260,6 +263,7 @@ const ETAPA_IDENTIFICACAO: Etapa = {
       placeholder: "Seu nome",
       obrigatorio: true,
     },
+    { tipo: "texto", id: "nascimento", label: "Data de nascimento", inputMode: "date" },
     {
       tipo: "texto",
       id: "cpf",
