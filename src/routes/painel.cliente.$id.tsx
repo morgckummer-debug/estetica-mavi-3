@@ -208,10 +208,15 @@ function AbaCadastro({
   const set = (id: string, v: string | boolean | null) =>
     setForm((prev) => ({ ...prev, [id]: v == null ? "" : String(v) }));
 
-  const camposFaltando = CAMPOS_CADASTRO.filter(
-    (c) => "obrigatorio" in c && c.obrigatorio && !String(form[c.id] ?? "").trim(),
-  );
-  const podeSalvar = camposFaltando.length === 0;
+  // Só o nome é exigido pra salvar uma edição — os outros campos
+  // "obrigatórios" valem pro cadastro novo (ficha completa), mas não podem
+  // travar a edição de uma cliente já cadastrada: quem se cadastrou por uma
+  // ficha de tratamento (só nome/nascimento/CPF/whatsapp) nunca teve
+  // endereço/sexo/CEP preenchidos, e exigir tudo isso só pra corrigir um
+  // campo pontual (WhatsApp errado, endereço errado...) obrigava a Marina a
+  // completar o cadastro inteiro antes de conseguir salvar qualquer coisa.
+  const nomeVazio = !String(form.nome ?? "").trim();
+  const podeSalvar = !nomeVazio;
 
   const salvar = async () => {
     setSalvando(true);
@@ -343,9 +348,7 @@ function AbaCadastro({
 
           {erro && <p className="text-sm text-painel-alert-text mb-3">{erro}</p>}
           {!podeSalvar && (
-            <p className="text-sm text-painel-alert-text mb-3">
-              Preencha para salvar: {camposFaltando.map((c) => c.label).join(", ")}
-            </p>
+            <p className="text-sm text-painel-alert-text mb-3">Preencha o nome para salvar.</p>
           )}
 
           <div className="flex items-center gap-3">
