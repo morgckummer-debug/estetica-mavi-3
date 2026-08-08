@@ -655,7 +655,16 @@ export async function listarSessoesDeFichas(fichaIds: string[]): Promise<SessaoA
 }
 
 export type SessaoPendente = SessaoAtendimento & {
-  ficha: { nome: string; telefone: string | null; tipo: Tipo };
+  ficha: {
+    nome: string;
+    telefone: string | null;
+    tipo: Tipo;
+    // Nullable só nas fichas de antes da migração 0011 (ver `Ficha`) — usado
+    // pra agrupar as pendentes por cliente (várias fichas/tipos podem ser da
+    // mesma pessoa) e linkar pra página dela.
+    cliente_id: string | null;
+    cliente: { cpf: string | null } | null;
+  };
 };
 
 const DIAS_TOLERANCIA_PENDENTE = 15;
@@ -676,7 +685,7 @@ function diasAtrasISO(dias: number): string {
 export async function listarSessoesPendentes(): Promise<SessaoPendente[]> {
   const limite = diasAtrasISO(DIAS_TOLERANCIA_PENDENTE);
   const res = await apiRest(
-    `sessoes?select=*,ficha:fichas(nome,telefone,tipo)&confirmado=eq.false&arquivado=eq.false&data=lte.${limite}&order=data.asc`,
+    `sessoes?select=*,ficha:fichas(nome,telefone,tipo,cliente_id,cliente:clientes(cpf))&confirmado=eq.false&arquivado=eq.false&data=lte.${limite}&order=data.asc`,
   );
   if (!res.ok) throw new Error("Não foi possível carregar as sessões pendentes.");
   return (await res.json()) as SessaoPendente[];
