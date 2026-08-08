@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Loader2, Inbox, MessageCircle, Clock } from "lucide-react";
-import { listarSessoesPendentes, type SessaoPendente } from "@/lib/painel";
+import { Loader2, Inbox, MessageCircle, Clock, BadgeCheck } from "lucide-react";
+import { listarSessoesPendentes, confirmarSessaoDireto, type SessaoPendente } from "@/lib/painel";
 import { FICHAS, nomeCurto } from "@/data/anamnese";
 import { linkWhatsappConfirmacao } from "@/lib/whatsapp";
 import { PAINEL_URL } from "@/data/services";
@@ -28,6 +28,9 @@ function diasEspera(iso: string): number {
 function PaginaPendentes() {
   const [sessoes, setSessoes] = useState<SessaoPendente[] | null>(null);
   const [erro, setErro] = useState<string | null>(null);
+  // Marcar como confirmada direto (sem link) — sessão antiga do caderninho
+  // de papel, já assinada pela cliente na clínica.
+  const [marcandoId, setMarcandoId] = useState<string | null>(null);
 
   useEffect(() => {
     listarSessoesPendentes()
@@ -40,6 +43,25 @@ function PaginaPendentes() {
     () => (sessoes ? [...sessoes].sort((a, b) => a.data.localeCompare(b.data)) : []),
     [sessoes],
   );
+
+  const marcarConfirmada = async (s: SessaoPendente) => {
+    if (
+      !window.confirm(
+        `Marcar o atendimento de ${s.ficha.nome} em ${dataBR(s.data)} como já confirmado, sem mandar link? Use só quando a cliente já assinou no papel.`,
+      )
+    )
+      return;
+    setMarcandoId(s.id);
+    setErro(null);
+    try {
+      await confirmarSessaoDireto(s.id);
+      setSessoes((prev) => (prev ?? []).filter((x) => x.id !== s.id));
+    } catch (e) {
+      setErro(e instanceof Error ? e.message : "Erro ao marcar sessão como confirmada.");
+    } finally {
+      setMarcandoId(null);
+    }
+  };
 
   return (
     <div>
@@ -122,6 +144,20 @@ function PaginaPendentes() {
                   <MessageCircle className="h-3.5 w-3.5" />
                   Enviar
                 </a>
+                <button
+                  type="button"
+                  onClick={() => marcarConfirmada(s)}
+                  disabled={marcandoId === s.id}
+                  title="Marcar como confirmada (assinada no papel), sem mandar link"
+                  className="inline-flex items-center gap-1.5 rounded-full border border-painel-border px-3.5 py-2 text-xs font-medium text-painel-chip-text hover:border-painel-primary/40 transition-colors disabled:opacity-40"
+                >
+                  {marcandoId === s.id ? (
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  ) : (
+                    <BadgeCheck className="h-3.5 w-3.5" />
+                  )}
+                  Já assinada no papel
+                </button>
               </div>
             </div>
           );
