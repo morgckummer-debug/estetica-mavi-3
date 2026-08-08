@@ -700,7 +700,7 @@ export async function listarUltimasSessoesPorFicha(): Promise<Record<string, str
 
 export async function criarSessao(
   fichaId: string,
-  dados: { data: string; areas: string[]; observacao: string },
+  dados: { data: string; areas: string[]; observacao: string; confirmada?: boolean },
 ): Promise<SessaoAtendimento> {
   const res = await apiRest("sessoes", {
     method: "POST",
@@ -710,6 +710,9 @@ export async function criarSessao(
       data: dados.data,
       areas: dados.areas,
       observacao: dados.observacao.trim() || null,
+      // Ficha antiga (papel), já assinada pela cliente na clínica: a Marina
+      // marca direto como confirmada, sem gerar/mandar link nenhum.
+      ...(dados.confirmada ? { confirmado: true, confirmado_em: new Date().toISOString() } : {}),
     }),
   });
   if (!res.ok) {
@@ -747,6 +750,24 @@ export async function atualizarSessao(
       "A alteração não foi salva no banco (permissão de atualizar sessões ausente). Rode de novo a parte de UPDATE da migração 0005_sessoes.sql no Supabase.",
     );
   }
+}
+
+// Marca uma sessão já registrada como confirmada SEM passar pelo link —
+// pra sessão antiga (ficha de papel) que a cliente já assinou na clínica, ou
+// pra corrigir um caso pendente que a Marina sabe que já foi assinado no
+// papel. Idempotente: mantém a 1ª data de confirmação se já houver uma.
+export async function confirmarSessaoDireto(id: string): Promise<string> {
+  const res = await apiRest(`sessoes?id=eq.${encodeURIComponent(id)}&confirmado=eq.false`, {
+    method: "PATCH",
+    headers: { Prefer: "return=representation" },
+    body: JSON.stringify({ confirmado: true, confirmado_em: new Date().toISOString() }),
+  });
+  if (!res.ok) throw new Error("Não foi possível marcar a sessão como confirmada.");
+  const alteradas = (await res.json().catch(() => [])) as { confirmado_em: string }[];
+  if (!Array.isArray(alteradas) || alteradas.length === 0) {
+    throw new Error("A sessão já estava confirmada ou não foi possível salvar.");
+  }
+  return alteradas[0].confirmado_em;
 }
 
 // Atribui o mesmo `lote_token` a várias sessões — usado para confirmar

@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Archive,
   ArchiveRestore,
+  BadgeCheck,
   Check,
   ChevronDown,
   ChevronRight,
@@ -29,6 +30,7 @@ import {
   atualizarFicha,
   enviarRelatorioPacote,
   atribuirLoteSessoes,
+  confirmarSessaoDireto,
   type SessaoAtendimento,
   type PacoteItem,
 } from "@/lib/painel";
@@ -240,6 +242,13 @@ type EnvioWhatsapp = {
   onLinkAberto: () => void;
 };
 
+// Marcar uma sessão como confirmada direto pela Marina, sem link — pra
+// sessão antiga do caderninho de papel, já assinada pela cliente na clínica.
+type MarcarConfirmada = {
+  marcandoId: string | null;
+  onClicar: (sessaoId: string) => void;
+};
+
 // Arquivar uma sessão que a cliente JÁ confirmou (tem "assinatura" digital)
 // pede uma segunda confirmação bem mais visível do que o window.confirm
 // usado nas outras ações — pra ninguém apagar uma confirmação por engano.
@@ -267,6 +276,7 @@ function LinhaSessaoView({
   edicao,
   envio,
   arquivar,
+  marcarConfirmada,
   escuro,
 }: {
   id: string;
@@ -280,6 +290,7 @@ function LinhaSessaoView({
   edicao: EdicaoSessao;
   envio: EnvioWhatsapp;
   arquivar: ArquivarConfirmada;
+  marcarConfirmada: MarcarConfirmada;
   // Card do pacote comprado: fundo escuro, então a linha (fora de edição)
   // usa texto bege/lavanda em vez das cores padrão, pensadas pra fundo claro.
   escuro?: boolean;
@@ -537,14 +548,29 @@ function LinhaSessaoView({
           <Pencil className="h-4 w-4" />
         </button>
         {!confirmado && (
-          <button
-            type="button"
-            onClick={() => envio.onIniciar(id)}
-            title="Enviar por WhatsApp"
-            className={`p-1 transition-colors ${corIcone}`}
-          >
-            <MessageCircle className="h-4 w-4" />
-          </button>
+          <>
+            <button
+              type="button"
+              onClick={() => envio.onIniciar(id)}
+              title="Enviar por WhatsApp"
+              className={`p-1 transition-colors ${corIcone}`}
+            >
+              <MessageCircle className="h-4 w-4" />
+            </button>
+            <button
+              type="button"
+              onClick={() => marcarConfirmada.onClicar(id)}
+              disabled={marcarConfirmada.marcandoId === id}
+              title="Marcar como confirmada (assinada no papel)"
+              className={`p-1 transition-colors ${corIcone} disabled:opacity-40`}
+            >
+              {marcarConfirmada.marcandoId === id ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <BadgeCheck className="h-4 w-4" />
+              )}
+            </button>
+          </>
         )}
       </span>
 
@@ -566,6 +592,19 @@ function LinhaSessaoView({
               className={`transition-colors ${corIcone}`}
             >
               <MessageCircle className="h-3.5 w-3.5" />
+            </button>
+            <button
+              type="button"
+              onClick={() => marcarConfirmada.onClicar(id)}
+              disabled={marcarConfirmada.marcandoId === id}
+              title="Marcar como confirmada (assinada no papel)"
+              className={`transition-colors ${corIcone} disabled:opacity-40`}
+            >
+              {marcarConfirmada.marcandoId === id ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <BadgeCheck className="h-3.5 w-3.5" />
+              )}
             </button>
           </>
         )}
@@ -660,6 +699,9 @@ export function HistoricoSessoes({
   const [itens, setItens] = useState<string[]>([]);
   const [observacao, setObservacao] = useState("");
   const [pacotesForm, setPacotesForm] = useState<Record<string, string>>({});
+  // Sessão antiga do caderninho de papel, já assinada pela cliente: marca
+  // como confirmada direto ao registrar, sem gerar link nenhum.
+  const [jaConfirmada, setJaConfirmada] = useState(false);
   const [salvando, setSalvando] = useState(false);
   // Bônus anexados a um pacote sendo declarado pela 1ª vez, junto da 1ª
   // sessão do item (ver `itensSemPacote` no JSX). Uma lista por item, pois
@@ -754,6 +796,10 @@ export function HistoricoSessoes({
   const [restaurandoId, setRestaurandoId] = useState<string | null>(null);
   const [mostrarArquivadas, setMostrarArquivadas] = useState(false);
 
+  // Marcar sessão como confirmada direto (sem link) — sessão antiga do
+  // caderninho de papel, já assinada pela cliente na clínica.
+  const [marcandoConfirmadaId, setMarcandoConfirmadaId] = useState<string | null>(null);
+
   // "Enviar Relatório": gera (ou atualiza) o link público de progresso de um
   // pacote específico e abre o WhatsApp já com a mensagem pronta. Só um
   // pacote por vez (chave = `${fichaId}::${item}::${numero}`).
@@ -838,6 +884,7 @@ export function HistoricoSessoes({
     setBonusFormRegistro({});
     setTipoFaltandoAnamneseRegistro(null);
     setData(hojeISO());
+    setJaConfirmada(false);
     setAbrindo(true);
   };
 
@@ -867,7 +914,12 @@ export function HistoricoSessoes({
     setSalvando(true);
     setErro(null);
     try {
-      const nova = await criarSessao(fichaId, { data, areas: itens, observacao });
+      const nova = await criarSessao(fichaId, {
+        data,
+        areas: itens,
+        observacao,
+        confirmada: jaConfirmada,
+      });
       setSessoes((prev) => [nova, ...(prev ?? [])]);
 
       // Erro aqui não desfaz a sessão já registrada — só avisa à parte.
@@ -887,6 +939,7 @@ export function HistoricoSessoes({
       setPacotesForm({});
       setBonusFormRegistro({});
       setData(hojeISO());
+      setJaConfirmada(false);
     } catch (e) {
       setErro(e instanceof Error ? e.message : "Erro ao registrar sessão.");
     } finally {
@@ -945,6 +998,37 @@ export function HistoricoSessoes({
     onConfirmar: () => arquivandoId && arquivar(arquivandoId),
     onCancelar: cancelarArquivar,
     onIniciar: iniciarArquivar,
+  };
+
+  const marcarConfirmadaDireto = async (sessaoId: string) => {
+    const s = (sessoes ?? []).find((x) => x.id === sessaoId);
+    if (!s) return;
+    const detalhe = s.areas.length > 0 ? ` (${s.areas.join(", ")})` : "";
+    if (
+      !window.confirm(
+        `Marcar a sessão de ${dataBR(s.data)}${detalhe} como já confirmada, sem mandar link? Use só quando a cliente já assinou no papel.`,
+      )
+    )
+      return;
+    setMarcandoConfirmadaId(sessaoId);
+    setErro(null);
+    try {
+      const confirmadoEm = await confirmarSessaoDireto(sessaoId);
+      setSessoes((prev) =>
+        (prev ?? []).map((x) =>
+          x.id === sessaoId ? { ...x, confirmado: true, confirmado_em: confirmadoEm } : x,
+        ),
+      );
+    } catch (e) {
+      setErro(e instanceof Error ? e.message : "Erro ao marcar sessão como confirmada.");
+    } finally {
+      setMarcandoConfirmadaId(null);
+    }
+  };
+
+  const marcarConfirmadaState: MarcarConfirmada = {
+    marcandoId: marcandoConfirmadaId,
+    onClicar: marcarConfirmadaDireto,
   };
 
   const restaurar = async (sessaoId: string) => {
@@ -1911,6 +1995,7 @@ export function HistoricoSessoes({
                 arquivar={arquivarState}
                 edicao={edicaoSessao}
                 envio={envioSessao}
+                marcarConfirmada={marcarConfirmadaState}
               />
             ))}
           </ul>
@@ -2105,6 +2190,19 @@ export function HistoricoSessoes({
               className="w-full rounded-xl border border-painel-border bg-painel-bg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-painel-primary/40"
             />
           </div>
+
+          <label className="mb-4 flex items-start gap-2 text-sm text-painel-chip-text">
+            <input
+              type="checkbox"
+              checked={jaConfirmada}
+              onChange={(e) => setJaConfirmada(e.target.checked)}
+              className="mt-0.5 h-4 w-4 rounded border-painel-border accent-painel-primary"
+            />
+            <span>
+              Sessão antiga, já assinada no papel — marcar como confirmada direto, sem mandar link
+              de confirmação.
+            </span>
+          </label>
 
           <div className="flex items-center gap-3">
             <button
@@ -2484,6 +2582,7 @@ export function HistoricoSessoes({
                                 arquivar={arquivarState}
                                 edicao={edicaoSessao}
                                 envio={envioSessao}
+                                marcarConfirmada={marcarConfirmadaState}
                               />
                             ))}
                         </ul>
@@ -2669,6 +2768,7 @@ export function HistoricoSessoes({
                                 arquivar={arquivarState}
                                 edicao={edicaoSessao}
                                 envio={envioSessao}
+                                marcarConfirmada={marcarConfirmadaState}
                               />
                             ))}
                         </ul>
@@ -2697,6 +2797,7 @@ export function HistoricoSessoes({
                             arquivar={arquivarState}
                             edicao={edicaoSessao}
                             envio={envioSessao}
+                            marcarConfirmada={marcarConfirmadaState}
                           />
                         ))}
                       </ul>
@@ -2818,6 +2919,7 @@ export function HistoricoSessoes({
                   arquivar={arquivarState}
                   edicao={edicaoSessao}
                   envio={envioSessao}
+                  marcarConfirmada={marcarConfirmadaState}
                 />
               ))}
             </ul>
