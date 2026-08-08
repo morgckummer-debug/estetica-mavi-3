@@ -1015,7 +1015,9 @@ export function HistoricoSessoes({
     try {
       const confirmadoEm = await confirmarSessaoDireto(sessaoId);
       setSessoes((prev) =>
-        (prev ?? []).map((x) => (x.id === sessaoId ? { ...x, confirmado: true, confirmado_em: confirmadoEm } : x)),
+        (prev ?? []).map((x) =>
+          x.id === sessaoId ? { ...x, confirmado: true, confirmado_em: confirmadoEm } : x,
+        ),
       );
     } catch (e) {
       setErro(e instanceof Error ? e.message : "Erro ao marcar sessão como confirmada.");
