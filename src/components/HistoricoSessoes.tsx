@@ -535,9 +535,9 @@ function LinhaSessaoView({
       >
         {texto}
       </span>
-      {/* Celular: só editar e WhatsApp, um em cima do outro (mais espaço
-          pro toque, sem risco de acertar o botão errado). Copiar e arquivar
-          ficam escondidos aqui — ainda disponíveis na versão desktop. */}
+      {/* Celular: editar, WhatsApp e arquivar, um em cima do outro (mais
+          espaço pro toque, sem risco de acertar o botão errado). Só copiar
+          fica escondido aqui — ainda disponível na versão desktop. */}
       <span className="flex sm:hidden flex-col items-center gap-2.5 ml-auto shrink-0">
         <button
           type="button"
@@ -572,6 +572,14 @@ function LinhaSessaoView({
             </button>
           </>
         )}
+        <button
+          type="button"
+          onClick={() => arquivar.onIniciar(id)}
+          title="Excluir sessão"
+          className={`p-1 transition-colors ${escuro ? "text-painel-lilac-soft/40 hover:text-painel-alert-text" : "text-painel-muted/40 hover:text-painel-alert-text"}`}
+        >
+          <Archive className="h-4 w-4" />
+        </button>
       </span>
 
       <span className="hidden sm:flex items-center gap-1.5 ml-auto shrink-0">
@@ -619,7 +627,7 @@ function LinhaSessaoView({
         <button
           type="button"
           onClick={() => arquivar.onIniciar(id)}
-          title="Arquivar sessão"
+          title="Excluir sessão"
           className={`transition-colors ${escuro ? "text-painel-lilac-soft/40 hover:text-painel-alert-text" : "text-painel-muted/40 hover:text-painel-alert-text"}`}
         >
           <Archive className="h-3.5 w-3.5" />
