@@ -1,7 +1,13 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createFileRoute, Link, useParams, useNavigate } from "@tanstack/react-router";
-import { ArrowLeft, Camera, CameraOff, Download, Loader2, Plus, Trash2 } from "lucide-react";
-import { obterCliente, criarContrato, type Cliente } from "@/lib/painel";
+import { ArrowLeft, Camera, CameraOff, Loader2, Plus, Printer, Trash2 } from "lucide-react";
+import {
+  obterCliente,
+  criarContrato,
+  anexarContratoPdf,
+  type Cliente,
+  type Contrato,
+} from "@/lib/painel";
 import { OPCOES_SESSAO, TIPOS, nomeCurto, type Tipo } from "@/data/anamnese";
 import { aplicarMascara, formatarDataBRBarra } from "@/lib/mascaras";
 import { ESTADOS_CIVIS, MESES_PT, type ItemContratado } from "@/data/contrato";
@@ -158,21 +164,25 @@ function GerarContrato() {
   const removerItem = (chave: string) =>
     setItens((prev) => (prev.length > 1 ? prev.filter((i) => i.chave !== chave) : prev));
 
-  // Salva o contrato (aba "Contratos" da cliente), gera o PDF a partir da
-  // cópia oculta fora da tela (pdfExportRef — a visível na pré-visualização
-  // está com escala reduzida pra caber na coluna, não dá pra gerar o PDF
-  // direto dela) e baixa automaticamente, sem passar pela janela de
-  // impressão do navegador. Se o salvamento falhar, avisa mas gera o PDF
-  // do mesmo jeito — a Marina pode precisar dele na hora mesmo assim.
-  const baixarContrato = async () => {
-    if (!cliente || !pdfExportRef.current) return;
+  // Salva o contrato (aba "Contratos" da cliente), guarda uma via em PDF
+  // dentro do app automaticamente (gerada a partir da cópia oculta fora da
+  // tela, pdfExportRef — a visível na pré-visualização está com escala
+  // reduzida pra caber na coluna, não dá pra gerar o PDF direto dela) e
+  // abre a impressão do navegador na folha em tamanho real, pra Marina
+  // imprimir e a cliente assinar. Guardar o PDF é melhor esforço: se
+  // falhar, ainda assim manda imprimir — o papel pra assinatura é o que
+  // não pode faltar na hora.
+  const imprimirContrato = async () => {
+    if (!cliente) return;
     setSalvando(true);
     setErroSalvar(null);
     const ano = Number(dataAno) || new Date().getFullYear();
     const mes = String(Number(dataMes) || new Date().getMonth() + 1).padStart(2, "0");
     const dia = String(Number(dataDia) || new Date().getDate()).padStart(2, "0");
+
+    let contrato: Contrato | null = null;
     try {
-      await criarContrato({
+      contrato = await criarContrato({
         clienteId: cliente.id,
         profissao: profissao.trim() || null,
         estadoCivil: estadoCivil.trim() || null,
@@ -185,55 +195,66 @@ function GerarContrato() {
       setErroSalvar(e instanceof Error ? e.message : "Erro ao salvar o contrato.");
     }
 
-    const nomeItens = itens
-      .filter((i) => i.descricao.trim() && i.quantidade.trim())
-      .map((i) => i.descricao)
-      .join(", ");
-    const dataArquivo = `${dia}-${mes}-${ano}`;
-    const nomeArquivo = ["Contrato", cliente.nome, nomeItens, dataArquivo]
-      .filter(Boolean)
-      .join(" - ")
-      // caracteres inválidos em nome de arquivo (Windows/macOS)
-      .replace(/[\\/:*?"<>|]/g, "-");
+    if (contrato && pdfExportRef.current) {
+      const nomeItens = itens
+        .filter((i) => i.descricao.trim() && i.quantidade.trim())
+        .map((i) => i.descricao)
+        .join(", ");
+      const dataArquivo = `${dia}-${mes}-${ano}`;
+      const nomeArquivo = ["Contrato", cliente.nome, nomeItens, dataArquivo]
+        .filter(Boolean)
+        .join(" - ")
+        // caracteres inválidos em nome de arquivo (Windows/macOS)
+        .replace(/[\\/:*?"<>|]/g, "-");
 
-    try {
-      // Imports dinâmicos: mexem com document/canvas — não podem carregar
-      // durante o SSR da rota (esse app roda com ssr: true), só aqui,
-      // quando a Marina já clicou e está no navegador de verdade.
-      const [{ default: html2canvas }, { jsPDF }] = await Promise.all([
-        import("html2canvas-pro"),
-        import("jspdf"),
-      ]);
+      try {
+        // Imports dinâmicos: mexem com document/canvas — não podem carregar
+        // durante o SSR da rota (esse app roda com ssr: true), só aqui,
+        // quando a Marina já clicou e está no navegador de verdade.
+        const [{ default: html2canvas }, { jsPDF }] = await Promise.all([
+          import("html2canvas-pro"),
+          import("jspdf"),
+        ]);
 
-      // Uma página do PDF por .contrato-pagina, cada uma "fotografada"
-      // separadamente e esticada pra ocupar a folha A4 inteira — em vez de
-      // tirar um print da coluna toda e deixar o jsPDF cortar por altura
-      // fixa. Esse corte automático arredonda pra cima (Math.ceil) quando a
-      // altura real passa só um pouquinho de 2 páginas — o que sobra vira
-      // uma 3ª folha praticamente em branco. Página por página, o total
-      // sempre bate com o número de folhas reais do contrato.
-      const paginas = Array.from(
-        pdfExportRef.current.querySelectorAll<HTMLElement>(".contrato-pagina"),
-      );
-      const pdf = new jsPDF({ unit: "mm", format: "a4", orientation: "portrait" });
-      for (let i = 0; i < paginas.length; i++) {
-        const canvas = await html2canvas(paginas[i], { scale: 2, useCORS: true });
-        if (i > 0) pdf.addPage();
-        pdf.addImage(canvas.toDataURL("image/jpeg", 0.98), "JPEG", 0, 0, 210, 297);
+        // Uma página do PDF por .contrato-pagina, cada uma "fotografada"
+        // separadamente e esticada pra ocupar a folha A4 inteira — em vez de
+        // tirar um print da coluna toda e deixar o jsPDF cortar por altura
+        // fixa. Esse corte automático arredonda pra cima (Math.ceil) quando a
+        // altura real passa só um pouquinho de 2 páginas — o que sobra vira
+        // uma 3ª folha praticamente em branco. Página por página, o total
+        // sempre bate com o número de folhas reais do contrato.
+        const paginas = Array.from(
+          pdfExportRef.current.querySelectorAll<HTMLElement>(".contrato-pagina"),
+        );
+        const pdf = new jsPDF({ unit: "mm", format: "a4", orientation: "portrait" });
+        for (let i = 0; i < paginas.length; i++) {
+          const canvas = await html2canvas(paginas[i], { scale: 2, useCORS: true });
+          if (i > 0) pdf.addPage();
+          pdf.addImage(canvas.toDataURL("image/jpeg", 0.98), "JPEG", 0, 0, 210, 297);
+        }
+        const arquivo = new File([pdf.output("blob")], `${nomeArquivo}.pdf`, {
+          type: "application/pdf",
+        });
+        await anexarContratoPdf({ id: contrato.id, clienteId: cliente.id }, arquivo);
+      } catch (e) {
+        setErroSalvar(
+          e instanceof Error ? e.message : "Contrato salvo, mas não deu pra guardar o PDF no app.",
+        );
       }
-      pdf.save(`${nomeArquivo}.pdf`);
-    } catch (e) {
-      setErroSalvar(e instanceof Error ? e.message : "Erro ao gerar o PDF do contrato.");
-      setSalvando(false);
-      return;
     }
 
     setSalvando(false);
-    navigate({
-      to: "/painel/cliente/$id",
-      params: { id: cliente.id },
-      search: { aba: "contratos" },
-    });
+    // Imprime a pré-visualização em tamanho real (ver #contrato-imprimir e o
+    // @media print em styles.css) — abre direto a janela de impressão do
+    // navegador, sem passar por um arquivo baixado antes.
+    window.print();
+    if (contrato) {
+      navigate({
+        to: "/painel/cliente/$id",
+        params: { id: cliente.id },
+        search: { aba: "contratos" },
+      });
+    }
   };
 
   const dados = {
@@ -547,17 +568,20 @@ function GerarContrato() {
 
           <button
             type="button"
-            onClick={baixarContrato}
+            onClick={imprimirContrato}
             disabled={salvando}
             className="w-full inline-flex items-center justify-center gap-2 rounded-full bg-painel-primary text-white px-6 py-3 text-sm font-semibold hover:bg-painel-primary/90 transition-colors disabled:opacity-60"
           >
             {salvando ? (
               <Loader2 className="h-4 w-4 animate-spin" />
             ) : (
-              <Download className="h-4 w-4" />
+              <Printer className="h-4 w-4" />
             )}
-            Baixar contrato (PDF)
+            Salvar e imprimir contrato
           </button>
+          <p className="text-[11px] text-painel-muted text-center">
+            Guarda uma via em PDF aqui no app e já abre a impressão pra cliente assinar.
+          </p>
         </div>
 
         {/* Pré-visualização — o que sai no PDF (2 folhas) */}

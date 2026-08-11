@@ -474,8 +474,11 @@ function AbaFichas({
   );
 }
 
-// Anexa (ou baixa) o PDF do contrato — impresso e salvo pela Marina fora
-// do app, depois anexado aqui pra ficar guardado junto do histórico.
+// Mostra (ou baixa) o PDF do contrato, já anexado automaticamente ao gerar
+// o contrato (ver painel/contrato/$id). "Anexar PDF" fica disponível como
+// reforço — contratos gerados antes dessa mudança, ou se o anexo automático
+// falhar — e também serve pra Marina substituir pela via assinada, se
+// escanear ou fotografar o papel depois da cliente assinar.
 function AnexoContratoPdf({
   contrato,
   clienteId,
