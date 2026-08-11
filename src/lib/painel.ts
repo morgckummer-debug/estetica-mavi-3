@@ -99,8 +99,10 @@ export type Contrato = {
   forma_pagamento: string | null;
   autoriza_foto: boolean;
   data_contrato: string; // "YYYY-MM-DD"
-  // Caminho do PDF assinado, anexado manualmente depois de imprimir (ver
-  // migração 0018_contrato_pdf.sql). Null até a Marina anexar.
+  // Caminho do PDF do contrato no Storage (ver migração 0018_contrato_pdf.sql)
+  // — anexado automaticamente ao gerar o contrato (painel/contrato/$id), ou
+  // manualmente depois, se a Marina preferir guardar a via assinada. Null só
+  // se o anexo automático falhar e ela ainda não tiver anexado na mão.
   pdf_path: string | null;
 };
 
@@ -554,8 +556,9 @@ export async function criarContrato(dados: {
   return arr[0];
 }
 
-// Sobe o PDF (já impresso/salvo pela Marina, fora do app) pro Storage e
-// vincula ao contrato — ver migração 0018_contrato_pdf.sql (bucket
+// Sobe um PDF pro Storage e vincula ao contrato — usado tanto pelo anexo
+// automático ao gerar o contrato (painel/contrato/$id) quanto pelo "Anexar
+// PDF" manual na aba Contratos — ver migração 0018_contrato_pdf.sql (bucket
 // "contratos" + coluna pdf_path). Um upload novo substitui o anterior
 // (mesmo caminho, x-upsert).
 export async function anexarContratoPdf(
