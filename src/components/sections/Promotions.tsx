@@ -111,7 +111,7 @@ export function Promotions() {
           >
             {promotions.map((promo, i) => {
               const whatsappMsg = encodeURIComponent(
-                `Olá! Vi a promoção *${promo.title}* (Arraiá Mavi) no site e gostaria de saber mais!`
+                `Olá! Vi a promoção *${promo.title}* (Esquenta de Aniversário Mavi) no site e gostaria de saber mais!`
               );
 
               const openWhatsapp = () =>
