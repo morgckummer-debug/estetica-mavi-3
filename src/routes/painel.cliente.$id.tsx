@@ -800,19 +800,22 @@ function PaginaCliente() {
     }
   };
 
-  // Cadastro não é tratamento — não entra na lista de procedimentos do
-  // histórico de sessões.
+  // Cadastro não é tratamento — já tem sua própria aba, não entra na lista
+  // de fichas nem no histórico de sessões.
+  const fichasTratamento = useMemo(
+    () => (fichas ?? []).filter((f) => f.tipo !== "cadastro"),
+    [fichas],
+  );
+
   const procedimentos: Procedimento[] = useMemo(
     () =>
-      (fichas ?? [])
-        .filter((f) => f.tipo !== "cadastro")
-        .map((f) => ({
-          id: f.id,
-          tipo: f.tipo,
-          nome: f.nome,
-          pacotes: f.pacotes ?? {},
-        })),
-    [fichas],
+      fichasTratamento.map((f) => ({
+        id: f.id,
+        tipo: f.tipo,
+        nome: f.nome,
+        pacotes: f.pacotes ?? {},
+      })),
+    [fichasTratamento],
   );
 
   // Sugere de cara um procedimento que a cliente ainda não tem ficha.
@@ -876,7 +879,7 @@ function PaginaCliente() {
               <p className="text-[13px] text-white/60 mt-2">
                 {cliente.telefone ? mascaraTelefone(cliente.telefone) : "sem telefone"}
                 {" · "}
-                {fichas.length} ficha(s)
+                {fichasTratamento.length} ficha(s)
               </p>
             </div>
             <div className="flex items-center gap-2 shrink-0">
@@ -980,7 +983,7 @@ function PaginaCliente() {
               ].join(" ")}
             >
               {a.label}
-              {a.id === "fichas" && ` (${fichas.length})`}
+              {a.id === "fichas" && ` (${fichasTratamento.length})`}
               {a.id === "contratos" && contratos ? ` (${contratos.length})` : ""}
             </button>
           ))}
@@ -994,7 +997,7 @@ function PaginaCliente() {
           />
         )}
         {aba === "fichas" && (
-          <AbaFichas fichas={fichas} cliente={cliente} tipoSugerido={tipoSugerido} />
+          <AbaFichas fichas={fichasTratamento} cliente={cliente} tipoSugerido={tipoSugerido} />
         )}
         {aba === "historico" && (
           <HistoricoSessoes
