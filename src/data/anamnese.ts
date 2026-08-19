@@ -316,6 +316,8 @@ const CORPORAL: DefinicaoFicha = {
     { id: "cintura", label: "Cintura" },
     { id: "quadril", label: "Quadril" },
     { id: "culote", label: "Culote" },
+    { id: "gluteoDir", label: "Glúteo Dir." },
+    { id: "gluteoEsq", label: "Glúteo Esq." },
     { id: "coxaDir", label: "Coxa Dir." },
     { id: "coxaEsq", label: "Coxa Esq." },
     { id: "panturrilhaDir", label: "Panturrilha Dir." },
