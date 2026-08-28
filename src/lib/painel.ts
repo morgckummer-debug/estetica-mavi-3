@@ -943,3 +943,32 @@ export async function excluirFichaDefinitivamente(id: string): Promise<void> {
     throw new Error("A exclusão não foi salva no banco (permissão de excluir fichas ausente).");
   }
 }
+
+// Backup manual, disparado pelo botão "Fazer backup" no menu do painel.
+// Baixa TUDO (inclusive fichas/clientes já excluídos, para o caso de
+// exclusão por engano) direto do Supabase para um .json no computador de
+// quem clicou — não depende de nenhuma infraestrutura nova, só das mesmas
+// policies "authenticated pode ler" que já liberam a leitura dessas tabelas
+// para quem está logada no painel.
+const TABELAS_BACKUP = ["clientes", "fichas", "sessoes", "contratos", "relatorios_pacote"] as const;
+
+export async function gerarBackupCompleto(): Promise<{ nomeArquivo: string; conteudo: Blob }> {
+  const dados: Record<string, unknown[]> = {};
+  for (const tabela of TABELAS_BACKUP) {
+    const res = await apiRest(`${tabela}?select=*`);
+    if (!res.ok) {
+      throw new Error(`Não foi possível ler a tabela "${tabela}" para o backup.`);
+    }
+    dados[tabela] = (await res.json()) as unknown[];
+  }
+
+  const agora = new Date();
+  const pacote = {
+    gerado_em: agora.toISOString(),
+    origem: "botao-manual-painel",
+    tabelas: dados,
+  };
+  const conteudo = new Blob([JSON.stringify(pacote, null, 2)], { type: "application/json" });
+  const carimbo = agora.toISOString().slice(0, 19).replace(/[:T]/g, "-");
+  return { nomeArquivo: `backup-mavi-${carimbo}.json`, conteudo };
+}
