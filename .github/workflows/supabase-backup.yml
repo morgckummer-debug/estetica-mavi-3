@@ -1,0 +1,125 @@
+# Backup diário do banco (clientes, fichas, sessões, contratos e
+# relatórios de pacote), guardado num bucket PRIVADO do Storage do próprio
+# Supabase — nunca no Git, porque este repositório é PÚBLICO no GitHub e
+# gravar dado de cliente ali exporia nome, CPF, telefone e respostas de
+# anamnese pra qualquer pessoa.
+#
+# Por quê ter isso, já existindo o keep-alive (supabase-keepalive.yml): o
+# keep-alive evita que o projeto pause por inatividade, mas não protege
+# contra perder dado por outro motivo — exclusão em massa por engano, bug
+# numa migração. Este backup cobre esse caso: se precisar recuperar,
+# Supabase → Storage → bucket "backups" tem uma cópia de cada dia.
+#
+# ANTES DE FUNCIONAR (duas coisas, uma única vez):
+#
+# 1. Rode supabase/migrations/20260828130000_backups_bucket.sql no SQL
+#    Editor do Supabase — cria o bucket privado "backups".
+#
+# 2. Cadastre a chave secreta do Supabase como Secret (não Variable — essa
+#    chave dá acesso total ao banco e ao storage, ignorando o RLS):
+#    Settings → Secrets and variables → Actions → Secrets → New repository
+#    secret → nome SUPABASE_SERVICE_ROLE_KEY → valor em Supabase → Project
+#    Settings → API Keys → "service_role" (secret).
+#
+# Sem os dois passos acima o job falha (e o GitHub avisa por e-mail — é
+# esse o aviso que se quer receber).
+name: Backup diário do Supabase
+
+on:
+  schedule:
+    # 09:35 UTC = 06:35 em Brasília, todo dia (logo depois do keep-alive).
+    - cron: '35 9 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: supabase-backup
+  cancel-in-progress: false
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      URL: ${{ vars.SUPABASE_URL || 'https://jjkmgkorqzbroebhksca.supabase.co' }}
+      CHAVE: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+    steps:
+      - name: Conferir se a chave secreta foi cadastrada
+        run: |
+          if [ -z "$CHAVE" ]; then
+            echo "::error::Falta o secret SUPABASE_SERVICE_ROLE_KEY (Settings → Secrets and variables → Actions). Veja o comentário no topo deste workflow."
+            exit 1
+          fi
+
+      - name: Baixar as tabelas do Supabase
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/backup
+          for TABELA in clientes fichas sessoes contratos relatorios_pacote; do
+            curl --fail-with-body -sS "$URL/rest/v1/$TABELA?select=*" \
+              -H "apikey: $CHAVE" \
+              -H "Authorization: Bearer $CHAVE" \
+              -o "/tmp/backup/$TABELA.json"
+          done
+
+      - name: Montar o pacote de backup do dia
+        run: |
+          set -euo pipefail
+          jq -n \
+            --arg gerado_em "$(date -u +%FT%TZ)" \
+            --arg origem "github-actions-diario" \
+            --slurpfile clientes /tmp/backup/clientes.json \
+            --slurpfile fichas /tmp/backup/fichas.json \
+            --slurpfile sessoes /tmp/backup/sessoes.json \
+            --slurpfile contratos /tmp/backup/contratos.json \
+            --slurpfile relatorios_pacote /tmp/backup/relatorios_pacote.json \
+            '{
+              gerado_em: $gerado_em,
+              origem: $origem,
+              tabelas: {
+                clientes: $clientes[0],
+                fichas: $fichas[0],
+                sessoes: $sessoes[0],
+                contratos: $contratos[0],
+                relatorios_pacote: $relatorios_pacote[0]
+              }
+            }' > /tmp/backup/pacote.json
+          echo "DATA=$(date -u +%F)" >> "$GITHUB_ENV"
+
+      - name: Subir para o bucket privado "backups"
+        run: |
+          set -euo pipefail
+          curl --fail-with-body -sS -X POST "$URL/storage/v1/object/backups/$DATA.json" \
+            -H "apikey: $CHAVE" \
+            -H "Authorization: Bearer $CHAVE" \
+            -H "Content-Type: application/json" \
+            -H "x-upsert: true" \
+            --data-binary @/tmp/backup/pacote.json
+          echo
+
+      - name: Apagar backups com mais de 120 dias
+        run: |
+          set -euo pipefail
+          LIMITE="$(date -u -d '120 days ago' +%F 2>/dev/null || date -u -v-120d +%F)"
+          curl --fail-with-body -sS -X POST "$URL/storage/v1/object/list/backups" \
+            -H "apikey: $CHAVE" \
+            -H "Authorization: Bearer $CHAVE" \
+            -H "Content-Type: application/json" \
+            -d '{"limit": 1000, "sortBy": {"column": "name", "order": "asc"}}' \
+            | jq -r --arg limite "$LIMITE" \
+              '.[] | select(.name < ($limite + ".json")) | .name' \
+            > /tmp/backup/antigos.txt || true
+
+          if [ -s /tmp/backup/antigos.txt ]; then
+            NOMES="$(jq -R . < /tmp/backup/antigos.txt | jq -s .)"
+            curl --fail-with-body -sS -X DELETE "$URL/storage/v1/object/backups" \
+              -H "apikey: $CHAVE" \
+              -H "Authorization: Bearer $CHAVE" \
+              -H "Content-Type: application/json" \
+              -d "{\"prefixes\": $NOMES}"
+            echo
+          else
+            echo "Nenhum backup com mais de 120 dias."
+          fi

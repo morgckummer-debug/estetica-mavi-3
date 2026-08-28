@@ -1,9 +1,16 @@
 import { useEffect, useRef, useState } from "react";
 import { createFileRoute, Outlet, useNavigate, Link } from "@tanstack/react-router";
-import { LogOut, Loader2, KeyRound, Check, X, ChevronDown } from "lucide-react";
+import { LogOut, Loader2, KeyRound, Check, X, ChevronDown, Download } from "lucide-react";
 import { SITE_URL } from "@/data/services";
 import { supabaseConfigurado } from "@/lib/supabase";
-import { entrar, sair, sessaoValida, trocarSenha, type Sessao } from "@/lib/painel";
+import {
+  entrar,
+  sair,
+  sessaoValida,
+  trocarSenha,
+  gerarBackupCompleto,
+  type Sessao,
+} from "@/lib/painel";
 import logo from "@/assets/logo-mavi.png";
 import { RamosWatermark } from "@/components/RamosWatermark";
 import { PainelModal } from "@/components/PainelModal";
@@ -256,10 +263,14 @@ function TrocarSenhaForm({ onFechar }: { onFechar: () => void }) {
 function MenuUsuario({
   nome,
   onTrocarSenha,
+  onBackup,
+  fazendoBackup,
   onSair,
 }: {
   nome: string;
   onTrocarSenha: () => void;
+  onBackup: () => void;
+  fazendoBackup: boolean;
   onSair: () => void;
 }) {
   const [aberto, setAberto] = useState(false);
@@ -305,6 +316,22 @@ function MenuUsuario({
           </button>
           <button
             type="button"
+            disabled={fazendoBackup}
+            onClick={() => {
+              setAberto(false);
+              onBackup();
+            }}
+            className="flex w-full items-center gap-2 px-4 py-2.5 text-sm text-painel-title hover:bg-painel-badge-bg/40 transition-colors disabled:opacity-40"
+          >
+            {fazendoBackup ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Download className="h-4 w-4" />
+            )}
+            Fazer backup
+          </button>
+          <button
+            type="button"
             onClick={() => {
               setAberto(false);
               onSair();
@@ -324,8 +351,28 @@ function PainelLayout() {
   const [estado, setEstado] = useState<"carregando" | "logado" | "deslogado">("carregando");
   const [email, setEmail] = useState<string | undefined>();
   const [trocandoSenha, setTrocandoSenha] = useState(false);
+  const [fazendoBackup, setFazendoBackup] = useState(false);
   const navigate = useNavigate();
   const { next } = Route.useSearch();
+
+  const baixarBackup = async () => {
+    setFazendoBackup(true);
+    try {
+      const { nomeArquivo, conteudo } = await gerarBackupCompleto();
+      const url = URL.createObjectURL(conteudo);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = nomeArquivo;
+      link.click();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      window.alert(
+        err instanceof Error ? err.message : "Não foi possível gerar o backup. Tente novamente.",
+      );
+    } finally {
+      setFazendoBackup(false);
+    }
+  };
 
   // Depois que a sessão ficar válida (login novo ou já tinha sessão), se a URL
   // trouxer ?next=/caminho relativo, redireciona pra lá — usado pela tela de
@@ -407,6 +454,8 @@ function PainelLayout() {
             <MenuUsuario
               nome={nomeExibicao(email)}
               onTrocarSenha={() => setTrocandoSenha(true)}
+              onBackup={baixarBackup}
+              fazendoBackup={fazendoBackup}
               onSair={() => {
                 sair();
                 setEstado("deslogado");
