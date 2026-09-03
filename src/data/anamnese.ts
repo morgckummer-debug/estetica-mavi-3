@@ -753,6 +753,28 @@ const FACIAL: DefinicaoFicha = {
   ],
 };
 
+// Áreas de depilação — usadas tanto no passo "Áreas" da ficha quanto no
+// registro de sessões do painel (para a Marina marcar o que foi feito).
+export const AREAS_DEPILACAO: string[] = [
+  "Abdômen",
+  "Axilas",
+  "Buço",
+  "Coxa",
+  "Dedos",
+  "Glúteos",
+  "Linha Alba Infra",
+  "Linha Alba Supra",
+  "Mãos",
+  "Meia-perna",
+  "Perianal",
+  "Pescoço",
+  "Queixo",
+  "Rosto",
+  "Tórax",
+  "Virilha",
+  "Virilha completa",
+];
+
 // ---------- DEPILAÇÃO (transcrita do papel da Mavi) ----------
 const LASER: DefinicaoFicha = {
   tipo: "laser",
@@ -914,15 +936,7 @@ const LASER: DefinicaoFicha = {
           id: "areas",
           label: "Área(s) a depilar",
           obrigatorio: true,
-          opcoes: [
-            "Axilas",
-            "Seios e/ou abdômen",
-            "Braço/antebraço",
-            "Virilha",
-            "Coxa e/ou canela",
-            "Glúteos e extras",
-            "Linha alba",
-          ],
+          opcoes: AREAS_DEPILACAO,
         },
       ],
     },
@@ -935,28 +949,6 @@ export const FICHAS: Record<Tipo, DefinicaoFicha> = {
   laser: LASER,
   cadastro: CADASTRO,
 };
-
-// Áreas de depilação, reaproveitadas no registro de sessões do painel
-// (mesma lista da ficha a laser, para a Marina marcar o que foi feito).
-export const AREAS_DEPILACAO: string[] = [
-  "Abdômen",
-  "Axilas",
-  "Buço",
-  "Coxa",
-  "Dedos",
-  "Glúteos",
-  "Linha Alba Infra",
-  "Linha Alba Supra",
-  "Mãos",
-  "Meia-perna",
-  "Perianal",
-  "Pescoço",
-  "Queixo",
-  "Rosto",
-  "Tórax",
-  "Virilha",
-  "Virilha completa",
-];
 
 // Botões de "o que foi feito" no registro de sessão, por tipo de ficha.
 // Baseados nos serviços reais da MAVI. A Marina sempre pode complementar
