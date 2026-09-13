@@ -22,24 +22,24 @@ export type Promotion = {
 
 export const promotions: Promotion[] = [
   {
-    id: "combo-amigas",
-    image: "/aniversario-combo-amigas.jpeg",
-    title: "Combo das Amigas — Virilha Completa + Perianal + Axilas (10x R$159,99)",
+    id: "drenagem-mavi",
+    image: "/aniversario-drenagem-mavi.jpeg",
+    title: "Drenagem Linfática Método MAVI — 10 sessões ganha +3 sessões (R$1.000,00 em até 6x)",
   },
   {
     id: "fem-vpac-coxa",
     image: "/aniversario-fem-vpac-coxa.jpeg",
-    title: "Laser Feminina — Virilha + Perianal + Axilas + Canela + Coxa (10x R$199,99)",
+    title: "Laser Feminina — Virilha Completa + Perianal + Canela + Coxa ganha 10 sessões de Axilas (10x R$199,99)",
   },
   {
     id: "fem-vpac",
     image: "/aniversario-fem-vpac.jpeg",
-    title: "Laser Feminina — Virilha + Perianal + Axilas + Canela (10x R$149,99)",
+    title: "Laser Feminina — Virilha Completa + Perianal + Axilas + Canela (10x R$149,99)",
   },
   {
     id: "fem-vpa",
     image: "/aniversario-fem-vpa.jpeg",
-    title: "Laser Feminina — Virilha + Perianal + Axilas (10x R$99,99)",
+    title: "Laser Feminina — Virilha Completa + Perianal + Axilas (10x R$99,99)",
   },
   {
     id: "canela-coxa",
@@ -49,7 +49,7 @@ export const promotions: Promotion[] = [
   {
     id: "fem-axilas",
     image: "/aniversario-fem-axilas.jpeg",
-    title: "Laser Feminina — Axilas (R$149,99 à vista)",
+    title: "Laser Feminina — Axilas (R$99,99 à vista)",
   },
   {
     id: "masc-torax-abdomen",
@@ -69,7 +69,7 @@ export const promotions: Promotion[] = [
   {
     id: "power-redux",
     image: "/aniversario-power-redux.jpeg",
-    title: "Combo das Amigas — Power Redux — 10 sessões (10x R$299,99)",
+    title: "Power Redux — 10 sessões, de R$4.500,00 por R$1.999,99 (até 6x no cartão)",
   },
   {
     id: "max-pos-parto",
@@ -84,7 +84,7 @@ export const promotions: Promotion[] = [
   {
     id: "limpeza-pele",
     image: "/aniversario-limpeza-pele.jpeg",
-    title: "Limpeza de Pele Profunda (R$150,00 à vista)",
+    title: "Limpeza de Pele ganha 1 sessão de Peeling (R$150,00 à vista)",
   },
   {
     id: "massagem-relaxante",
