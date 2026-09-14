@@ -114,8 +114,6 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { property: "og:image:height", content: "630" },
       { property: "og:image:alt", content: "MAVI Centro de Estética — Sete Lagoas, MG" },
       { name: "twitter:image", content: `${SITE_URL}${ogSocial.url}` },
-      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/bb80b404-3a0a-4f67-bf6a-10ebb2e25d08/id-preview-686e6bf1--912ca056-41ca-4b5c-b5f8-f3d3c13513fe.lovable.app-1784476093999.png" },
-      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/bb80b404-3a0a-4f67-bf6a-10ebb2e25d08/id-preview-686e6bf1--912ca056-41ca-4b5c-b5f8-f3d3c13513fe.lovable.app-1784476093999.png" },
     ],
     links: [
       {
