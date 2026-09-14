@@ -3,6 +3,7 @@
 // guardada no navegador (localStorage) e é renovada automaticamente.
 
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./supabase";
+import { SITE_URL } from "@/data/services";
 import type { Tipo } from "@/data/anamnese";
 
 const CHAVE_SESSAO = "mavi_sessao";
@@ -173,10 +174,12 @@ export async function recuperarSenha(email: string): Promise<void> {
   if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
     throw new Error("Supabase não configurado. Verifique as variáveis de ambiente.");
   }
-  const redirectTo =
-    typeof window !== "undefined" ? `${window.location.origin}/redefinir-senha` : undefined;
+  // Domínio fixo (não window.location.origin) — senão o link do e-mail
+  // pode sair apontando pra um domínio de preview temporário (Vercel/
+  // Lovable) em vez do site publicado, se alguém acessar o painel por lá.
+  const redirectTo = `${SITE_URL}/redefinir-senha`;
   const res = await fetch(
-    `${SUPABASE_URL}/auth/v1/recover${redirectTo ? `?redirect_to=${encodeURIComponent(redirectTo)}` : ""}`,
+    `${SUPABASE_URL}/auth/v1/recover?redirect_to=${encodeURIComponent(redirectTo)}`,
     {
       method: "POST",
       headers: authHeaders(),
