@@ -166,6 +166,71 @@ export async function entrar(email: string, senha: string): Promise<Sessao> {
   return sessao;
 }
 
+// Dispara o e-mail de recuperação de senha (Supabase Auth) — o link leva
+// para /redefinir-senha, que lê o token do fragmento da URL e permite
+// escolher uma senha nova.
+export async function recuperarSenha(email: string): Promise<void> {
+  if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+    throw new Error("Supabase não configurado. Verifique as variáveis de ambiente.");
+  }
+  const redirectTo =
+    typeof window !== "undefined" ? `${window.location.origin}/redefinir-senha` : undefined;
+  const res = await fetch(
+    `${SUPABASE_URL}/auth/v1/recover${redirectTo ? `?redirect_to=${encodeURIComponent(redirectTo)}` : ""}`,
+    {
+      method: "POST",
+      headers: authHeaders(),
+      body: JSON.stringify({ email }),
+    },
+  );
+  if (!res.ok) {
+    const err = (await res.json().catch(() => ({}))) as {
+      error_description?: string;
+      msg?: string;
+    };
+    throw new Error(
+      err.error_description || err.msg || "Não foi possível enviar o e-mail de recuperação.",
+    );
+  }
+}
+
+// Define a senha nova a partir do access_token de recuperação (vindo do
+// link do e-mail) e já guarda a sessão resultante — quem clica no link do
+// e-mail e troca a senha cai logada direto no painel.
+export async function definirNovaSenha(
+  tokens: { access_token: string; refresh_token: string; expires_in?: number },
+  novaSenha: string,
+): Promise<Sessao> {
+  if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+    throw new Error("Supabase não configurado. Verifique as variáveis de ambiente.");
+  }
+  const res = await fetch(`${SUPABASE_URL}/auth/v1/user`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+      apikey: SUPABASE_ANON_KEY,
+      Authorization: `Bearer ${tokens.access_token}`,
+    },
+    body: JSON.stringify({ password: novaSenha }),
+  });
+  if (!res.ok) {
+    const err = (await res.json().catch(() => ({}))) as {
+      error_description?: string;
+      msg?: string;
+    };
+    throw new Error(err.error_description || err.msg || "Não foi possível definir a nova senha.");
+  }
+  const data = (await res.json()) as { email?: string };
+  const sessao: Sessao = {
+    access_token: tokens.access_token,
+    refresh_token: tokens.refresh_token,
+    expires_at: agora() + (tokens.expires_in ?? 3600),
+    email: data.email,
+  };
+  salvarSessao(sessao);
+  return sessao;
+}
+
 async function renovar(sessao: Sessao): Promise<Sessao | null> {
   if (!SUPABASE_URL || !SUPABASE_ANON_KEY) return null;
   const res = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=refresh_token`, {

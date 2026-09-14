@@ -8,6 +8,7 @@ import {
   sair,
   sessaoValida,
   trocarSenha,
+  recuperarSenha,
   gerarBackupCompleto,
   type Sessao,
 } from "@/lib/painel";
@@ -40,15 +41,17 @@ export const Route = createFileRoute("/painel")({
   component: PainelLayout,
 });
 
+const USUARIAS = [
+  { nome: "Morgana", email: "morgckummer@gmail.com" },
+  { nome: "Marina", email: "morganamavi26@gmail.com" },
+] as const;
+
 function LoginForm({ onEntrar }: { onEntrar: (s: Sessao) => void }) {
-  const USUARIAS = [
-    { nome: "Morgana", email: "morgckummer@gmail.com" },
-    { nome: "Marina", email: "morganamavi26@gmail.com" },
-  ] as const;
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
   const [erro, setErro] = useState<string | null>(null);
   const [carregando, setCarregando] = useState(false);
+  const [esqueciSenha, setEsqueciSenha] = useState(false);
 
   const submeter = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -130,6 +133,13 @@ function LoginForm({ onEntrar }: { onEntrar: (s: Sessao) => void }) {
                 autoComplete="current-password"
                 className="w-full rounded-xl border border-painel-border bg-painel-bg px-4 py-3.5 text-sm text-painel-title focus:outline-none focus:ring-2 focus:ring-painel-primary/40"
               />
+              <button
+                type="button"
+                onClick={() => setEsqueciSenha(true)}
+                className="mt-2 text-xs font-medium text-painel-primary hover:underline"
+              >
+                Esqueci minha senha
+              </button>
             </div>
 
             {erro && (
@@ -149,7 +159,100 @@ function LoginForm({ onEntrar }: { onEntrar: (s: Sessao) => void }) {
           </form>
         </div>
       </div>
+
+      {esqueciSenha && <EsqueciSenhaForm onFechar={() => setEsqueciSenha(false)} />}
     </section>
+  );
+}
+
+function EsqueciSenhaForm({ onFechar }: { onFechar: () => void }) {
+  const [email, setEmail] = useState("");
+  const [erro, setErro] = useState<string | null>(null);
+  const [enviando, setEnviando] = useState(false);
+  const [enviado, setEnviado] = useState(false);
+
+  const submeter = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setErro(null);
+    if (!email) {
+      setErro("Selecione a usuária.");
+      return;
+    }
+    setEnviando(true);
+    try {
+      await recuperarSenha(email);
+      setEnviado(true);
+    } catch (err) {
+      setErro(err instanceof Error ? err.message : "Não foi possível enviar o e-mail.");
+    } finally {
+      setEnviando(false);
+    }
+  };
+
+  return (
+    <PainelModal onFechar={onFechar}>
+      <div className="flex items-center justify-between gap-2 mb-4">
+        <div className="flex items-center gap-2">
+          <KeyRound className="h-4 w-4 text-painel-lilac-soft" />
+          <h3 className="font-medium text-white">Esqueci minha senha</h3>
+        </div>
+        <button
+          type="button"
+          onClick={onFechar}
+          title="Fechar"
+          className="text-white/50 hover:text-white transition-colors"
+        >
+          <X className="h-4 w-4" />
+        </button>
+      </div>
+
+      {enviado ? (
+        <p className="text-sm text-painel-lilac-soft">
+          Enviamos um link de redefinição para o e-mail de {email}. Confira a caixa de entrada (e o
+          spam) e clique no link para escolher uma senha nova.
+        </p>
+      ) : (
+        <form onSubmit={submeter} className="space-y-3">
+          <div>
+            <label className="block text-xs font-medium text-white/60 mb-1.5">Usuária</label>
+            <select
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              className="w-full rounded-xl border border-white/20 bg-white/10 px-4 py-2.5 text-sm text-white focus:outline-none focus:ring-2 focus:ring-painel-lilac-soft/50"
+            >
+              <option value="" disabled className="text-painel-title">
+                Selecione…
+              </option>
+              {USUARIAS.map((u) => (
+                <option key={u.email} value={u.email} className="text-painel-title">
+                  {u.nome}
+                </option>
+              ))}
+            </select>
+          </div>
+          {erro && <p className="text-sm text-rose-300">{erro}</p>}
+          <div className="flex items-center gap-2">
+            <button
+              type="submit"
+              disabled={enviando || !email}
+              className="inline-flex items-center gap-1.5 rounded-full bg-painel-primary text-white px-4 py-2 text-sm font-medium hover:bg-painel-primary/90 transition-colors disabled:opacity-40"
+            >
+              {enviando ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
+              Enviar link
+            </button>
+            <button
+              type="button"
+              onClick={onFechar}
+              disabled={enviando}
+              className="rounded-full border border-white/20 px-4 py-2 text-sm font-medium text-white/70 hover:border-white/40 transition-colors disabled:opacity-40"
+            >
+              Cancelar
+            </button>
+          </div>
+        </form>
+      )}
+    </PainelModal>
   );
 }
 
