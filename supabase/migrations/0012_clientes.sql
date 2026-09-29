@@ -52,6 +52,11 @@ create index if not exists clientes_excluida_idx on public.clientes (excluida);
 -- ------------------------------------------------------------
 alter table public.clientes enable row level security;
 
+-- Data API: a partir de 30/out/2026 o Supabase não concede mais acesso
+-- automático a tabelas novas em public; o grant precisa ser explícito.
+grant select, insert, update, delete on public.clientes to authenticated;
+grant select, insert, update, delete on public.clientes to service_role;
+
 drop policy if exists "authenticated pode ler clientes" on public.clientes;
 create policy "authenticated pode ler clientes"
   on public.clientes for select

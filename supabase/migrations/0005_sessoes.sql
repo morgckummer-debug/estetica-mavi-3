@@ -37,6 +37,11 @@ create index if not exists sessoes_token_idx on public.sessoes (token);
 -- ------------------------------------------------------------
 alter table public.sessoes enable row level security;
 
+-- Data API: a partir de 30/out/2026 o Supabase não concede mais acesso
+-- automático a tabelas novas em public; o grant precisa ser explícito.
+grant select, insert, update, delete on public.sessoes to authenticated;
+grant select, insert, update, delete on public.sessoes to service_role;
+
 drop policy if exists "authenticated pode ler sessoes" on public.sessoes;
 create policy "authenticated pode ler sessoes"
   on public.sessoes for select

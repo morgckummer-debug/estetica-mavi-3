@@ -28,6 +28,11 @@ insert into public.manutencao_keepalive (id) values (1) on conflict (id) do noth
 -- data. Mesmo assim fica com RLS ligado, para não destoar do resto.
 alter table public.manutencao_keepalive enable row level security;
 
+-- Data API: a partir de 30/out/2026 o Supabase não concede mais acesso
+-- automático a tabelas novas em public; o grant precisa ser explícito.
+grant select on public.manutencao_keepalive to authenticated;
+grant select, insert, update, delete on public.manutencao_keepalive to service_role;
+
 drop policy if exists authenticated_select_keepalive on public.manutencao_keepalive;
 
 create policy authenticated_select_keepalive

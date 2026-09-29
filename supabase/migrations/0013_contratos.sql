@@ -33,6 +33,11 @@ create index if not exists contratos_cliente_idx on public.contratos (cliente_id
 -- ------------------------------------------------------------
 alter table public.contratos enable row level security;
 
+-- Data API: a partir de 30/out/2026 o Supabase não concede mais acesso
+-- automático a tabelas novas em public; o grant precisa ser explícito.
+grant select, insert, update, delete on public.contratos to authenticated;
+grant select, insert, update, delete on public.contratos to service_role;
+
 drop policy if exists "authenticated pode ler contratos" on public.contratos;
 create policy "authenticated pode ler contratos"
   on public.contratos for select
