@@ -34,6 +34,12 @@ create index if not exists relatorios_pacote_token_idx on public.relatorios_paco
 
 alter table public.relatorios_pacote enable row level security;
 
+-- Data API: a partir de 30/out/2026 o Supabase não concede mais acesso
+-- automático a tabelas novas em public; o grant precisa ser explícito.
+grant select on public.relatorios_pacote to anon;
+grant select, insert, update, delete on public.relatorios_pacote to authenticated;
+grant select, insert, update, delete on public.relatorios_pacote to service_role;
+
 drop policy if exists "authenticated pode gerenciar relatorios" on public.relatorios_pacote;
 create policy "authenticated pode gerenciar relatorios"
   on public.relatorios_pacote for all

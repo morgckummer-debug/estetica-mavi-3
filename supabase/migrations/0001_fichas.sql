@@ -35,6 +35,12 @@ create index if not exists fichas_nome_idx on public.fichas (lower(nome));
 -- ------------------------------------------------------------
 alter table public.fichas enable row level security;
 
+-- Data API: a partir de 30/out/2026 o Supabase não concede mais acesso
+-- automático a tabelas novas em public; o grant precisa ser explícito.
+grant insert on public.fichas to anon;
+grant select, insert, update, delete on public.fichas to authenticated;
+grant select, insert, update, delete on public.fichas to service_role;
+
 -- Marina (qualquer usuário autenticado) pode ler as fichas
 drop policy if exists "authenticated pode ler fichas" on public.fichas;
 create policy "authenticated pode ler fichas"
