@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 
+import { enviarEmailConfirmacao } from "./agenda-email.server";
 import { colunaUnica, rpc } from "./rpc";
 
 // Agendamento online (páginas públicas /agendar e /agendamento/<token>).
@@ -35,6 +36,8 @@ export type ResultadoAgendar =
       fim: string;
       servico: string;
       primeiro_nome: string;
+      // true quando o e-mail de confirmação foi enviado.
+      email_enviado?: boolean;
     }
   | { ok: false; erro: ErroAgenda };
 
@@ -108,7 +111,7 @@ export const agendar = createServerFn({ method: "POST" })
         primeiro_nome: data.nome.split(" ")[0],
       };
     }
-    return (await rpc("agenda_agendar", {
+    const r = (await rpc("agenda_agendar", {
       p_servico_id: data.servicoId,
       p_inicio: data.inicio,
       p_nome: data.nome,
@@ -116,6 +119,20 @@ export const agendar = createServerFn({ method: "POST" })
       p_email: data.email ?? "",
       p_areas: data.areas ?? [],
     })) as ResultadoAgendar;
+
+    // E-mail de confirmação (opcional): se falhar, o agendamento continua valendo.
+    if (r.ok && r.token && data.email) {
+      const envio = await enviarEmailConfirmacao({
+        para: data.email,
+        primeiroNome: r.primeiro_nome,
+        servico: r.servico,
+        inicio: r.inicio,
+        fim: r.fim,
+        token: r.token,
+      });
+      return { ...r, email_enviado: envio === "enviado" };
+    }
+    return r;
   });
 
 // Dados mínimos para a página do link da cliente. Null se o link não existe.

@@ -35,7 +35,7 @@ const btnPrincipal =
   "inline-flex w-full items-center justify-center gap-2 rounded-full bg-primary px-7 py-4 text-base font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-40";
 
 const MENSAGEM_ERRO: Partial<Record<ErroAgenda, string>> = {
-  dados_invalidos: "Confira seu nome e WhatsApp (com DDD).",
+  dados_invalidos: "Confira seu nome, WhatsApp (com DDD) e e-mail.",
   limite_agendamentos:
     "Você já tem horários marcados. Para marcar mais um, fale com a gente pelo WhatsApp.",
   servico_invalido: "Esse serviço não está disponível agora. Escolha outro.",
@@ -64,6 +64,7 @@ export function PaginaAgendar() {
 
   const [nome, setNome] = useState("");
   const [telefone, setTelefone] = useState("");
+  const [email, setEmail] = useState("");
   const [isca, setIsca] = useState("");
   const [enviando, setEnviando] = useState(false);
   const [copiado, setCopiado] = useState(false);
@@ -115,6 +116,7 @@ export function PaginaAgendar() {
           inicio,
           nome: nome.trim(),
           telefone,
+          email: email.trim(),
           website: isca,
         },
       });
@@ -325,6 +327,25 @@ export function PaginaAgendar() {
                   className={campo}
                 />
               </div>
+              <div>
+                <label className={rotulo} htmlFor="ag-email">
+                  E-mail <span className="font-normal text-muted-foreground">(opcional)</span>
+                </label>
+                <input
+                  id="ag-email"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  maxLength={200}
+                  autoComplete="email"
+                  className={campo}
+                />
+                <p className="mt-1.5 text-xs text-muted-foreground">
+                  Se quiser, enviamos a confirmação para o seu e-mail, com o botão para cancelar ou
+                  reagendar.
+                </p>
+              </div>
+
               {/* Campo-isca: invisível para pessoas, robôs costumam preencher. */}
               <div aria-hidden="true" className="absolute -left-[9999px] h-0 w-0 overflow-hidden">
                 <label htmlFor="ag-site">Site</label>
@@ -397,6 +418,11 @@ export function PaginaAgendar() {
             <p className="mt-3 text-muted-foreground">
               Obrigada, {resultado.primeiro_nome}. Seu horário está reservado.
             </p>
+            {resultado.email_enviado && (
+              <p className="mt-2 text-sm text-muted-foreground">
+                Enviamos a confirmação para o seu e-mail. 💌
+              </p>
+            )}
 
             <div className="mt-6 rounded-2xl border border-border bg-card p-5 text-left">
               <p className="text-xs uppercase tracking-widest text-muted-foreground">Seu horário</p>
