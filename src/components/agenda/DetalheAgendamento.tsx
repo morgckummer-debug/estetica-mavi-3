@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { CalendarClock, Check, Loader2, MessageCircle, UserRound, X } from "lucide-react";
+import { useEffect, useState } from "react";
+import { CalendarClock, Check, Loader2, MessageCircle, Send, UserRound, X } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import {
   cancelarAgendamento,
@@ -11,7 +11,11 @@ import {
   type AgendaServico,
   type Agendamento,
 } from "@/lib/agenda";
-import { linkWhatsappContato } from "@/lib/whatsapp";
+import { linkWhatsappContato, linkWhatsappFicha } from "@/lib/whatsapp";
+import { tipoFichaDoServico } from "@/lib/agenda-ficha";
+import { listarFichasDoCliente } from "@/lib/painel";
+import { getFicha, nomeCurto } from "@/data/anamnese";
+import { PAINEL_URL } from "@/data/services";
 import { mascaraTelefone } from "@/lib/mascaras";
 import { PainelModal } from "@/components/PainelModal";
 import { EtiquetaStatus } from "./AgendamentoCard";
@@ -34,6 +38,27 @@ export function DetalheAgendamento({
   const [erro, setErro] = useState<string | null>(null);
 
   const ativo = STATUS_ATIVOS.includes(ag.status);
+
+  // Ficha certa para o serviço marcado. Se a cliente já é cadastrada e já tem
+  // essa ficha (ou o cadastro, no caso da consulta), não precisa mandar de novo.
+  const fichaTipo = tipoFichaDoServico(ag.servico_nome);
+  const [jaTemFicha, setJaTemFicha] = useState<boolean | null>(ag.cliente_id ? null : false);
+  useEffect(() => {
+    if (!ag.cliente_id) {
+      setJaTemFicha(false);
+      return;
+    }
+    let vivo = true;
+    listarFichasDoCliente(ag.cliente_id)
+      .then((fichas) => {
+        if (vivo)
+          setJaTemFicha(fichaTipo === "cadastro" || fichas.some((f) => f.tipo === fichaTipo));
+      })
+      .catch(() => vivo && setJaTemFicha(false));
+    return () => {
+      vivo = false;
+    };
+  }, [ag.cliente_id, fichaTipo]);
 
   const executar = async (acao: () => Promise<void>, mensagem: string) => {
     setTrabalhando(true);
@@ -133,6 +158,32 @@ export function DetalheAgendamento({
               <MessageCircle className="h-4 w-4" />
               WhatsApp
             </a>
+            {jaTemFicha === false && (
+              <a
+                href={linkWhatsappFicha({
+                  origin: PAINEL_URL,
+                  tipo: fichaTipo,
+                  nomeFicha: getFicha(fichaTipo)?.nome ?? fichaTipo,
+                  nomeCliente: ag.nome,
+                  telefone: ag.telefone,
+                })}
+                target="whatsapp"
+                rel="noreferrer"
+                className={btnSecundario}
+              >
+                <Send className="h-4 w-4" />
+                Enviar ficha{" "}
+                {fichaTipo === "cadastro" ? "de cadastro" : nomeCurto(fichaTipo).toLowerCase()}
+              </a>
+            )}
+            {jaTemFicha === true && (
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-painel-green/40 px-4 py-2 text-sm font-medium text-emerald-300">
+                <Check className="h-4 w-4" />
+                {fichaTipo === "cadastro"
+                  ? "Cadastro já feito"
+                  : `Ficha ${nomeCurto(fichaTipo).toLowerCase()} já preenchida`}
+              </span>
+            )}
             {ag.cliente_id && (
               <Link
                 to="/painel/cliente/$id"

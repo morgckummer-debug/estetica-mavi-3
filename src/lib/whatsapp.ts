@@ -15,6 +15,29 @@ export function linkWhatsappContato(telefone: string | null | undefined): string
   return `https://wa.me/${numeroWhatsapp(telefone)}`;
 }
 
+// Convite para a cliente preencher a ficha antes do atendimento — mesmo
+// texto e mesmo link (com nome e WhatsApp já preenchidos) do "Enviar ficha"
+// da página da cliente.
+export function linkWhatsappFicha(params: {
+  origin: string;
+  tipo: string;
+  nomeFicha: string;
+  nomeCliente: string;
+  telefone: string | null | undefined;
+}): string {
+  const primeiro = params.nomeCliente.trim().split(" ")[0] || "";
+  const digitos = String(params.telefone ?? "").replace(/\D/g, "");
+  const query = [
+    params.nomeCliente.trim() && `nome=${encodeURIComponent(params.nomeCliente.trim())}`,
+    digitos && `whatsapp=${digitos}`,
+  ]
+    .filter(Boolean)
+    .join("&");
+  const link = `${params.origin}/avaliacao/${params.tipo}${query ? `?${query}` : ""}`;
+  const msg = `Oi${primeiro ? ` ${primeiro}` : ""}! 💜 Antes do seu atendimento na MAVI, preencha sua ficha de ${params.nomeFicha.toLowerCase()} — leva só alguns minutinhos: ${link}`;
+  return `https://wa.me/${numeroWhatsapp(params.telefone)}?text=${encodeURIComponent(msg)}`;
+}
+
 export function linkConfirmacao(origin: string, token: string): string {
   return `${origin}/confirmar/${token}`;
 }

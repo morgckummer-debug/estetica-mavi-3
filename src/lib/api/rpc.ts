@@ -26,3 +26,13 @@ export async function rpc(fn: string, args: Record<string, unknown>): Promise<un
   }
   return res.json();
 }
+
+// Funções que devolvem UMA coluna só (ex.: os horários livres) voltam do
+// Supabase como lista simples (["2026-10-05", ...]); com mais colunas, como
+// lista de objetos. Esta função aceita as duas formas e devolve só os valores.
+export function colunaUnica(rows: unknown, chave: string): string[] {
+  if (!Array.isArray(rows)) return [];
+  return rows
+    .map((r) => (r && typeof r === "object" ? (r as Record<string, unknown>)[chave] : r))
+    .filter((v): v is string => typeof v === "string");
+}
