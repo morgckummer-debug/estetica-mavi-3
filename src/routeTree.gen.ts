@@ -9,55 +9,49 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as PowerReduxRouteImport } from './routes/power-redux'
-import { Route as PoliticaDePrivacidadeRouteImport } from './routes/politica-de-privacidade'
-import { Route as PainelRouteImport } from './routes/painel'
-import { Route as ObrigadoRouteImport } from './routes/obrigado'
-import { Route as McpRouteImport } from './routes/mcp'
-import { Route as DrenagemLinfaticaRouteImport } from './routes/drenagem-linfatica'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as PainelIndexRouteImport } from './routes/painel.index'
-import { Route as AvaliacaoIndexRouteImport } from './routes/avaliacao.index'
-import { Route as ServicosSlugRouteImport } from './routes/servicos.$slug'
-import { Route as ResultadosPowerReduxRouteImport } from './routes/resultados.power-redux'
-import { Route as RelatorioTokenRouteImport } from './routes/relatorio.$token'
-import { Route as PainelAgendaRouteImport } from './routes/painel.agenda'
-import { Route as PainelPendentesRouteImport } from './routes/painel.pendentes'
-import { Route as PainelNovaRouteImport } from './routes/painel.nova'
-import { Route as PainelIdRouteImport } from './routes/painel.$id'
-import { Route as ConfirmarTokenRouteImport } from './routes/confirmar.$token'
-import { Route as AvaliacaoTipoRouteImport } from './routes/avaliacao.$tipo'
-import { Route as Char91DotwellKnownChar93OauthProtectedResourceRouteImport } from './routes/[.well-known]/oauth-protected-resource'
+import { Route as AgendarRouteImport } from './routes/agendar'
+import { Route as AgendarTesteRouteImport } from './routes/agendar-teste'
+import { Route as DrenagemLinfaticaRouteImport } from './routes/drenagem-linfatica'
+import { Route as McpRouteImport } from './routes/mcp'
+import { Route as ObrigadoRouteImport } from './routes/obrigado'
+import { Route as PainelRouteImport } from './routes/painel'
+import { Route as PoliticaDePrivacidadeRouteImport } from './routes/politica-de-privacidade'
+import { Route as PowerReduxRouteImport } from './routes/power-redux'
+import { Route as RedefinirSenhaRouteImport } from './routes/redefinir-senha'
 import { Route as Char91DotmcpChar93ListToolsRouteImport } from './routes/[.mcp]/list-tools'
-import { Route as PainelContratoIdRouteImport } from './routes/painel.contrato.$id'
-import { Route as PainelClienteIdRouteImport } from './routes/painel.cliente.$id'
-import { Route as ConfirmarLoteTokenRouteImport } from './routes/confirmar.lote.$token'
-import { Route as Char91DotmcpChar93InvokeToolToolRouteImport } from './routes/[.mcp]/invoke-tool/$tool'
+import { Route as Char91DotwellKnownChar93OauthProtectedResourceRouteImport } from './routes/[.well-known]/oauth-protected-resource'
+import { Route as AgendamentoTokenRouteImport } from './routes/agendamento.$token'
+import { Route as AvaliacaoIndexRouteImport } from './routes/avaliacao.index'
+import { Route as AvaliacaoTipoRouteImport } from './routes/avaliacao.$tipo'
+import { Route as ConfirmarTokenRouteImport } from './routes/confirmar.$token'
+import { Route as PainelIndexRouteImport } from './routes/painel.index'
+import { Route as PainelIdRouteImport } from './routes/painel.$id'
+import { Route as PainelAgendaRouteImport } from './routes/painel.agenda'
+import { Route as PainelNovaRouteImport } from './routes/painel.nova'
+import { Route as PainelPendentesRouteImport } from './routes/painel.pendentes'
+import { Route as RelatorioTokenRouteImport } from './routes/relatorio.$token'
+import { Route as ResultadosPowerReduxRouteImport } from './routes/resultados.power-redux'
+import { Route as ServicosSlugRouteImport } from './routes/servicos.$slug'
 import { Route as DotlovableOauthConsentRouteImport } from './routes/[.]lovable.oauth.consent'
+import { Route as Char91DotmcpChar93InvokeToolToolRouteImport } from './routes/[.mcp]/invoke-tool/$tool'
+import { Route as ConfirmarLoteTokenRouteImport } from './routes/confirmar.lote.$token'
+import { Route as PainelClienteIdRouteImport } from './routes/painel.cliente.$id'
+import { Route as PainelContratoIdRouteImport } from './routes/painel.contrato.$id'
 
-const PowerReduxRoute = PowerReduxRouteImport.update({
-  id: '/power-redux',
-  path: '/power-redux',
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const PoliticaDePrivacidadeRoute = PoliticaDePrivacidadeRouteImport.update({
-  id: '/politica-de-privacidade',
-  path: '/politica-de-privacidade',
+const AgendarRoute = AgendarRouteImport.update({
+  id: '/agendar',
+  path: '/agendar',
   getParentRoute: () => rootRouteImport,
 } as any)
-const PainelRoute = PainelRouteImport.update({
-  id: '/painel',
-  path: '/painel',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ObrigadoRoute = ObrigadoRouteImport.update({
-  id: '/obrigado',
-  path: '/obrigado',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const McpRoute = McpRouteImport.update({
-  id: '/mcp',
-  path: '/mcp',
+const AgendarTesteRoute = AgendarTesteRouteImport.update({
+  id: '/agendar-teste',
+  path: '/agendar-teste',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DrenagemLinfaticaRoute = DrenagemLinfaticaRouteImport.update({
@@ -65,59 +59,56 @@ const DrenagemLinfaticaRoute = DrenagemLinfaticaRouteImport.update({
   path: '/drenagem-linfatica',
   getParentRoute: () => rootRouteImport,
 } as any)
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
+const McpRoute = McpRouteImport.update({
+  id: '/mcp',
+  path: '/mcp',
   getParentRoute: () => rootRouteImport,
 } as any)
-const PainelIndexRoute = PainelIndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => PainelRoute,
+const ObrigadoRoute = ObrigadoRouteImport.update({
+  id: '/obrigado',
+  path: '/obrigado',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PainelRoute = PainelRouteImport.update({
+  id: '/painel',
+  path: '/painel',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PoliticaDePrivacidadeRoute = PoliticaDePrivacidadeRouteImport.update({
+  id: '/politica-de-privacidade',
+  path: '/politica-de-privacidade',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PowerReduxRoute = PowerReduxRouteImport.update({
+  id: '/power-redux',
+  path: '/power-redux',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RedefinirSenhaRoute = RedefinirSenhaRouteImport.update({
+  id: '/redefinir-senha',
+  path: '/redefinir-senha',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const Char91DotmcpChar93ListToolsRoute =
+  Char91DotmcpChar93ListToolsRouteImport.update({
+    id: '/.mcp/list-tools',
+    path: '/.mcp/list-tools',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const Char91DotwellKnownChar93OauthProtectedResourceRoute =
+  Char91DotwellKnownChar93OauthProtectedResourceRouteImport.update({
+    id: '/.well-known/oauth-protected-resource',
+    path: '/.well-known/oauth-protected-resource',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const AgendamentoTokenRoute = AgendamentoTokenRouteImport.update({
+  id: '/agendamento/$token',
+  path: '/agendamento/$token',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const AvaliacaoIndexRoute = AvaliacaoIndexRouteImport.update({
   id: '/avaliacao/',
   path: '/avaliacao/',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ServicosSlugRoute = ServicosSlugRouteImport.update({
-  id: '/servicos/$slug',
-  path: '/servicos/$slug',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ResultadosPowerReduxRoute = ResultadosPowerReduxRouteImport.update({
-  id: '/resultados/power-redux',
-  path: '/resultados/power-redux',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const RelatorioTokenRoute = RelatorioTokenRouteImport.update({
-  id: '/relatorio/$token',
-  path: '/relatorio/$token',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const PainelAgendaRoute = PainelAgendaRouteImport.update({
-  id: '/agenda',
-  path: '/agenda',
-  getParentRoute: () => PainelRoute,
-} as any)
-const PainelPendentesRoute = PainelPendentesRouteImport.update({
-  id: '/pendentes',
-  path: '/pendentes',
-  getParentRoute: () => PainelRoute,
-} as any)
-const PainelNovaRoute = PainelNovaRouteImport.update({
-  id: '/nova',
-  path: '/nova',
-  getParentRoute: () => PainelRoute,
-} as any)
-const PainelIdRoute = PainelIdRouteImport.update({
-  id: '/$id',
-  path: '/$id',
-  getParentRoute: () => PainelRoute,
-} as any)
-const ConfirmarTokenRoute = ConfirmarTokenRouteImport.update({
-  id: '/confirmar/$token',
-  path: '/confirmar/$token',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AvaliacaoTipoRoute = AvaliacaoTipoRouteImport.update({
@@ -125,31 +116,54 @@ const AvaliacaoTipoRoute = AvaliacaoTipoRouteImport.update({
   path: '/avaliacao/$tipo',
   getParentRoute: () => rootRouteImport,
 } as any)
-const Char91DotwellKnownChar93OauthProtectedResourceRoute =
-  Char91DotwellKnownChar93OauthProtectedResourceRouteImport.update({
-    id: '/.well-known/oauth-protected-resource',
-    path: '/.well-known/oauth-protected-resource',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const Char91DotmcpChar93ListToolsRoute =
-  Char91DotmcpChar93ListToolsRouteImport.update({
-    id: '/.mcp/list-tools',
-    path: '/.mcp/list-tools',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const PainelContratoIdRoute = PainelContratoIdRouteImport.update({
-  id: '/contrato/$id',
-  path: '/contrato/$id',
+const ConfirmarTokenRoute = ConfirmarTokenRouteImport.update({
+  id: '/confirmar/$token',
+  path: '/confirmar/$token',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PainelIndexRoute = PainelIndexRouteImport.update({
+  id: '/',
+  path: '/',
   getParentRoute: () => PainelRoute,
 } as any)
-const PainelClienteIdRoute = PainelClienteIdRouteImport.update({
-  id: '/cliente/$id',
-  path: '/cliente/$id',
+const PainelIdRoute = PainelIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
   getParentRoute: () => PainelRoute,
 } as any)
-const ConfirmarLoteTokenRoute = ConfirmarLoteTokenRouteImport.update({
-  id: '/confirmar/lote/$token',
-  path: '/confirmar/lote/$token',
+const PainelAgendaRoute = PainelAgendaRouteImport.update({
+  id: '/agenda',
+  path: '/agenda',
+  getParentRoute: () => PainelRoute,
+} as any)
+const PainelNovaRoute = PainelNovaRouteImport.update({
+  id: '/nova',
+  path: '/nova',
+  getParentRoute: () => PainelRoute,
+} as any)
+const PainelPendentesRoute = PainelPendentesRouteImport.update({
+  id: '/pendentes',
+  path: '/pendentes',
+  getParentRoute: () => PainelRoute,
+} as any)
+const RelatorioTokenRoute = RelatorioTokenRouteImport.update({
+  id: '/relatorio/$token',
+  path: '/relatorio/$token',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ResultadosPowerReduxRoute = ResultadosPowerReduxRouteImport.update({
+  id: '/resultados/power-redux',
+  path: '/resultados/power-redux',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ServicosSlugRoute = ServicosSlugRouteImport.update({
+  id: '/servicos/$slug',
+  path: '/servicos/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DotlovableOauthConsentRoute = DotlovableOauthConsentRouteImport.update({
+  id: '/.lovable/oauth/consent',
+  path: '/.lovable/oauth/consent',
   getParentRoute: () => rootRouteImport,
 } as any)
 const Char91DotmcpChar93InvokeToolToolRoute =
@@ -158,27 +172,41 @@ const Char91DotmcpChar93InvokeToolToolRoute =
     path: '/.mcp/invoke-tool/$tool',
     getParentRoute: () => rootRouteImport,
   } as any)
-const DotlovableOauthConsentRoute = DotlovableOauthConsentRouteImport.update({
-  id: '/.lovable/oauth/consent',
-  path: '/.lovable/oauth/consent',
+const ConfirmarLoteTokenRoute = ConfirmarLoteTokenRouteImport.update({
+  id: '/confirmar/lote/$token',
+  path: '/confirmar/lote/$token',
   getParentRoute: () => rootRouteImport,
+} as any)
+const PainelClienteIdRoute = PainelClienteIdRouteImport.update({
+  id: '/cliente/$id',
+  path: '/cliente/$id',
+  getParentRoute: () => PainelRoute,
+} as any)
+const PainelContratoIdRoute = PainelContratoIdRouteImport.update({
+  id: '/contrato/$id',
+  path: '/contrato/$id',
+  getParentRoute: () => PainelRoute,
 } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/agendar': typeof AgendarRoute
+  '/agendar-teste': typeof AgendarTesteRoute
   '/drenagem-linfatica': typeof DrenagemLinfaticaRoute
   '/mcp': typeof McpRoute
   '/obrigado': typeof ObrigadoRoute
   '/painel': typeof PainelRouteWithChildren
   '/politica-de-privacidade': typeof PoliticaDePrivacidadeRoute
   '/power-redux': typeof PowerReduxRoute
+  '/redefinir-senha': typeof RedefinirSenhaRoute
   '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
+  '/agendamento/$token': typeof AgendamentoTokenRoute
   '/avaliacao/$tipo': typeof AvaliacaoTipoRoute
   '/confirmar/$token': typeof ConfirmarTokenRoute
   '/painel/$id': typeof PainelIdRoute
-  '/painel/nova': typeof PainelNovaRoute
   '/painel/agenda': typeof PainelAgendaRoute
+  '/painel/nova': typeof PainelNovaRoute
   '/painel/pendentes': typeof PainelPendentesRoute
   '/relatorio/$token': typeof RelatorioTokenRoute
   '/resultados/power-redux': typeof ResultadosPowerReduxRoute
@@ -193,18 +221,22 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/agendar': typeof AgendarRoute
+  '/agendar-teste': typeof AgendarTesteRoute
   '/drenagem-linfatica': typeof DrenagemLinfaticaRoute
   '/mcp': typeof McpRoute
   '/obrigado': typeof ObrigadoRoute
   '/politica-de-privacidade': typeof PoliticaDePrivacidadeRoute
   '/power-redux': typeof PowerReduxRoute
+  '/redefinir-senha': typeof RedefinirSenhaRoute
   '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
+  '/agendamento/$token': typeof AgendamentoTokenRoute
   '/avaliacao/$tipo': typeof AvaliacaoTipoRoute
   '/confirmar/$token': typeof ConfirmarTokenRoute
   '/painel/$id': typeof PainelIdRoute
-  '/painel/nova': typeof PainelNovaRoute
   '/painel/agenda': typeof PainelAgendaRoute
+  '/painel/nova': typeof PainelNovaRoute
   '/painel/pendentes': typeof PainelPendentesRoute
   '/relatorio/$token': typeof RelatorioTokenRoute
   '/resultados/power-redux': typeof ResultadosPowerReduxRoute
@@ -220,19 +252,23 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/agendar': typeof AgendarRoute
+  '/agendar-teste': typeof AgendarTesteRoute
   '/drenagem-linfatica': typeof DrenagemLinfaticaRoute
   '/mcp': typeof McpRoute
   '/obrigado': typeof ObrigadoRoute
   '/painel': typeof PainelRouteWithChildren
   '/politica-de-privacidade': typeof PoliticaDePrivacidadeRoute
   '/power-redux': typeof PowerReduxRoute
+  '/redefinir-senha': typeof RedefinirSenhaRoute
   '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
+  '/agendamento/$token': typeof AgendamentoTokenRoute
   '/avaliacao/$tipo': typeof AvaliacaoTipoRoute
   '/confirmar/$token': typeof ConfirmarTokenRoute
   '/painel/$id': typeof PainelIdRoute
-  '/painel/nova': typeof PainelNovaRoute
   '/painel/agenda': typeof PainelAgendaRoute
+  '/painel/nova': typeof PainelNovaRoute
   '/painel/pendentes': typeof PainelPendentesRoute
   '/relatorio/$token': typeof RelatorioTokenRoute
   '/resultados/power-redux': typeof ResultadosPowerReduxRoute
@@ -249,19 +285,23 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/agendar'
+    | '/agendar-teste'
     | '/drenagem-linfatica'
     | '/mcp'
     | '/obrigado'
     | '/painel'
     | '/politica-de-privacidade'
     | '/power-redux'
+    | '/redefinir-senha'
     | '/.mcp/list-tools'
     | '/.well-known/oauth-protected-resource'
+    | '/agendamento/$token'
     | '/avaliacao/$tipo'
     | '/confirmar/$token'
     | '/painel/$id'
-    | '/painel/nova'
     | '/painel/agenda'
+    | '/painel/nova'
     | '/painel/pendentes'
     | '/relatorio/$token'
     | '/resultados/power-redux'
@@ -276,18 +316,22 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/agendar'
+    | '/agendar-teste'
     | '/drenagem-linfatica'
     | '/mcp'
     | '/obrigado'
     | '/politica-de-privacidade'
     | '/power-redux'
+    | '/redefinir-senha'
     | '/.mcp/list-tools'
     | '/.well-known/oauth-protected-resource'
+    | '/agendamento/$token'
     | '/avaliacao/$tipo'
     | '/confirmar/$token'
     | '/painel/$id'
-    | '/painel/nova'
     | '/painel/agenda'
+    | '/painel/nova'
     | '/painel/pendentes'
     | '/relatorio/$token'
     | '/resultados/power-redux'
@@ -302,19 +346,23 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/agendar'
+    | '/agendar-teste'
     | '/drenagem-linfatica'
     | '/mcp'
     | '/obrigado'
     | '/painel'
     | '/politica-de-privacidade'
     | '/power-redux'
+    | '/redefinir-senha'
     | '/.mcp/list-tools'
     | '/.well-known/oauth-protected-resource'
+    | '/agendamento/$token'
     | '/avaliacao/$tipo'
     | '/confirmar/$token'
     | '/painel/$id'
-    | '/painel/nova'
     | '/painel/agenda'
+    | '/painel/nova'
     | '/painel/pendentes'
     | '/relatorio/$token'
     | '/resultados/power-redux'
@@ -330,14 +378,18 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AgendarRoute: typeof AgendarRoute
+  AgendarTesteRoute: typeof AgendarTesteRoute
   DrenagemLinfaticaRoute: typeof DrenagemLinfaticaRoute
   McpRoute: typeof McpRoute
   ObrigadoRoute: typeof ObrigadoRoute
   PainelRoute: typeof PainelRouteWithChildren
   PoliticaDePrivacidadeRoute: typeof PoliticaDePrivacidadeRoute
   PowerReduxRoute: typeof PowerReduxRoute
+  RedefinirSenhaRoute: typeof RedefinirSenhaRoute
   Char91DotmcpChar93ListToolsRoute: typeof Char91DotmcpChar93ListToolsRoute
   Char91DotwellKnownChar93OauthProtectedResourceRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
+  AgendamentoTokenRoute: typeof AgendamentoTokenRoute
   AvaliacaoTipoRoute: typeof AvaliacaoTipoRoute
   ConfirmarTokenRoute: typeof ConfirmarTokenRoute
   RelatorioTokenRoute: typeof RelatorioTokenRoute
@@ -351,39 +403,25 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/power-redux': {
-      id: '/power-redux'
-      path: '/power-redux'
-      fullPath: '/power-redux'
-      preLoaderRoute: typeof PowerReduxRouteImport
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/politica-de-privacidade': {
-      id: '/politica-de-privacidade'
-      path: '/politica-de-privacidade'
-      fullPath: '/politica-de-privacidade'
-      preLoaderRoute: typeof PoliticaDePrivacidadeRouteImport
+    '/agendar': {
+      id: '/agendar'
+      path: '/agendar'
+      fullPath: '/agendar'
+      preLoaderRoute: typeof AgendarRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/painel': {
-      id: '/painel'
-      path: '/painel'
-      fullPath: '/painel'
-      preLoaderRoute: typeof PainelRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/obrigado': {
-      id: '/obrigado'
-      path: '/obrigado'
-      fullPath: '/obrigado'
-      preLoaderRoute: typeof ObrigadoRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/mcp': {
-      id: '/mcp'
-      path: '/mcp'
-      fullPath: '/mcp'
-      preLoaderRoute: typeof McpRouteImport
+    '/agendar-teste': {
+      id: '/agendar-teste'
+      path: '/agendar-teste'
+      fullPath: '/agendar-teste'
+      preLoaderRoute: typeof AgendarTesteRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/drenagem-linfatica': {
@@ -393,95 +431,46 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DrenagemLinfaticaRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
+    '/mcp': {
+      id: '/mcp'
+      path: '/mcp'
+      fullPath: '/mcp'
+      preLoaderRoute: typeof McpRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/painel/': {
-      id: '/painel/'
-      path: '/'
-      fullPath: '/painel/'
-      preLoaderRoute: typeof PainelIndexRouteImport
-      parentRoute: typeof PainelRoute
-    }
-    '/avaliacao/': {
-      id: '/avaliacao/'
-      path: '/avaliacao'
-      fullPath: '/avaliacao/'
-      preLoaderRoute: typeof AvaliacaoIndexRouteImport
+    '/obrigado': {
+      id: '/obrigado'
+      path: '/obrigado'
+      fullPath: '/obrigado'
+      preLoaderRoute: typeof ObrigadoRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/servicos/$slug': {
-      id: '/servicos/$slug'
-      path: '/servicos/$slug'
-      fullPath: '/servicos/$slug'
-      preLoaderRoute: typeof ServicosSlugRouteImport
+    '/painel': {
+      id: '/painel'
+      path: '/painel'
+      fullPath: '/painel'
+      preLoaderRoute: typeof PainelRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/resultados/power-redux': {
-      id: '/resultados/power-redux'
-      path: '/resultados/power-redux'
-      fullPath: '/resultados/power-redux'
-      preLoaderRoute: typeof ResultadosPowerReduxRouteImport
+    '/politica-de-privacidade': {
+      id: '/politica-de-privacidade'
+      path: '/politica-de-privacidade'
+      fullPath: '/politica-de-privacidade'
+      preLoaderRoute: typeof PoliticaDePrivacidadeRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/relatorio/$token': {
-      id: '/relatorio/$token'
-      path: '/relatorio/$token'
-      fullPath: '/relatorio/$token'
-      preLoaderRoute: typeof RelatorioTokenRouteImport
+    '/power-redux': {
+      id: '/power-redux'
+      path: '/power-redux'
+      fullPath: '/power-redux'
+      preLoaderRoute: typeof PowerReduxRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/painel/agenda': {
-      id: '/painel/agenda'
-      path: '/agenda'
-      fullPath: '/painel/agenda'
-      preLoaderRoute: typeof PainelAgendaRouteImport
-      parentRoute: typeof PainelRoute
-    }
-    '/painel/pendentes': {
-      id: '/painel/pendentes'
-      path: '/pendentes'
-      fullPath: '/painel/pendentes'
-      preLoaderRoute: typeof PainelPendentesRouteImport
-      parentRoute: typeof PainelRoute
-    }
-    '/painel/nova': {
-      id: '/painel/nova'
-      path: '/nova'
-      fullPath: '/painel/nova'
-      preLoaderRoute: typeof PainelNovaRouteImport
-      parentRoute: typeof PainelRoute
-    }
-    '/painel/$id': {
-      id: '/painel/$id'
-      path: '/$id'
-      fullPath: '/painel/$id'
-      preLoaderRoute: typeof PainelIdRouteImport
-      parentRoute: typeof PainelRoute
-    }
-    '/confirmar/$token': {
-      id: '/confirmar/$token'
-      path: '/confirmar/$token'
-      fullPath: '/confirmar/$token'
-      preLoaderRoute: typeof ConfirmarTokenRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/avaliacao/$tipo': {
-      id: '/avaliacao/$tipo'
-      path: '/avaliacao/$tipo'
-      fullPath: '/avaliacao/$tipo'
-      preLoaderRoute: typeof AvaliacaoTipoRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/.well-known/oauth-protected-resource': {
-      id: '/.well-known/oauth-protected-resource'
-      path: '/.well-known/oauth-protected-resource'
-      fullPath: '/.well-known/oauth-protected-resource'
-      preLoaderRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRouteImport
+    '/redefinir-senha': {
+      id: '/redefinir-senha'
+      path: '/redefinir-senha'
+      fullPath: '/redefinir-senha'
+      preLoaderRoute: typeof RedefinirSenhaRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/.mcp/list-tools': {
@@ -491,32 +480,95 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof Char91DotmcpChar93ListToolsRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/painel/contrato/$id': {
-      id: '/painel/contrato/$id'
-      path: '/contrato/$id'
-      fullPath: '/painel/contrato/$id'
-      preLoaderRoute: typeof PainelContratoIdRouteImport
-      parentRoute: typeof PainelRoute
-    }
-    '/painel/cliente/$id': {
-      id: '/painel/cliente/$id'
-      path: '/cliente/$id'
-      fullPath: '/painel/cliente/$id'
-      preLoaderRoute: typeof PainelClienteIdRouteImport
-      parentRoute: typeof PainelRoute
-    }
-    '/confirmar/lote/$token': {
-      id: '/confirmar/lote/$token'
-      path: '/confirmar/lote/$token'
-      fullPath: '/confirmar/lote/$token'
-      preLoaderRoute: typeof ConfirmarLoteTokenRouteImport
+    '/.well-known/oauth-protected-resource': {
+      id: '/.well-known/oauth-protected-resource'
+      path: '/.well-known/oauth-protected-resource'
+      fullPath: '/.well-known/oauth-protected-resource'
+      preLoaderRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/.mcp/invoke-tool/$tool': {
-      id: '/.mcp/invoke-tool/$tool'
-      path: '/.mcp/invoke-tool/$tool'
-      fullPath: '/.mcp/invoke-tool/$tool'
-      preLoaderRoute: typeof Char91DotmcpChar93InvokeToolToolRouteImport
+    '/agendamento/$token': {
+      id: '/agendamento/$token'
+      path: '/agendamento/$token'
+      fullPath: '/agendamento/$token'
+      preLoaderRoute: typeof AgendamentoTokenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/avaliacao/': {
+      id: '/avaliacao/'
+      path: '/avaliacao'
+      fullPath: '/avaliacao/'
+      preLoaderRoute: typeof AvaliacaoIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/avaliacao/$tipo': {
+      id: '/avaliacao/$tipo'
+      path: '/avaliacao/$tipo'
+      fullPath: '/avaliacao/$tipo'
+      preLoaderRoute: typeof AvaliacaoTipoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/confirmar/$token': {
+      id: '/confirmar/$token'
+      path: '/confirmar/$token'
+      fullPath: '/confirmar/$token'
+      preLoaderRoute: typeof ConfirmarTokenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/painel/': {
+      id: '/painel/'
+      path: '/'
+      fullPath: '/painel/'
+      preLoaderRoute: typeof PainelIndexRouteImport
+      parentRoute: typeof PainelRoute
+    }
+    '/painel/$id': {
+      id: '/painel/$id'
+      path: '/$id'
+      fullPath: '/painel/$id'
+      preLoaderRoute: typeof PainelIdRouteImport
+      parentRoute: typeof PainelRoute
+    }
+    '/painel/agenda': {
+      id: '/painel/agenda'
+      path: '/agenda'
+      fullPath: '/painel/agenda'
+      preLoaderRoute: typeof PainelAgendaRouteImport
+      parentRoute: typeof PainelRoute
+    }
+    '/painel/nova': {
+      id: '/painel/nova'
+      path: '/nova'
+      fullPath: '/painel/nova'
+      preLoaderRoute: typeof PainelNovaRouteImport
+      parentRoute: typeof PainelRoute
+    }
+    '/painel/pendentes': {
+      id: '/painel/pendentes'
+      path: '/pendentes'
+      fullPath: '/painel/pendentes'
+      preLoaderRoute: typeof PainelPendentesRouteImport
+      parentRoute: typeof PainelRoute
+    }
+    '/relatorio/$token': {
+      id: '/relatorio/$token'
+      path: '/relatorio/$token'
+      fullPath: '/relatorio/$token'
+      preLoaderRoute: typeof RelatorioTokenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/resultados/power-redux': {
+      id: '/resultados/power-redux'
+      path: '/resultados/power-redux'
+      fullPath: '/resultados/power-redux'
+      preLoaderRoute: typeof ResultadosPowerReduxRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/servicos/$slug': {
+      id: '/servicos/$slug'
+      path: '/servicos/$slug'
+      fullPath: '/servicos/$slug'
+      preLoaderRoute: typeof ServicosSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/.lovable/oauth/consent': {
@@ -526,13 +578,41 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DotlovableOauthConsentRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/.mcp/invoke-tool/$tool': {
+      id: '/.mcp/invoke-tool/$tool'
+      path: '/.mcp/invoke-tool/$tool'
+      fullPath: '/.mcp/invoke-tool/$tool'
+      preLoaderRoute: typeof Char91DotmcpChar93InvokeToolToolRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/confirmar/lote/$token': {
+      id: '/confirmar/lote/$token'
+      path: '/confirmar/lote/$token'
+      fullPath: '/confirmar/lote/$token'
+      preLoaderRoute: typeof ConfirmarLoteTokenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/painel/cliente/$id': {
+      id: '/painel/cliente/$id'
+      path: '/cliente/$id'
+      fullPath: '/painel/cliente/$id'
+      preLoaderRoute: typeof PainelClienteIdRouteImport
+      parentRoute: typeof PainelRoute
+    }
+    '/painel/contrato/$id': {
+      id: '/painel/contrato/$id'
+      path: '/contrato/$id'
+      fullPath: '/painel/contrato/$id'
+      preLoaderRoute: typeof PainelContratoIdRouteImport
+      parentRoute: typeof PainelRoute
+    }
   }
 }
 
 interface PainelRouteChildren {
   PainelIdRoute: typeof PainelIdRoute
-  PainelNovaRoute: typeof PainelNovaRoute
   PainelAgendaRoute: typeof PainelAgendaRoute
+  PainelNovaRoute: typeof PainelNovaRoute
   PainelPendentesRoute: typeof PainelPendentesRoute
   PainelIndexRoute: typeof PainelIndexRoute
   PainelClienteIdRoute: typeof PainelClienteIdRoute
@@ -541,8 +621,8 @@ interface PainelRouteChildren {
 
 const PainelRouteChildren: PainelRouteChildren = {
   PainelIdRoute: PainelIdRoute,
-  PainelNovaRoute: PainelNovaRoute,
   PainelAgendaRoute: PainelAgendaRoute,
+  PainelNovaRoute: PainelNovaRoute,
   PainelPendentesRoute: PainelPendentesRoute,
   PainelIndexRoute: PainelIndexRoute,
   PainelClienteIdRoute: PainelClienteIdRoute,
@@ -554,15 +634,19 @@ const PainelRouteWithChildren =
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AgendarRoute: AgendarRoute,
+  AgendarTesteRoute: AgendarTesteRoute,
   DrenagemLinfaticaRoute: DrenagemLinfaticaRoute,
   McpRoute: McpRoute,
   ObrigadoRoute: ObrigadoRoute,
   PainelRoute: PainelRouteWithChildren,
   PoliticaDePrivacidadeRoute: PoliticaDePrivacidadeRoute,
   PowerReduxRoute: PowerReduxRoute,
+  RedefinirSenhaRoute: RedefinirSenhaRoute,
   Char91DotmcpChar93ListToolsRoute: Char91DotmcpChar93ListToolsRoute,
   Char91DotwellKnownChar93OauthProtectedResourceRoute:
     Char91DotwellKnownChar93OauthProtectedResourceRoute,
+  AgendamentoTokenRoute: AgendamentoTokenRoute,
   AvaliacaoTipoRoute: AvaliacaoTipoRoute,
   ConfirmarTokenRoute: ConfirmarTokenRoute,
   RelatorioTokenRoute: RelatorioTokenRoute,
