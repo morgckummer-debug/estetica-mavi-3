@@ -547,6 +547,13 @@ function PainelLayout() {
                 Clientes
               </Link>
               <Link
+                to="/painel/agenda"
+                className="rounded-full px-3.5 py-2 text-[13px] font-medium text-white/70 hover:text-white transition-colors"
+                activeProps={{ className: "text-white" }}
+              >
+                Agenda
+              </Link>
+              <Link
                 to="/painel/pendentes"
                 className="rounded-full px-3.5 py-2 text-[13px] font-medium text-white/70 hover:text-white transition-colors"
                 activeProps={{ className: "text-white" }}
@@ -567,6 +574,30 @@ function PainelLayout() {
             />
           </div>
         </div>
+        <nav className="relative flex sm:hidden items-center justify-center gap-1 px-4 pb-4">
+          <Link
+            to="/painel"
+            className="rounded-full px-3.5 py-1.5 text-[13px] font-medium text-white/70 transition-colors"
+            activeProps={{ className: "bg-white/15 text-white" }}
+            activeOptions={{ exact: true }}
+          >
+            Clientes
+          </Link>
+          <Link
+            to="/painel/agenda"
+            className="rounded-full px-3.5 py-1.5 text-[13px] font-medium text-white/70 transition-colors"
+            activeProps={{ className: "bg-white/15 text-white" }}
+          >
+            Agenda
+          </Link>
+          <Link
+            to="/painel/pendentes"
+            className="rounded-full px-3.5 py-1.5 text-[13px] font-medium text-white/70 transition-colors"
+            activeProps={{ className: "bg-white/15 text-white" }}
+          >
+            Pendentes
+          </Link>
+        </nav>
       </header>
       <div className="mx-auto max-w-5xl px-4 sm:px-6 py-8">
         {trocandoSenha && <TrocarSenhaForm onFechar={() => setTrocandoSenha(false)} />}

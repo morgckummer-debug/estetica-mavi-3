@@ -298,7 +298,7 @@ export async function trocarSenha(novaSenha: string): Promise<void> {
   }
 }
 
-async function apiRest(path: string, init: RequestInit = {}): Promise<Response> {
+export async function apiRest(path: string, init: RequestInit = {}): Promise<Response> {
   const s = await sessaoValida();
   if (!s) throw new Error("NAO_AUTENTICADO");
   return fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
