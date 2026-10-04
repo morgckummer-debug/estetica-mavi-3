@@ -10,6 +10,11 @@ function numeroWhatsapp(telefone: string | null | undefined): string {
   return d;
 }
 
+// Abre a conversa com a cliente, sem mensagem pronta.
+export function linkWhatsappContato(telefone: string | null | undefined): string {
+  return `https://wa.me/${numeroWhatsapp(telefone)}`;
+}
+
 export function linkConfirmacao(origin: string, token: string): string {
   return `${origin}/confirmar/${token}`;
 }

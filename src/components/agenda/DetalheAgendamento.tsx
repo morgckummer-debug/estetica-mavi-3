@@ -1,0 +1,206 @@
+import { useState } from "react";
+import { CalendarClock, Check, Loader2, MessageCircle, UserRound, X } from "lucide-react";
+import { Link } from "@tanstack/react-router";
+import {
+  cancelarAgendamento,
+  dataSP,
+  marcarStatus,
+  rotuloDiaLongo,
+  rotuloHorario,
+  STATUS_ATIVOS,
+  type AgendaServico,
+  type Agendamento,
+} from "@/lib/agenda";
+import { linkWhatsappContato } from "@/lib/whatsapp";
+import { mascaraTelefone } from "@/lib/mascaras";
+import { PainelModal } from "@/components/PainelModal";
+import { EtiquetaStatus } from "./AgendamentoCard";
+import { ReagendarPainel } from "./ReagendarPainel";
+import { btnPerigo, btnSecundario } from "./estilos";
+
+export function DetalheAgendamento({
+  ag,
+  servicos,
+  onFechar,
+  onAlterado,
+}: {
+  ag: Agendamento;
+  servicos: AgendaServico[];
+  onFechar: () => void;
+  onAlterado: (mensagem: string) => void;
+}) {
+  const [modo, setModo] = useState<"ver" | "reagendar">("ver");
+  const [trabalhando, setTrabalhando] = useState(false);
+  const [erro, setErro] = useState<string | null>(null);
+
+  const ativo = STATUS_ATIVOS.includes(ag.status);
+
+  const executar = async (acao: () => Promise<void>, mensagem: string) => {
+    setTrabalhando(true);
+    setErro(null);
+    try {
+      await acao();
+      onAlterado(mensagem);
+    } catch (e) {
+      setErro(e instanceof Error ? e.message : "Não foi possível concluir a ação.");
+      setTrabalhando(false);
+    }
+  };
+
+  const cancelar = () => {
+    if (
+      !window.confirm(
+        `Cancelar o horário de ${ag.nome} em ${rotuloDiaLongo(dataSP(ag.inicio))}, ${rotuloHorario(ag.inicio, ag.fim)}? O horário volta a ficar livre.`,
+      )
+    )
+      return;
+    void executar(() => cancelarAgendamento(ag.id), "Agendamento cancelado.");
+  };
+
+  return (
+    <PainelModal onFechar={onFechar} maxWidth="max-w-md">
+      <div className="flex items-start justify-between gap-2 mb-4">
+        <div className="min-w-0">
+          <h3 className="font-medium text-white truncate">{ag.nome}</h3>
+          <p className="text-sm text-white/60">
+            {ag.servico_nome}
+            {ag.areas.length > 0 ? ` · ${ag.areas.join(", ")}` : ""}
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={onFechar}
+          title="Fechar"
+          className="text-white/50 hover:text-white transition-colors"
+        >
+          <X className="h-4 w-4" />
+        </button>
+      </div>
+
+      {modo === "reagendar" ? (
+        <ReagendarPainel
+          ag={ag}
+          servicos={servicos}
+          onConcluido={() => onAlterado("Agendamento reagendado.")}
+          onVoltar={() => setModo("ver")}
+        />
+      ) : (
+        <div className="space-y-4">
+          <div className="rounded-xl border border-white/10 bg-white/5 px-4 py-3">
+            <p className="text-sm font-medium text-white first-letter:uppercase">
+              {rotuloDiaLongo(dataSP(ag.inicio))}
+            </p>
+            <p className="text-sm text-painel-lilac-soft">{rotuloHorario(ag.inicio, ag.fim)}</p>
+            <div className="mt-2">
+              <EtiquetaStatus ag={ag} />
+            </div>
+          </div>
+
+          <dl className="space-y-1.5 text-sm">
+            <div className="flex gap-2">
+              <dt className="w-20 shrink-0 text-white/50">WhatsApp</dt>
+              <dd className="text-white">{mascaraTelefone(ag.telefone)}</dd>
+            </div>
+            {ag.email && (
+              <div className="flex gap-2">
+                <dt className="w-20 shrink-0 text-white/50">E-mail</dt>
+                <dd className="break-all text-white">{ag.email}</dd>
+              </div>
+            )}
+            <div className="flex gap-2">
+              <dt className="w-20 shrink-0 text-white/50">Origem</dt>
+              <dd className="text-white">
+                {ag.origem === "online" ? "Agendou pelo site" : "Marcado no painel"}
+              </dd>
+            </div>
+            {ag.observacao && (
+              <div className="flex gap-2">
+                <dt className="w-20 shrink-0 text-white/50">Obs.</dt>
+                <dd className="text-white">{ag.observacao}</dd>
+              </div>
+            )}
+          </dl>
+
+          {erro && <p className="text-sm text-rose-300">{erro}</p>}
+
+          <div className="flex flex-wrap items-center gap-2">
+            <a
+              href={linkWhatsappContato(ag.telefone)}
+              target="whatsapp"
+              rel="noreferrer"
+              className={btnSecundario}
+            >
+              <MessageCircle className="h-4 w-4" />
+              WhatsApp
+            </a>
+            {ag.cliente_id && (
+              <Link
+                to="/painel/cliente/$id"
+                params={{ id: ag.cliente_id }}
+                className={btnSecundario}
+              >
+                <UserRound className="h-4 w-4" />
+                Ver cadastro
+              </Link>
+            )}
+          </div>
+
+          {ativo && (
+            <div className="flex flex-wrap items-center gap-2 border-t border-white/10 pt-4">
+              <button
+                type="button"
+                disabled={trabalhando}
+                onClick={() => setModo("reagendar")}
+                className={btnSecundario}
+              >
+                <CalendarClock className="h-4 w-4" />
+                Reagendar
+              </button>
+              <button
+                type="button"
+                disabled={trabalhando}
+                onClick={() =>
+                  executar(() => marcarStatus(ag.id, "concluido"), "Marcada como atendida.")
+                }
+                className={btnSecundario}
+              >
+                {trabalhando ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Check className="h-4 w-4" />
+                )}
+                Atendida
+              </button>
+              <button
+                type="button"
+                disabled={trabalhando}
+                onClick={() => executar(() => marcarStatus(ag.id, "faltou"), "Marcada como falta.")}
+                className={btnSecundario}
+              >
+                Faltou
+              </button>
+              <button type="button" disabled={trabalhando} onClick={cancelar} className={btnPerigo}>
+                Cancelar horário
+              </button>
+            </div>
+          )}
+
+          {(ag.status === "concluido" || ag.status === "faltou") && (
+            <div className="border-t border-white/10 pt-4">
+              <button
+                type="button"
+                disabled={trabalhando}
+                onClick={() =>
+                  executar(() => marcarStatus(ag.id, "agendado"), "Voltou para agendado.")
+                }
+                className={btnSecundario}
+              >
+                Desfazer
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+    </PainelModal>
+  );
+}

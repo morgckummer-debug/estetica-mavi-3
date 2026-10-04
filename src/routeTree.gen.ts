@@ -21,6 +21,7 @@ import { Route as AvaliacaoIndexRouteImport } from './routes/avaliacao.index'
 import { Route as ServicosSlugRouteImport } from './routes/servicos.$slug'
 import { Route as ResultadosPowerReduxRouteImport } from './routes/resultados.power-redux'
 import { Route as RelatorioTokenRouteImport } from './routes/relatorio.$token'
+import { Route as PainelAgendaRouteImport } from './routes/painel.agenda'
 import { Route as PainelPendentesRouteImport } from './routes/painel.pendentes'
 import { Route as PainelNovaRouteImport } from './routes/painel.nova'
 import { Route as PainelIdRouteImport } from './routes/painel.$id'
@@ -93,6 +94,11 @@ const RelatorioTokenRoute = RelatorioTokenRouteImport.update({
   id: '/relatorio/$token',
   path: '/relatorio/$token',
   getParentRoute: () => rootRouteImport,
+} as any)
+const PainelAgendaRoute = PainelAgendaRouteImport.update({
+  id: '/agenda',
+  path: '/agenda',
+  getParentRoute: () => PainelRoute,
 } as any)
 const PainelPendentesRoute = PainelPendentesRouteImport.update({
   id: '/pendentes',
@@ -172,6 +178,7 @@ export interface FileRoutesByFullPath {
   '/confirmar/$token': typeof ConfirmarTokenRoute
   '/painel/$id': typeof PainelIdRoute
   '/painel/nova': typeof PainelNovaRoute
+  '/painel/agenda': typeof PainelAgendaRoute
   '/painel/pendentes': typeof PainelPendentesRoute
   '/relatorio/$token': typeof RelatorioTokenRoute
   '/resultados/power-redux': typeof ResultadosPowerReduxRoute
@@ -197,6 +204,7 @@ export interface FileRoutesByTo {
   '/confirmar/$token': typeof ConfirmarTokenRoute
   '/painel/$id': typeof PainelIdRoute
   '/painel/nova': typeof PainelNovaRoute
+  '/painel/agenda': typeof PainelAgendaRoute
   '/painel/pendentes': typeof PainelPendentesRoute
   '/relatorio/$token': typeof RelatorioTokenRoute
   '/resultados/power-redux': typeof ResultadosPowerReduxRoute
@@ -224,6 +232,7 @@ export interface FileRoutesById {
   '/confirmar/$token': typeof ConfirmarTokenRoute
   '/painel/$id': typeof PainelIdRoute
   '/painel/nova': typeof PainelNovaRoute
+  '/painel/agenda': typeof PainelAgendaRoute
   '/painel/pendentes': typeof PainelPendentesRoute
   '/relatorio/$token': typeof RelatorioTokenRoute
   '/resultados/power-redux': typeof ResultadosPowerReduxRoute
@@ -252,6 +261,7 @@ export interface FileRouteTypes {
     | '/confirmar/$token'
     | '/painel/$id'
     | '/painel/nova'
+    | '/painel/agenda'
     | '/painel/pendentes'
     | '/relatorio/$token'
     | '/resultados/power-redux'
@@ -277,6 +287,7 @@ export interface FileRouteTypes {
     | '/confirmar/$token'
     | '/painel/$id'
     | '/painel/nova'
+    | '/painel/agenda'
     | '/painel/pendentes'
     | '/relatorio/$token'
     | '/resultados/power-redux'
@@ -303,6 +314,7 @@ export interface FileRouteTypes {
     | '/confirmar/$token'
     | '/painel/$id'
     | '/painel/nova'
+    | '/painel/agenda'
     | '/painel/pendentes'
     | '/relatorio/$token'
     | '/resultados/power-redux'
@@ -423,6 +435,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof RelatorioTokenRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/painel/agenda': {
+      id: '/painel/agenda'
+      path: '/agenda'
+      fullPath: '/painel/agenda'
+      preLoaderRoute: typeof PainelAgendaRouteImport
+      parentRoute: typeof PainelRoute
+    }
     '/painel/pendentes': {
       id: '/painel/pendentes'
       path: '/pendentes'
@@ -513,6 +532,7 @@ declare module '@tanstack/react-router' {
 interface PainelRouteChildren {
   PainelIdRoute: typeof PainelIdRoute
   PainelNovaRoute: typeof PainelNovaRoute
+  PainelAgendaRoute: typeof PainelAgendaRoute
   PainelPendentesRoute: typeof PainelPendentesRoute
   PainelIndexRoute: typeof PainelIndexRoute
   PainelClienteIdRoute: typeof PainelClienteIdRoute
@@ -522,6 +542,7 @@ interface PainelRouteChildren {
 const PainelRouteChildren: PainelRouteChildren = {
   PainelIdRoute: PainelIdRoute,
   PainelNovaRoute: PainelNovaRoute,
+  PainelAgendaRoute: PainelAgendaRoute,
   PainelPendentesRoute: PainelPendentesRoute,
   PainelIndexRoute: PainelIndexRoute,
   PainelClienteIdRoute: PainelClienteIdRoute,
