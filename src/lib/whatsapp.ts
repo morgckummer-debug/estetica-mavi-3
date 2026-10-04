@@ -92,3 +92,39 @@ export function linkWhatsappRelatorio(params: {
   const numero = numeroWhatsapp(params.telefone);
   return `https://wa.me/${numero}?text=${encodeURIComponent(msg)}`;
 }
+
+// Link do agendamento da Agenda MAVI: a cliente confirma presença, reagenda
+// ou cancela por ele, sem login.
+export function linkAgendamento(origin: string, token: string): string {
+  return `${origin}/agendamento/${token}`;
+}
+
+// Lembrete do horário marcado, com o link para confirmar presença.
+export function linkWhatsappLembrete(params: {
+  origin: string;
+  token: string;
+  telefone: string | null | undefined;
+  nomeCliente: string;
+  servico: string;
+  dia: string;
+  hora: string;
+}): string {
+  const primeiro = params.nomeCliente.trim().split(" ")[0] || "";
+  const msg = `Oi${primeiro ? ` ${primeiro}` : ""}! 💜 Lembrete do seu horário na MAVI: ${params.servico}, ${params.dia} às ${params.hora}. Confirme sua presença (ou reagende, se precisar) por aqui: ${linkAgendamento(params.origin, params.token)}`;
+  return `https://wa.me/${numeroWhatsapp(params.telefone)}?text=${encodeURIComponent(msg)}`;
+}
+
+// A clínica precisou mexer no horário: pede que a cliente escolha outro pelo link.
+export function linkWhatsappEscolherHorario(params: {
+  origin: string;
+  token: string;
+  telefone: string | null | undefined;
+  nomeCliente: string;
+  servico: string;
+  dia: string;
+  hora: string;
+}): string {
+  const primeiro = params.nomeCliente.trim().split(" ")[0] || "";
+  const msg = `Oi${primeiro ? ` ${primeiro}` : ""}! 💜 Precisamos ajustar o seu horário na MAVI (${params.servico}, ${params.dia} às ${params.hora}). Pode escolher um novo horário por aqui, é rapidinho: ${linkAgendamento(params.origin, params.token)} Qualquer dúvida, é só chamar!`;
+  return `https://wa.me/${numeroWhatsapp(params.telefone)}?text=${encodeURIComponent(msg)}`;
+}

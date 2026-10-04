@@ -21,7 +21,7 @@ import {
   type ServicoPublico,
 } from "@/lib/api/agenda.functions";
 import { dataSP, horaSP, rotuloDiaLongo } from "@/lib/agenda-datas";
-import { mascaraTelefone } from "@/lib/mascaras";
+import { mascaraCpf, mascaraTelefone } from "@/lib/mascaras";
 import { ADDRESS, ADDRESS_MAPS_URL, WHATSAPP_URL } from "@/data/services";
 import { EscolherHorario } from "./EscolherHorario";
 import { linkGoogleAgenda } from "./google-agenda";
@@ -35,7 +35,9 @@ const btnPrincipal =
   "inline-flex w-full items-center justify-center gap-2 rounded-full bg-primary px-7 py-4 text-base font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-40";
 
 const MENSAGEM_ERRO: Partial<Record<ErroAgenda, string>> = {
-  dados_invalidos: "Confira seu nome, WhatsApp (com DDD) e e-mail.",
+  dados_invalidos: "Confira seu nome, WhatsApp (com DDD), CPF e e-mail.",
+  cpf_nao_confere:
+    "O CPF não confere com o cadastro desse WhatsApp. Confira os números ou fale com a gente pelo WhatsApp.",
   limite_agendamentos:
     "Você já tem horários marcados. Para marcar mais um, fale com a gente pelo WhatsApp.",
   servico_invalido: "Esse serviço não está disponível agora. Escolha outro.",
@@ -64,6 +66,7 @@ export function PaginaAgendar() {
 
   const [nome, setNome] = useState("");
   const [telefone, setTelefone] = useState("");
+  const [cpf, setCpf] = useState("");
   const [email, setEmail] = useState("");
   const [isca, setIsca] = useState("");
   const [enviando, setEnviando] = useState(false);
@@ -116,6 +119,7 @@ export function PaginaAgendar() {
           inicio,
           nome: nome.trim(),
           telefone,
+          cpf: servico.tipo === "procedimento" ? cpf : undefined,
           email: email.trim(),
           website: isca,
         },
@@ -327,6 +331,26 @@ export function PaginaAgendar() {
                   className={campo}
                 />
               </div>
+              {servico.tipo === "procedimento" && (
+                <div>
+                  <label className={rotulo} htmlFor="ag-cpf">
+                    CPF
+                  </label>
+                  <input
+                    id="ag-cpf"
+                    value={cpf}
+                    onChange={(e) => setCpf(mascaraCpf(e.target.value))}
+                    required
+                    inputMode="numeric"
+                    autoComplete="off"
+                    placeholder="000.000.000-00"
+                    className={campo}
+                  />
+                  <p className="mt-1.5 text-xs text-muted-foreground">
+                    Usamos o CPF só para conferir que você já tem cadastro na MAVI.
+                  </p>
+                </div>
+              )}
               <div>
                 <label className={rotulo} htmlFor="ag-email">
                   E-mail <span className="font-normal text-muted-foreground">(opcional)</span>
