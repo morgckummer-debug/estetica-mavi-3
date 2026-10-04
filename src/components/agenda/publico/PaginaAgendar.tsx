@@ -5,6 +5,8 @@ import {
   ArrowLeft,
   CalendarCheck,
   CalendarPlus,
+  Check,
+  Copy,
   Loader2,
   MapPin,
   MessageCircle,
@@ -33,7 +35,7 @@ const btnPrincipal =
   "inline-flex w-full items-center justify-center gap-2 rounded-full bg-primary px-7 py-4 text-base font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-40";
 
 const MENSAGEM_ERRO: Partial<Record<ErroAgenda, string>> = {
-  dados_invalidos: "Confira seu nome, WhatsApp (com DDD) e e-mail.",
+  dados_invalidos: "Confira seu nome e WhatsApp (com DDD).",
   limite_agendamentos:
     "Você já tem horários marcados. Para marcar mais um, fale com a gente pelo WhatsApp.",
   servico_invalido: "Esse serviço não está disponível agora. Escolha outro.",
@@ -62,11 +64,9 @@ export function PaginaAgendar() {
 
   const [nome, setNome] = useState("");
   const [telefone, setTelefone] = useState("");
-  const [email, setEmail] = useState("");
-  const [areas, setAreas] = useState("");
-  const [lgpd, setLgpd] = useState(false);
   const [isca, setIsca] = useState("");
   const [enviando, setEnviando] = useState(false);
+  const [copiado, setCopiado] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
   const [precisaConsulta, setPrecisaConsulta] = useState(false);
   const [resultado, setResultado] = useState<Extract<ResultadoAgendar, { ok: true }> | null>(null);
@@ -88,6 +88,20 @@ export function PaginaAgendar() {
     setPasso("horario");
   };
 
+  // Sem e-mail, o link do agendamento é a única forma de a cliente cancelar ou
+  // reagendar sozinha: ela precisa guardá-lo.
+  const linkDoAgendamento = (token: string) => `${window.location.origin}/agendamento/${token}`;
+
+  const copiarLink = async (token: string) => {
+    try {
+      await navigator.clipboard.writeText(linkDoAgendamento(token));
+      setCopiado(true);
+      setTimeout(() => setCopiado(false), 2500);
+    } catch {
+      /* sem permissão para copiar: o botão do WhatsApp continua disponível */
+    }
+  };
+
   const enviar = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!servico || !inicio) return;
@@ -101,14 +115,6 @@ export function PaginaAgendar() {
           inicio,
           nome: nome.trim(),
           telefone,
-          email: email.trim(),
-          areas:
-            servico.tipo === "procedimento"
-              ? areas
-                  .split(",")
-                  .map((a) => a.trim())
-                  .filter(Boolean)
-              : [],
           website: isca,
         },
       });
@@ -319,41 +325,6 @@ export function PaginaAgendar() {
                   className={campo}
                 />
               </div>
-              <div>
-                <label className={rotulo} htmlFor="ag-email">
-                  E-mail
-                </label>
-                <input
-                  id="ag-email"
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                  maxLength={200}
-                  autoComplete="email"
-                  className={campo}
-                />
-                <p className="mt-1.5 text-xs text-muted-foreground">
-                  Enviamos aqui a confirmação e o link para cancelar ou reagendar.
-                </p>
-              </div>
-              {servico.tipo === "procedimento" && (
-                <div>
-                  <label className={rotulo} htmlFor="ag-areas">
-                    Quais áreas?{" "}
-                    <span className="font-normal text-muted-foreground">(opcional)</span>
-                  </label>
-                  <input
-                    id="ag-areas"
-                    value={areas}
-                    onChange={(e) => setAreas(e.target.value)}
-                    placeholder="Ex.: virilha, axilas"
-                    maxLength={200}
-                    className={campo}
-                  />
-                </div>
-              )}
-
               {/* Campo-isca: invisível para pessoas, robôs costumam preencher. */}
               <div aria-hidden="true" className="absolute -left-[9999px] h-0 w-0 overflow-hidden">
                 <label htmlFor="ag-site">Site</label>
@@ -366,26 +337,18 @@ export function PaginaAgendar() {
                 />
               </div>
 
-              <label className="flex items-start gap-3 text-sm leading-relaxed text-muted-foreground">
-                <input
-                  type="checkbox"
-                  checked={lgpd}
-                  onChange={(e) => setLgpd(e.target.checked)}
-                  required
-                  className="mt-1 h-4 w-4 accent-primary"
-                />
-                <span>
-                  Concordo com o uso dos meus dados para agendar e confirmar meu horário, conforme a{" "}
-                  <Link
-                    to="/politica-de-privacidade"
-                    target="_blank"
-                    className="font-medium text-primary underline"
-                  >
-                    política de privacidade
-                  </Link>
-                  .
-                </span>
-              </label>
+              <p className="text-xs leading-relaxed text-muted-foreground">
+                Ao confirmar, você concorda com o uso do seu nome e WhatsApp para agendar e avisar
+                sobre o seu horário, conforme a{" "}
+                <Link
+                  to="/politica-de-privacidade"
+                  target="_blank"
+                  className="font-medium text-primary underline"
+                >
+                  política de privacidade
+                </Link>
+                .
+              </p>
 
               {precisaConsulta && consulta && (
                 <div className="rounded-2xl border border-primary/30 bg-lavender-soft/60 p-4 text-sm leading-relaxed text-foreground">
@@ -410,7 +373,7 @@ export function PaginaAgendar() {
                 </p>
               )}
 
-              <button type="submit" disabled={enviando || !lgpd} className={btnPrincipal}>
+              <button type="submit" disabled={enviando} className={btnPrincipal}>
                 {enviando ? (
                   <Loader2 className="h-5 w-5 animate-spin" />
                 ) : (
@@ -481,10 +444,34 @@ export function PaginaAgendar() {
               )}
             </div>
             {resultado.token && (
-              <p className="mt-4 text-xs leading-relaxed text-muted-foreground">
-                Guarde o endereço desta próxima página: é por ela que você cancela ou muda o horário
-                quando quiser.
-              </p>
+              <div className="mt-6 rounded-2xl border border-primary/30 bg-lavender-soft/50 p-5 text-left">
+                <p className="font-medium text-primary">Guarde o link do seu agendamento</p>
+                <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
+                  É por ele que você cancela ou muda o horário quando precisar. Salve agora, para
+                  não perder:
+                </p>
+                <div className="mt-3 grid gap-2.5 sm:grid-cols-2">
+                  <button
+                    type="button"
+                    onClick={() => copiarLink(resultado.token as string)}
+                    className="inline-flex items-center justify-center gap-2 rounded-full border border-primary/30 bg-card px-4 py-2.5 text-sm font-medium text-primary transition-colors hover:bg-lavender-soft"
+                  >
+                    {copiado ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                    {copiado ? "Link copiado!" : "Copiar link"}
+                  </button>
+                  <a
+                    href={`https://wa.me/55${telefone.replace(/\D/g, "")}?text=${encodeURIComponent(
+                      `Meu agendamento na MAVI: ${linkDoAgendamento(resultado.token)}`,
+                    )}`}
+                    target="whatsapp"
+                    rel="noreferrer"
+                    className="inline-flex items-center justify-center gap-2 rounded-full border border-primary/30 bg-card px-4 py-2.5 text-sm font-medium text-primary transition-colors hover:bg-lavender-soft"
+                  >
+                    <MessageCircle className="h-4 w-4" />
+                    Enviar para o meu WhatsApp
+                  </a>
+                </div>
+              </div>
             )}
 
             <a

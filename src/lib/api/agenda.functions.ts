@@ -89,8 +89,9 @@ export const agendar = createServerFn({ method: "POST" })
       inicio: z.string().datetime({ offset: true }),
       nome: z.string().min(2).max(120),
       telefone: z.string().min(10).max(25),
-      email: z.string().email().max(200),
-      areas: z.array(z.string().max(60)).max(20),
+      // A cliente não informa e-mail no agendamento online (só nome e WhatsApp).
+      email: z.union([z.literal(""), z.string().email().max(200)]).optional(),
+      areas: z.array(z.string().max(60)).max(20).optional(),
       // Campo-isca, escondido na tela: pessoas não preenchem, robôs sim.
       website: z.string().max(200).optional(),
     }),
@@ -112,8 +113,8 @@ export const agendar = createServerFn({ method: "POST" })
       p_inicio: data.inicio,
       p_nome: data.nome,
       p_telefone: data.telefone,
-      p_email: data.email,
-      p_areas: data.areas,
+      p_email: data.email ?? "",
+      p_areas: data.areas ?? [],
     })) as ResultadoAgendar;
   });
 
