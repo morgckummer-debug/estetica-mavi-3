@@ -1,6 +1,15 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import { CalendarPlus, ChevronLeft, ChevronRight, Loader2, Lock, RefreshCw, Settings2 } from "lucide-react";
+import {
+  CalendarDays,
+  CalendarPlus,
+  ChevronLeft,
+  ChevronRight,
+  Loader2,
+  Lock,
+  RefreshCw,
+  Settings2,
+} from "lucide-react";
 import {
   diasDoMes,
   excluirBloqueio,
@@ -29,6 +38,8 @@ import { DetalheAgendamento } from "@/components/agenda/DetalheAgendamento";
 import { NovoAgendamento } from "@/components/agenda/NovoAgendamento";
 import { BloquearHorario } from "@/components/agenda/BloquearHorario";
 import { ServicosAgenda } from "@/components/agenda/ServicosAgenda";
+import { MiniCalendario } from "@/components/agenda/MiniCalendario";
+import { ResumoDoDia } from "@/components/agenda/ResumoDoDia";
 
 export const Route = createFileRoute("/painel/agenda")({
   component: PaginaAgenda,
@@ -80,6 +91,8 @@ function PaginaAgenda() {
   const [todosServicos, setTodosServicos] = useState<AgendaServico[]>([]);
   const [bloqueando, setBloqueando] = useState<"bloqueio" | "ferias" | null>(null);
   const [editandoServicos, setEditandoServicos] = useState(false);
+  // No celular o calendário do mês fica recolhido até pedir.
+  const [mostrarCalendario, setMostrarCalendario] = useState(false);
 
   // No celular a semana não cabe em colunas: abre direto no dia.
   useEffect(() => {
@@ -175,46 +188,73 @@ function PaginaAgenda() {
 
   return (
     <div>
-      <div className="mb-1 flex flex-wrap items-baseline justify-between gap-3">
-        <h2 className="font-display text-[34px] text-painel-title">Agenda</h2>
-        <div className="flex items-center gap-2">
+      <div className="lg:flex lg:items-start lg:gap-6">
+        <div className="min-w-0 flex-1">
+          <div className="mb-1 flex flex-wrap items-baseline justify-between gap-3">
+            <h2 className="font-display text-[34px] text-painel-title">Agenda</h2>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setEditandoServicos(true)}
+                className="inline-flex items-center gap-1.5 rounded-full border border-painel-border bg-white px-4 py-2 text-[13px] font-medium text-painel-chip-text hover:border-painel-primary/40 transition-colors"
+              >
+                <Settings2 className="h-3.5 w-3.5" />
+                Serviços
+              </button>
+              <button
+                type="button"
+                onClick={() => setBloqueando("bloqueio")}
+                className="inline-flex items-center gap-1.5 rounded-full border border-painel-border bg-white px-4 py-2 text-[13px] font-medium text-painel-chip-text hover:border-painel-primary/40 transition-colors"
+              >
+                <Lock className="h-3.5 w-3.5" />
+                Bloquear
+              </button>
+              <button
+                type="button"
+                onClick={() => setNovo({ dia: visao === "dia" ? ancora : hojeSP() })}
+                disabled={servicos.length === 0}
+                className="inline-flex items-center gap-1.5 rounded-full bg-painel-primary px-4 py-2 text-[13px] font-semibold text-white hover:bg-painel-primary/90 transition-colors disabled:opacity-40"
+              >
+                <CalendarPlus className="h-3.5 w-3.5" />
+                Agendar
+              </button>
+            </div>
+          </div>
+          <p className="mb-6 text-sm text-painel-muted">
+            {carregando
+              ? "Carregando..."
+              : `${total} ${total === 1 ? "atendimento" : "atendimentos"} no período`}
+            {aReagendar > 0 && (
+              <span className="ml-2 rounded-full bg-painel-gold-soft/60 px-2.5 py-0.5 text-[11px] font-semibold text-painel-gold">
+                {aReagendar} precisa{aReagendar > 1 ? "m" : ""} reagendar
+              </span>
+            )}
+          </p>
+
+          <ResumoDoDia recarga={recarga} />
+
           <button
             type="button"
-            onClick={() => setEditandoServicos(true)}
-            className="inline-flex items-center gap-1.5 rounded-full border border-painel-border bg-white px-4 py-2 text-[13px] font-medium text-painel-chip-text hover:border-painel-primary/40 transition-colors"
+            onClick={() => setMostrarCalendario((v) => !v)}
+            aria-expanded={mostrarCalendario}
+            className="mb-4 inline-flex items-center gap-1.5 rounded-full border border-painel-border bg-white px-4 py-2 text-[13px] font-medium text-painel-chip-text hover:border-painel-primary/40 transition-colors lg:hidden"
           >
-            <Settings2 className="h-3.5 w-3.5" />
-            Serviços
-          </button>
-          <button
-            type="button"
-            onClick={() => setBloqueando("bloqueio")}
-            className="inline-flex items-center gap-1.5 rounded-full border border-painel-border bg-white px-4 py-2 text-[13px] font-medium text-painel-chip-text hover:border-painel-primary/40 transition-colors"
-          >
-            <Lock className="h-3.5 w-3.5" />
-            Bloquear
-          </button>
-          <button
-            type="button"
-            onClick={() => setNovo({ dia: visao === "dia" ? ancora : hojeSP() })}
-            disabled={servicos.length === 0}
-            className="inline-flex items-center gap-1.5 rounded-full bg-painel-primary px-4 py-2 text-[13px] font-semibold text-white hover:bg-painel-primary/90 transition-colors disabled:opacity-40"
-          >
-            <CalendarPlus className="h-3.5 w-3.5" />
-            Agendar
+            <CalendarDays className="h-3.5 w-3.5" />
+            {mostrarCalendario ? "Esconder calendário" : "Calendário do mês"}
           </button>
         </div>
+
+        <div
+          className={`mb-5 w-full lg:block lg:w-[272px] lg:shrink-0 ${mostrarCalendario ? "block" : "hidden"}`}
+        >
+          <MiniCalendario
+            ancora={ancora}
+            semanaInteira={visao === "semana"}
+            recarga={recarga}
+            onEscolher={escolherDia}
+          />
+        </div>
       </div>
-      <p className="mb-6 text-sm text-painel-muted">
-        {carregando
-          ? "Carregando..."
-          : `${total} ${total === 1 ? "atendimento" : "atendimentos"} no período`}
-        {aReagendar > 0 && (
-          <span className="ml-2 rounded-full bg-painel-gold-soft/60 px-2.5 py-0.5 text-[11px] font-semibold text-painel-gold">
-            {aReagendar} precisa{aReagendar > 1 ? "m" : ""} reagendar
-          </span>
-        )}
-      </p>
 
       <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
         <div className="inline-flex rounded-full border border-painel-border bg-white p-1">

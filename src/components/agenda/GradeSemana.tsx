@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Check, Lock, RotateCw, X } from "lucide-react";
 import {
   dataSP,
@@ -114,6 +114,22 @@ export function GradeSemana({
   onAgendarEm: (dia: string, hora: string) => void;
 }) {
   const [passando, setPassando] = useState<{ dia: string; min: number } | null>(null);
+  // A linha do "agora" anda sozinha; ao abrir a semana de hoje a tela rola até ela.
+  const [, setRelogio] = useState(0);
+  const linhaAgora = useRef<HTMLDivElement>(null);
+  const jaRolou = useRef<string | null>(null);
+  const chaveDias = `${dias[0]}:${dias.length}`;
+
+  useEffect(() => {
+    const id = window.setInterval(() => setRelogio((n) => n + 1), 60_000);
+    return () => window.clearInterval(id);
+  }, []);
+
+  useEffect(() => {
+    if (jaRolou.current === chaveDias || !linhaAgora.current) return;
+    jaRolou.current = chaveDias;
+    linhaAgora.current.scrollIntoView({ block: "center", behavior: "smooth" });
+  }, [chaveDias]);
 
   const corPorServico = new Map(servicos.map((s) => [s.id, s.cor]));
   const hoje = hojeSP();
@@ -363,6 +379,7 @@ export function GradeSemana({
                 {/* Agora */}
                 {ehHoje && agora >= ini && agora <= fim && (
                   <div
+                    ref={linhaAgora}
                     className="pointer-events-none absolute inset-x-0 z-20 border-t-2 border-painel-primary-deep"
                     style={{ top: y(agora) }}
                   >
