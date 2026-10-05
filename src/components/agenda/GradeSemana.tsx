@@ -331,6 +331,7 @@ export function GradeSemana({
                         )}
                         <span className={`truncate ${cancelado || faltou ? "line-through" : ""}`}>
                           {alta ? `${hora} · ${ag.nome}` : `${horaSP(ag.inicio)} · ${ag.nome}`}
+                          {!alta && dias.length === 1 && ` · ${ag.servico_nome}`}
                         </span>
                       </span>
                       {alta && (
