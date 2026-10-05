@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Check, Loader2, Search, X } from "lucide-react";
-import { criarAgendamentoManual, hojeSP, type AgendaServico } from "@/lib/agenda";
+import { criarAgendamentoManual, hojeSP, instanteSP, type AgendaServico } from "@/lib/agenda";
 import { listarClientes, type Cliente } from "@/lib/painel";
 import { digitos } from "@/lib/clientes";
 import { mascaraTelefone } from "@/lib/mascaras";
@@ -11,11 +11,14 @@ import { btnPrimario, btnSecundario, campo, rotulo } from "./estilos";
 // Agendamento feito pela Marina no painel (cliente que ligou, encaixe...).
 export function NovoAgendamento({
   diaInicial,
+  horaInicial,
   servicos,
   onFechar,
   onCriado,
 }: {
   diaInicial: string;
+  // "HH:MM" quando a Marina clicou num horário vazio da grade.
+  horaInicial?: string;
   servicos: AgendaServico[];
   onFechar: () => void;
   onCriado: () => void;
@@ -29,7 +32,9 @@ export function NovoAgendamento({
   const [email, setEmail] = useState("");
   const [servicoId, setServicoId] = useState(servicos[0]?.id ?? "");
   const [dia, setDia] = useState(diaInicial < hoje ? hoje : diaInicial);
-  const [inicio, setInicio] = useState<string | null>(null);
+  const [inicio, setInicio] = useState<string | null>(() =>
+    horaInicial && diaInicial >= hoje ? instanteSP(diaInicial, horaInicial) : null,
+  );
   const [areas, setAreas] = useState("");
   const [observacao, setObservacao] = useState("");
   const [salvando, setSalvando] = useState(false);

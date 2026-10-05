@@ -2,7 +2,6 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { CalendarPlus, ChevronLeft, ChevronRight, Loader2, Lock, Settings2 } from "lucide-react";
 import {
-  dataSP,
   diasDoMes,
   excluirBloqueio,
   hojeSP,
@@ -10,6 +9,7 @@ import {
   inicioDoMes,
   listarAgendamentos,
   listarBloqueios,
+  listarFaixasHorario,
   listarServicosAgenda,
   rotuloDiaLongo,
   rotuloDiaMes,
@@ -20,8 +20,9 @@ import {
   type AgendaServico,
   type Agendamento,
   type Bloqueio,
+  type FaixaHorario,
 } from "@/lib/agenda";
-import { ListaDias } from "@/components/agenda/ListaDias";
+import { GradeSemana } from "@/components/agenda/GradeSemana";
 import { VisaoMes } from "@/components/agenda/VisaoMes";
 import { DetalheAgendamento } from "@/components/agenda/DetalheAgendamento";
 import { NovoAgendamento } from "@/components/agenda/NovoAgendamento";
@@ -71,7 +72,9 @@ function PaginaAgenda() {
   const [recarga, setRecarga] = useState(0);
 
   const [aberto, setAberto] = useState<Agendamento | null>(null);
-  const [novo, setNovo] = useState(false);
+  // Dia (e hora, se clicou num horário vazio) do novo agendamento.
+  const [novo, setNovo] = useState<{ dia: string; hora?: string } | null>(null);
+  const [faixas, setFaixas] = useState<FaixaHorario[]>([]);
   const [bloqueando, setBloqueando] = useState<"bloqueio" | "ferias" | null>(null);
   const [editandoServicos, setEditandoServicos] = useState(false);
 
@@ -87,6 +90,15 @@ function PaginaAgenda() {
   }, []);
 
   useEffect(carregarServicos, [carregarServicos]);
+
+  // Horário de atendimento da semana (vem das "Regras gerais"): recarrega ao
+  // fechar a janela de Serviços, que é onde ele muda.
+  useEffect(() => {
+    if (editandoServicos) return;
+    listarFaixasHorario()
+      .then(setFaixas)
+      .catch(() => setFaixas([]));
+  }, [editandoServicos]);
 
   const { de, ate } = useMemo(() => intervalo(visao, ancora), [visao, ancora]);
 
@@ -154,11 +166,6 @@ function PaginaAgenda() {
   const total = agendamentos.filter((a) => STATUS_ATIVOS.includes(a.status)).length;
   const aReagendar = agendamentos.filter((a) => a.status === "remarcar").length;
   const ehHoje = ancora === hojeSP();
-  const temItemNoDia =
-    bloqueios.length > 0 ||
-    agendamentos.some(
-      (a) => dataSP(a.inicio) === ancora && (mostrarCancelados || a.status !== "cancelado"),
-    );
 
   return (
     <div>
@@ -183,7 +190,7 @@ function PaginaAgenda() {
           </button>
           <button
             type="button"
-            onClick={() => setNovo(true)}
+            onClick={() => setNovo({ dia: visao === "dia" ? ancora : hojeSP() })}
             disabled={servicos.length === 0}
             className="inline-flex items-center gap-1.5 rounded-full bg-painel-primary px-4 py-2 text-[13px] font-semibold text-white hover:bg-painel-primary/90 transition-colors disabled:opacity-40"
           >
@@ -288,18 +295,17 @@ function PaginaAgenda() {
         />
       ) : (
         <>
-          <ListaDias
+          <GradeSemana
             dias={dias}
             agendamentos={agendamentos}
             bloqueios={bloqueios}
+            faixas={faixas}
             mostrarCancelados={mostrarCancelados}
             onAbrir={setAberto}
             onRemoverBloqueio={removerBloqueio}
             onEscolherDia={escolherDia}
+            onAgendarEm={(dia, hora) => setNovo({ dia, hora })}
           />
-          {visao === "dia" && !carregando && !temItemNoDia && (
-            <p className="py-12 text-center text-painel-muted">Nenhum atendimento neste dia.</p>
-          )}
         </>
       )}
 
@@ -317,11 +323,12 @@ function PaginaAgenda() {
       )}
       {novo && (
         <NovoAgendamento
-          diaInicial={visao === "dia" ? ancora : hojeSP()}
+          diaInicial={novo.dia}
+          horaInicial={novo.hora}
           servicos={servicos}
-          onFechar={() => setNovo(false)}
+          onFechar={() => setNovo(null)}
           onCriado={() => {
-            setNovo(false);
+            setNovo(null);
             avisar("Agendamento criado.");
             recarregar();
           }}
