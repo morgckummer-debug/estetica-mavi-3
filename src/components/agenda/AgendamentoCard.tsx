@@ -63,6 +63,26 @@ export function EtiquetaStatus({ ag, curta = false }: { ag: Agendamento; curta?:
   );
 }
 
+// Quem agendou: cliente já cadastrada (reconhecida pelo telefone) ou pessoa nova.
+// Ajuda a Marina a desconfiar de nome falso no agendamento online.
+export function EtiquetaCadastro({ ag }: { ag: Agendamento }) {
+  const cadastrada = Boolean(ag.cliente_id);
+  const nome = ag.cliente?.nome;
+  return (
+    <span
+      className={`inline-flex max-w-full items-center gap-1 rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${
+        cadastrada
+          ? "bg-painel-green/10 text-painel-green"
+          : "bg-painel-gold-soft/60 text-painel-gold"
+      }`}
+    >
+      <span className="truncate">
+        {cadastrada ? `Cliente cadastrada${nome ? `: ${nome}` : ""}` : "Pessoa nova"}
+      </span>
+    </span>
+  );
+}
+
 export function AgendamentoCard({
   ag,
   onAbrir,
@@ -106,6 +126,9 @@ export function AgendamentoCard({
         {ag.servico_nome}
         {ag.areas.length > 0 ? ` · ${ag.areas.join(", ")}` : ""}
       </p>
+      <div className="mt-1.5">
+        <EtiquetaCadastro ag={ag} />
+      </div>
       {!compacto && (
         <p className="mt-1.5 flex items-center gap-3 text-[11.5px] text-painel-muted-2">
           <span className="inline-flex items-center gap-1">

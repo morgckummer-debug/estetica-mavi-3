@@ -1,9 +1,10 @@
 import { useState } from "react";
-import { Check, Loader2, Lock, X } from "lucide-react";
+import { Check, Loader2, Lock, MessageCircle, X } from "lucide-react";
 import {
   agendamentosNoPeriodo,
   criarBloqueio,
   dataSP,
+  horaSP,
   hojeSP,
   instanteSP,
   pedirRemarcacao,
@@ -13,6 +14,8 @@ import {
   type AgendaServico,
   type Agendamento,
 } from "@/lib/agenda";
+import { PAINEL_URL } from "@/data/services";
+import { linkWhatsappEscolherHorario } from "@/lib/whatsapp";
 import { PainelModal } from "@/components/PainelModal";
 import { ReagendarPainel } from "./ReagendarPainel";
 import { btnPrimario, btnSecundario, campo, rotulo } from "./estilos";
@@ -44,6 +47,8 @@ export function BloquearHorario({
 
   // Segunda etapa: agendamentos que o bloqueio atingiu.
   const [conflitos, setConflitos] = useState<Agendamento[] | null>(null);
+  // Quem foi marcada como "precisa reagendar" e ainda pode receber o aviso por WhatsApp.
+  const [avisaveis, setAvisaveis] = useState<Set<string>>(new Set());
   const [resolvidos, setResolvidos] = useState<Record<string, string>>({});
   const [reagendando, setReagendando] = useState<Agendamento | null>(null);
   const [trabalhando, setTrabalhando] = useState<string | null>(null);
@@ -80,6 +85,7 @@ export function BloquearHorario({
     try {
       await pedirRemarcacao(ag.id);
       setResolvidos((r) => ({ ...r, [ag.id]: "Marcada como “precisa reagendar”" }));
+      setAvisaveis((s) => new Set(s).add(ag.id));
     } catch (err) {
       setErro(err instanceof Error ? err.message : "Não foi possível atualizar.");
     } finally {
@@ -132,10 +138,31 @@ export function BloquearHorario({
                     {rotuloHorario(ag.inicio, ag.fim)}
                   </p>
                   {resolvidos[ag.id] ? (
-                    <p className="mt-2 inline-flex items-center gap-1 text-xs font-medium text-painel-lilac-soft">
-                      <Check className="h-3.5 w-3.5" />
-                      {resolvidos[ag.id]}
-                    </p>
+                    <div className="mt-2 flex flex-wrap items-center gap-3">
+                      <p className="inline-flex items-center gap-1 text-xs font-medium text-painel-lilac-soft">
+                        <Check className="h-3.5 w-3.5" />
+                        {resolvidos[ag.id]}
+                      </p>
+                      {avisaveis.has(ag.id) && (
+                        <a
+                          href={linkWhatsappEscolherHorario({
+                            origin: PAINEL_URL,
+                            token: ag.token,
+                            telefone: ag.telefone,
+                            nomeCliente: ag.nome,
+                            servico: ag.servico_nome,
+                            dia: rotuloDiaLongo(dataSP(ag.inicio)),
+                            hora: horaSP(ag.inicio),
+                          })}
+                          target="whatsapp"
+                          rel="noreferrer"
+                          className={btnSecundario}
+                        >
+                          <MessageCircle className="h-4 w-4" />
+                          Avisar por WhatsApp
+                        </a>
+                      )}
+                    </div>
                   ) : (
                     <div className="mt-2.5 flex flex-wrap gap-2">
                       <button

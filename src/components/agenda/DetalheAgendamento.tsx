@@ -1,9 +1,19 @@
 import { useEffect, useState } from "react";
-import { CalendarClock, Check, Loader2, MessageCircle, Send, UserRound, X } from "lucide-react";
+import {
+  Bell,
+  CalendarClock,
+  Check,
+  Loader2,
+  MessageCircle,
+  Send,
+  UserRound,
+  X,
+} from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import {
   cancelarAgendamento,
   dataSP,
+  horaSP,
   marcarStatus,
   rotuloDiaLongo,
   rotuloHorario,
@@ -11,14 +21,14 @@ import {
   type AgendaServico,
   type Agendamento,
 } from "@/lib/agenda";
-import { linkWhatsappContato, linkWhatsappFicha } from "@/lib/whatsapp";
+import { linkWhatsappContato, linkWhatsappFicha, linkWhatsappLembrete } from "@/lib/whatsapp";
 import { tipoFichaDoServico } from "@/lib/agenda-ficha";
 import { listarFichasDoCliente } from "@/lib/painel";
 import { getFicha, nomeCurto } from "@/data/anamnese";
 import { PAINEL_URL } from "@/data/services";
 import { mascaraTelefone } from "@/lib/mascaras";
 import { PainelModal } from "@/components/PainelModal";
-import { EtiquetaStatus } from "./AgendamentoCard";
+import { EtiquetaCadastro, EtiquetaStatus } from "./AgendamentoCard";
 import { ReagendarPainel } from "./ReagendarPainel";
 import { btnPerigo, btnSecundario } from "./estilos";
 
@@ -116,8 +126,9 @@ export function DetalheAgendamento({
               {rotuloDiaLongo(dataSP(ag.inicio))}
             </p>
             <p className="text-sm text-painel-lilac-soft">{rotuloHorario(ag.inicio, ag.fim)}</p>
-            <div className="mt-2">
+            <div className="mt-2 flex flex-wrap items-center gap-1.5">
               <EtiquetaStatus ag={ag} />
+              <EtiquetaCadastro ag={ag} />
             </div>
           </div>
 
@@ -158,6 +169,25 @@ export function DetalheAgendamento({
               <MessageCircle className="h-4 w-4" />
               WhatsApp
             </a>
+            {ativo && (
+              <a
+                href={linkWhatsappLembrete({
+                  origin: PAINEL_URL,
+                  token: ag.token,
+                  telefone: ag.telefone,
+                  nomeCliente: ag.nome,
+                  servico: ag.servico_nome,
+                  dia: rotuloDiaLongo(dataSP(ag.inicio)),
+                  hora: horaSP(ag.inicio),
+                })}
+                target="whatsapp"
+                rel="noreferrer"
+                className={btnSecundario}
+              >
+                <Bell className="h-4 w-4" />
+                Lembrete
+              </a>
+            )}
             {jaTemFicha === false && (
               <a
                 href={linkWhatsappFicha({

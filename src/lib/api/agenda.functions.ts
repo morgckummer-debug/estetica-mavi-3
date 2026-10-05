@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 
 import { enviarEmailConfirmacao } from "./agenda-email.server";
+import { cpfValido } from "../mascaras";
 import { colunaUnica, rpc } from "./rpc";
 
 // Agendamento online (páginas públicas /agendar e /agendamento/<token>).
@@ -22,6 +23,7 @@ export type ErroAgenda =
   | "dados_invalidos"
   | "servico_invalido"
   | "consulta_primeiro"
+  | "cpf_nao_confere"
   | "limite_agendamentos"
   | "horario_indisponivel"
   | "nao_encontrado"
@@ -95,6 +97,8 @@ export const agendar = createServerFn({ method: "POST" })
       // A cliente não informa e-mail no agendamento online (só nome e WhatsApp).
       email: z.union([z.literal(""), z.string().email().max(200)]).optional(),
       areas: z.array(z.string().max(60)).max(20).optional(),
+      // CPF: só é pedido para procedimento, e precisa bater com o cadastro.
+      cpf: z.string().max(20).optional(),
       // Campo-isca, escondido na tela: pessoas não preenchem, robôs sim.
       website: z.string().max(200).optional(),
     }),
@@ -111,6 +115,8 @@ export const agendar = createServerFn({ method: "POST" })
         primeiro_nome: data.nome.split(" ")[0],
       };
     }
+    // CPF informado precisa ser um CPF de verdade (dígitos verificadores).
+    if (data.cpf && !cpfValido(data.cpf)) return { ok: false, erro: "dados_invalidos" };
     const r = (await rpc("agenda_agendar", {
       p_servico_id: data.servicoId,
       p_inicio: data.inicio,
@@ -118,6 +124,7 @@ export const agendar = createServerFn({ method: "POST" })
       p_telefone: data.telefone,
       p_email: data.email ?? "",
       p_areas: data.areas ?? [],
+      p_cpf: data.cpf ?? "",
     })) as ResultadoAgendar;
 
     // E-mail de confirmação (opcional): se falhar, o agendamento continua valendo.
