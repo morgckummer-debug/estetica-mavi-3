@@ -17,6 +17,8 @@ export type ServicoPublico = {
   nome: string;
   tipo: "consulta" | "procedimento";
   duracao_min: number;
+  // Áreas que a cliente escolhe ao agendar (vazio = serviço sem áreas).
+  areas?: string[];
 };
 
 export type ErroAgenda =
@@ -24,6 +26,7 @@ export type ErroAgenda =
   | "servico_invalido"
   | "consulta_primeiro"
   | "cpf_nao_confere"
+  | "areas_obrigatorias"
   | "limite_agendamentos"
   | "horario_indisponivel"
   | "nao_encontrado"
@@ -37,6 +40,8 @@ export type ResultadoAgendar =
       inicio: string;
       fim: string;
       servico: string;
+      // Áreas escolhidas (serviços feitos por área, como o laser).
+      areas?: string[];
       primeiro_nome: string;
       // true quando o e-mail de confirmação foi enviado.
       email_enviado?: boolean;
@@ -96,7 +101,7 @@ export const agendar = createServerFn({ method: "POST" })
       telefone: z.string().min(10).max(25),
       // A cliente não informa e-mail no agendamento online (só nome e WhatsApp).
       email: z.union([z.literal(""), z.string().email().max(200)]).optional(),
-      areas: z.array(z.string().max(60)).max(20).optional(),
+      areas: z.array(z.string().max(60)).max(40).optional(),
       // CPF: só é pedido para procedimento, e precisa bater com o cadastro.
       cpf: z.string().max(20).optional(),
       // Campo-isca, escondido na tela: pessoas não preenchem, robôs sim.
@@ -132,7 +137,7 @@ export const agendar = createServerFn({ method: "POST" })
       const envio = await enviarEmailConfirmacao({
         para: data.email,
         primeiroNome: r.primeiro_nome,
-        servico: r.servico,
+        servico: r.areas?.length ? `${r.servico} (${r.areas.join(", ")})` : r.servico,
         inicio: r.inicio,
         fim: r.fim,
         token: r.token,

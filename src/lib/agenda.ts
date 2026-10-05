@@ -45,6 +45,8 @@ export type AgendaServico = {
   ficha: Tipo;
   // Cor pastel na agenda.
   cor: CorServico;
+  // Áreas possíveis do serviço (ex.: laser → perna, buço...). Vazio = sem áreas.
+  areas_opcoes: string[];
   ativo: boolean;
   ordem: number;
 };
@@ -246,6 +248,7 @@ export type DadosServico = {
   duracao_min: number;
   ficha: Tipo;
   cor: CorServico;
+  areas_opcoes: string[];
   ativo: boolean;
 };
 

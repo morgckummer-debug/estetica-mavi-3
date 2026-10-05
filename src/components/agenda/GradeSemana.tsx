@@ -307,7 +307,7 @@ export function GradeSemana({
                       }}
                       onMouseMove={(e) => e.stopPropagation()}
                       onMouseEnter={() => setPassando(null)}
-                      title={`${hora} · ${ag.nome} · ${ag.servico_nome}`}
+                      title={`${hora} · ${ag.nome} · ${ag.servico_nome}${ag.areas.length > 0 ? ` (${ag.areas.join(", ")})` : ""}`}
                       className={`absolute inset-x-1 overflow-hidden rounded-lg border-l-4 px-2 py-0.5 text-left text-[#3d2a4c] transition-shadow hover:z-10 hover:shadow-[0_8px_24px_-14px_rgba(120,80,150,0.55)] ${
                         reagendar ? "border-[1.5px] border-l-4 border-dashed" : ""
                       } ${apagado}`}
@@ -319,7 +319,12 @@ export function GradeSemana({
                       }}
                     >
                       <span className="flex items-center gap-1 text-[12px] font-semibold leading-tight">
-                        {confirmou && <Check className="h-3 w-3 shrink-0" />}
+                        {confirmou && (
+                          <Check
+                            className="h-3.5 w-3.5 shrink-0 text-[#1f6b3a]"
+                            strokeWidth={3.5}
+                          />
+                        )}
                         {reagendar && <RotateCw className="h-3 w-3 shrink-0" />}
                         {faltou && (
                           <span className="h-[7px] w-[7px] shrink-0 rounded-full bg-[#c0485f]" />
@@ -331,6 +336,7 @@ export function GradeSemana({
                       {alta && (
                         <span className="block truncate text-[11.5px] leading-snug opacity-85">
                           {ag.servico_nome}
+                          {ag.areas.length > 0 && ` · ${ag.areas.join(", ")}`}
                           {!ag.cliente_id && " · pessoa nova"}
                         </span>
                       )}

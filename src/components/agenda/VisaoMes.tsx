@@ -106,6 +106,9 @@ export function VisaoMes({
                           className="block truncate rounded-md border-l-[3px] px-1.5 py-0.5 text-[11px] text-[#3d2a4c]"
                           style={{ background: p.fundo, borderColor: p.borda }}
                         >
+                          {ag.presenca_confirmada_em && (
+                            <span className="font-bold text-[#1f6b3a]">✓ </span>
+                          )}
                           {horaSP(ag.inicio)} {ag.nome.split(" ")[0]}
                         </span>
                       );

@@ -36,6 +36,7 @@ const btnPrincipal =
 
 const MENSAGEM_ERRO: Partial<Record<ErroAgenda, string>> = {
   dados_invalidos: "Confira seu nome, WhatsApp (com DDD), CPF e e-mail.",
+  areas_obrigatorias: "Escolha ao menos uma área.",
   cpf_nao_confere:
     "O CPF não confere com o cadastro desse WhatsApp. Confira os números ou fale com a gente pelo WhatsApp.",
   limite_agendamentos:
@@ -67,6 +68,7 @@ export function PaginaAgendar() {
   const [nome, setNome] = useState("");
   const [telefone, setTelefone] = useState("");
   const [cpf, setCpf] = useState("");
+  const [areas, setAreas] = useState<string[]>([]);
   const [email, setEmail] = useState("");
   const [isca, setIsca] = useState("");
   const [enviando, setEnviando] = useState(false);
@@ -86,6 +88,7 @@ export function PaginaAgendar() {
 
   const escolherServico = (s: ServicoPublico) => {
     setServico(s);
+    setAreas([]);
     setInicio(null);
     setErro(null);
     setPrecisaConsulta(false);
@@ -109,6 +112,10 @@ export function PaginaAgendar() {
   const enviar = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!servico || !inicio) return;
+    if ((servico.areas ?? []).length > 0 && areas.length === 0) {
+      setErro("Escolha ao menos uma área.");
+      return;
+    }
     setErro(null);
     setPrecisaConsulta(false);
     setEnviando(true);
@@ -120,6 +127,7 @@ export function PaginaAgendar() {
           nome: nome.trim(),
           telefone,
           cpf: servico.tipo === "procedimento" ? cpf : undefined,
+          areas: (servico.areas ?? []).length > 0 ? areas : undefined,
           email: email.trim(),
           website: isca,
         },
@@ -298,9 +306,45 @@ export function PaginaAgendar() {
               <p className="text-sm first-letter:uppercase text-muted-foreground">
                 {rotuloDiaLongo(dataSP(inicio))} · {horaSP(inicio)}
               </p>
+              {areas.length > 0 && (
+                <p className="mt-1 text-sm text-muted-foreground">Áreas: {areas.join(", ")}</p>
+              )}
             </div>
 
             <form onSubmit={enviar} className="space-y-4">
+              {(servico.areas ?? []).length > 0 && (
+                <fieldset>
+                  <legend className={rotulo}>Quais áreas você quer fazer?</legend>
+                  <div className="flex flex-wrap gap-2">
+                    {(servico.areas ?? []).map((a) => {
+                      const marcada = areas.includes(a);
+                      return (
+                        <button
+                          key={a}
+                          type="button"
+                          aria-pressed={marcada}
+                          onClick={() =>
+                            setAreas((atual) =>
+                              atual.includes(a) ? atual.filter((x) => x !== a) : [...atual, a],
+                            )
+                          }
+                          className={`rounded-full border px-3.5 py-2 text-sm transition-colors ${
+                            marcada
+                              ? "border-primary bg-primary font-medium text-primary-foreground"
+                              : "border-border bg-card text-foreground hover:border-primary/50"
+                          }`}
+                        >
+                          {a}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  <p className="mt-1.5 text-xs text-muted-foreground">
+                    Pode escolher mais de uma. Se tiver dúvida, escolha as que você já sabe e a
+                    gente confirma na hora.
+                  </p>
+                </fieldset>
+              )}
               <div>
                 <label className={rotulo} htmlFor="ag-nome">
                   Seu nome completo
