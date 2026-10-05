@@ -51,7 +51,8 @@ export function DetalheAgendamento({
 
   // Ficha certa para o serviço marcado. Se a cliente já é cadastrada e já tem
   // essa ficha (ou o cadastro, no caso da consulta), não precisa mandar de novo.
-  const fichaTipo = tipoFichaDoServico(ag.servico_nome);
+  const fichaTipo =
+    servicos.find((s) => s.id === ag.servico_id)?.ficha ?? tipoFichaDoServico(ag.servico_nome);
   const [jaTemFicha, setJaTemFicha] = useState<boolean | null>(ag.cliente_id ? null : false);
   useEffect(() => {
     if (!ag.cliente_id) {
