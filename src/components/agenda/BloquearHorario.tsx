@@ -18,6 +18,7 @@ import { PAINEL_URL } from "@/data/services";
 import { linkWhatsappEscolherHorario } from "@/lib/whatsapp";
 import { PainelModal } from "@/components/PainelModal";
 import { ReagendarPainel } from "./ReagendarPainel";
+import { SeletorData } from "./SeletorData";
 import { btnPrimario, btnSecundario, campo, rotulo } from "./estilos";
 
 // Bloqueia um horário, um dia inteiro ou um período (férias, feriado). Com
@@ -240,25 +241,26 @@ export function BloquearHorario({
         <div className="grid grid-cols-2 gap-3">
           <div>
             <label className={rotulo}>De</label>
-            <input
-              type="date"
-              value={de}
+            <SeletorData
+              valor={de}
               min={hoje}
-              onChange={(e) => {
-                setDe(e.target.value);
-                if (ate < e.target.value) setAte(e.target.value);
+              semana={false}
+              rotulo="De"
+              onChange={(ymd) => {
+                setDe(ymd);
+                if (ate < ymd) setAte(ymd);
               }}
-              className={`${campo} [color-scheme:dark]`}
             />
           </div>
           <div>
             <label className={rotulo}>Até</label>
-            <input
-              type="date"
-              value={ate}
+            <SeletorData
+              valor={ate}
               min={de}
-              onChange={(e) => setAte(e.target.value)}
-              className={`${campo} [color-scheme:dark]`}
+              alinhar="direita"
+              semana={false}
+              rotulo="Até"
+              onChange={setAte}
             />
           </div>
         </div>
