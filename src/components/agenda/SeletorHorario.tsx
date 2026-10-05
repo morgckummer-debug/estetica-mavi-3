@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Loader2 } from "lucide-react";
 import { horariosLivres, horaSP, hojeSP, instanteSP, type AgendaServico } from "@/lib/agenda";
 import { campo, rotulo } from "./estilos";
+import { SeletorData } from "./SeletorData";
 
 // Escolha de data + horário. Os horários livres vêm do banco (já descontando
 // expediente, bloqueios e outros agendamentos). "Outro horário" é o encaixe:
@@ -52,16 +53,15 @@ export function SeletorHorario({
     <div className="space-y-3">
       <div>
         <label className={rotulo}>Data</label>
-        <input
-          type="date"
-          value={dia}
+        <SeletorData
+          valor={dia}
           min={hojeSP()}
-          onChange={(e) => {
-            onDia(e.target.value);
+          rotulo="Data"
+          onChange={(ymd) => {
+            onDia(ymd);
             onValor(null);
             setManual(false);
           }}
-          className={`${campo} [color-scheme:dark]`}
         />
       </div>
 
