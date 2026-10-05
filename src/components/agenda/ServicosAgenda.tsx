@@ -1,5 +1,14 @@
 import { useEffect, useState } from "react";
-import { ArrowDown, ArrowUp, Check, Loader2, Plus, SlidersHorizontal, X } from "lucide-react";
+import {
+  ArrowDown,
+  ArrowUp,
+  Check,
+  Loader2,
+  Palmtree,
+  Plus,
+  SlidersHorizontal,
+  X,
+} from "lucide-react";
 import {
   atualizarServico,
   criarServico,
@@ -31,8 +40,11 @@ const rascunhoDe = (s: AgendaServico): Rascunho => ({
 export function ServicosAgenda({
   onFechar,
   onAlterado,
+  onFerias,
 }: {
   onFechar: () => void;
+  // Fecha esta janela e abre o cadastro de férias.
+  onFerias: () => void;
   // Avisa a agenda para recarregar a lista de serviços.
   onAlterado: () => void;
 }) {
@@ -149,6 +161,10 @@ export function ServicosAgenda({
       >
         <SlidersHorizontal className="h-4 w-4" />
         Regras gerais (horários e prazos)
+      </button>
+      <button type="button" onClick={onFerias} className={`${btnSecundario} mb-4 ml-2`}>
+        <Palmtree className="h-4 w-4" />
+        Férias
       </button>
 
       {!servicos ? (

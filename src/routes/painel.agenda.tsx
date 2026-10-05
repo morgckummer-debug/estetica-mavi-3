@@ -1,14 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import {
-  CalendarPlus,
-  ChevronLeft,
-  ChevronRight,
-  Loader2,
-  Lock,
-  Palmtree,
-  Settings2,
-} from "lucide-react";
+import { CalendarPlus, ChevronLeft, ChevronRight, Loader2, Lock, Settings2 } from "lucide-react";
 import {
   dataSP,
   diasDoMes,
@@ -183,14 +175,6 @@ function PaginaAgenda() {
           </button>
           <button
             type="button"
-            onClick={() => setBloqueando("ferias")}
-            className="inline-flex items-center gap-1.5 rounded-full border border-painel-border bg-white px-4 py-2 text-[13px] font-medium text-painel-chip-text hover:border-painel-primary/40 transition-colors"
-          >
-            <Palmtree className="h-3.5 w-3.5" />
-            Férias
-          </button>
-          <button
-            type="button"
             onClick={() => setBloqueando("bloqueio")}
             className="inline-flex items-center gap-1.5 rounded-full border border-painel-border bg-white px-4 py-2 text-[13px] font-medium text-painel-chip-text hover:border-painel-primary/40 transition-colors"
           >
@@ -344,7 +328,14 @@ function PaginaAgenda() {
         />
       )}
       {editandoServicos && (
-        <ServicosAgenda onFechar={() => setEditandoServicos(false)} onAlterado={carregarServicos} />
+        <ServicosAgenda
+          onFechar={() => setEditandoServicos(false)}
+          onAlterado={carregarServicos}
+          onFerias={() => {
+            setEditandoServicos(false);
+            setBloqueando("ferias");
+          }}
+        />
       )}
       {bloqueando && (
         <BloquearHorario
