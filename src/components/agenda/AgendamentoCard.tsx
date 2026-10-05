@@ -64,10 +64,9 @@ export function EtiquetaStatus({ ag, curta = false }: { ag: Agendamento; curta?:
 }
 
 // Quem agendou: cliente já cadastrada (reconhecida pelo telefone) ou pessoa nova.
-// Ajuda a Marina a desconfiar de nome falso no agendamento online.
+// Mostra se o telefone bateu com um cadastro existente.
 export function EtiquetaCadastro({ ag }: { ag: Agendamento }) {
   const cadastrada = Boolean(ag.cliente_id);
-  const nome = ag.cliente?.nome;
   return (
     <span
       className={`inline-flex max-w-full items-center gap-1 rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${
@@ -76,9 +75,7 @@ export function EtiquetaCadastro({ ag }: { ag: Agendamento }) {
           : "bg-painel-gold-soft/60 text-painel-gold"
       }`}
     >
-      <span className="truncate">
-        {cadastrada ? `Cliente cadastrada${nome ? `: ${nome}` : ""}` : "Pessoa nova"}
-      </span>
+      <span className="truncate">{cadastrada ? "Cliente cadastrada" : "Pessoa nova"}</span>
     </span>
   );
 }

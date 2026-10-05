@@ -32,8 +32,6 @@ export type Agendamento = {
   observacao: string | null;
   origem: "online" | "painel";
   token: string;
-  // Cadastro ligado pelo telefone (só vem na listagem da agenda).
-  cliente?: { nome: string } | null;
 };
 
 export type AgendaServico = {
@@ -62,7 +60,7 @@ export const STATUS_ATIVOS: AgendaStatus[] = ["agendado", "remarcar"];
 /** Agendamentos que começam entre [de, ate) — datas "YYYY-MM-DD". */
 export async function listarAgendamentos(de: string, ate: string): Promise<Agendamento[]> {
   const res = await apiRest(
-    `agenda_agendamentos?select=*,cliente:clientes(nome)` +
+    `agenda_agendamentos?select=*` +
       `&inicio=gte.${encodeURIComponent(instanteSP(de))}` +
       `&inicio=lt.${encodeURIComponent(instanteSP(ate))}` +
       `&order=inicio.asc`,
@@ -107,7 +105,7 @@ export async function horariosLivres(
  *  de conflito ao criar um bloqueio. */
 export async function agendamentosNoPeriodo(inicio: string, fim: string): Promise<Agendamento[]> {
   const res = await apiRest(
-    `agenda_agendamentos?select=*,cliente:clientes(nome)` +
+    `agenda_agendamentos?select=*` +
       `&status=in.(${STATUS_ATIVOS.join(",")})` +
       `&fim=gt.${encodeURIComponent(inicio)}` +
       `&inicio=lt.${encodeURIComponent(fim)}` +
