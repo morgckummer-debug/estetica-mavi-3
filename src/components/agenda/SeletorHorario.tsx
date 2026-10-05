@@ -49,6 +49,17 @@ export function SeletorHorario({
     };
   }, [servicoId, dia, ignorarId]);
 
+  // Hora que já veio escolhida (clique na grade) e não está entre os horários
+  // livres: vira encaixe, com a hora preenchida no campo.
+  useEffect(() => {
+    if (livres === null || !valor || manual) return;
+    if (!livres.some((h) => mesmoInstante(valor, h))) {
+      setManual(true);
+      setHoraManual(horaSP(valor));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [livres]);
+
   return (
     <div className="space-y-3">
       <div>
@@ -71,7 +82,7 @@ export function SeletorHorario({
         {livres && livres.length > 0 && (
           <div className="flex flex-wrap gap-1.5">
             {livres.map((h) => {
-              const selecionado = !manual && valor === h;
+              const selecionado = !manual && valor !== null && mesmoInstante(valor, h);
               return (
                 <button
                   key={h}
@@ -125,4 +136,10 @@ export function SeletorHorario({
       </div>
     </div>
   );
+}
+
+// Os horários vêm do banco em um formato de texto e o escolhido em outro:
+// compara pelo instante, não pelo texto.
+function mesmoInstante(a: string, b: string): boolean {
+  return new Date(a).getTime() === new Date(b).getTime();
 }
