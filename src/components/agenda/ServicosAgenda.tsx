@@ -33,13 +33,32 @@ const FICHAS: Tipo[] = ["corporal", "facial", "laser"];
 
 const rotuloFicha = (f: Tipo) => (f === "cadastro" ? "Cadastro" : nomeCurto(f));
 
-type Rascunho = { nome: string; duracao: string; ficha: Tipo; cor: CorServico };
+type Rascunho = {
+  nome: string;
+  duracao: string;
+  ficha: Tipo;
+  cor: CorServico;
+  // Áreas do serviço, separadas por vírgula (ex.: "Perna, Buço").
+  areas: string;
+};
+
+// "Perna, Buço" → ["Perna", "Buço"] (sem repetir e sem vazios).
+const listaDeAreas = (texto: string): string[] =>
+  Array.from(
+    new Set(
+      texto
+        .split(/[,\n]/)
+        .map((a) => a.trim())
+        .filter(Boolean),
+    ),
+  );
 
 const rascunhoDe = (s: AgendaServico): Rascunho => ({
   nome: s.nome,
   duracao: String(s.duracao_min),
   ficha: s.ficha,
   cor: (s.cor ?? "lilas") as CorServico,
+  areas: (s.areas_opcoes ?? []).join(", "),
 });
 
 // Tela da Marina para escolher quais serviços aparecem na agenda, quanto tempo
@@ -105,6 +124,9 @@ export function ServicosAgenda({
         nome: r.nome.trim(),
         duracao_min: Number(r.duracao),
         ...(r.cor !== (s.cor ?? "lilas") ? { cor: r.cor } : {}),
+        ...(r.areas !== (s.areas_opcoes ?? []).join(", ")
+          ? { areas_opcoes: listaDeAreas(r.areas) }
+          : {}),
         ...(s.tipo === "consulta" ? {} : { ficha: r.ficha }),
       }),
     );
@@ -129,6 +151,7 @@ export function ServicosAgenda({
           duracao_min: Number(novo.duracao),
           ficha: novo.ficha,
           cor: novo.cor,
+          areas_opcoes: listaDeAreas(novo.areas),
         },
         proxima,
       );
@@ -143,7 +166,8 @@ export function ServicosAgenda({
       (r.nome.trim() !== s.nome ||
         Number(r.duracao) !== s.duracao_min ||
         r.ficha !== s.ficha ||
-        r.cor !== (s.cor ?? "lilas"))
+        r.cor !== (s.cor ?? "lilas") ||
+        r.areas !== (s.areas_opcoes ?? []).join(", "))
     );
   };
 
@@ -261,6 +285,16 @@ export function ServicosAgenda({
                       )}
                     </div>
                     <SeletorCor valor={r.cor} onChange={(cor) => editar(s.id, { cor })} />
+                    <div>
+                      <label className={rotulo}>Áreas (opcional, separe por vírgula)</label>
+                      <textarea
+                        value={r.areas}
+                        rows={2}
+                        onChange={(e) => editar(s.id, { areas: e.target.value })}
+                        placeholder="Ex.: Perna, Axilas, Buço"
+                        className={campo}
+                      />
+                    </div>
                     <div className="flex flex-wrap items-center gap-2">
                       {mudou(s) && (
                         <button
@@ -346,6 +380,16 @@ export function ServicosAgenda({
                 </div>
               </div>
               <SeletorCor valor={novo.cor} onChange={(cor) => setNovo({ ...novo, cor })} />
+              <div>
+                <label className={rotulo}>Áreas (opcional, separe por vírgula)</label>
+                <textarea
+                  value={novo.areas}
+                  rows={2}
+                  onChange={(e) => setNovo({ ...novo, areas: e.target.value })}
+                  placeholder="Ex.: Perna, Axilas, Buço"
+                  className={campo}
+                />
+              </div>
               <div className="flex gap-2">
                 <button
                   type="button"
@@ -370,6 +414,7 @@ export function ServicosAgenda({
                   duracao: "60",
                   ficha: "corporal",
                   cor: proximaCorLivre((servicos ?? []).map((s) => s.cor)),
+                  areas: "",
                 })
               }
               className={btnSecundario}

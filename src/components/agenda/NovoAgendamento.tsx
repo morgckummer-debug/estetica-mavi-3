@@ -36,6 +36,7 @@ export function NovoAgendamento({
     horaInicial && diaInicial >= hoje ? instanteSP(diaInicial, horaInicial) : null,
   );
   const [areas, setAreas] = useState("");
+  const [areasSel, setAreasSel] = useState<string[]>([]);
   const [observacao, setObservacao] = useState("");
   const [salvando, setSalvando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
@@ -76,6 +77,7 @@ export function NovoAgendamento({
   };
 
   const servico = servicos.find((s) => s.id === servicoId);
+  const opcoes = servico?.areas_opcoes ?? [];
 
   const salvar = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -92,6 +94,10 @@ export function NovoAgendamento({
       setErro("Informe o WhatsApp com DDD.");
       return;
     }
+    if (opcoes.length > 0 && areasSel.length === 0) {
+      setErro("Escolha ao menos uma área.");
+      return;
+    }
     setSalvando(true);
     try {
       await criarAgendamentoManual({
@@ -101,10 +107,13 @@ export function NovoAgendamento({
         telefone,
         email,
         clienteId,
-        areas: areas
-          .split(",")
-          .map((a) => a.trim())
-          .filter(Boolean),
+        areas:
+          opcoes.length > 0
+            ? areasSel
+            : areas
+                .split(",")
+                .map((a) => a.trim())
+                .filter(Boolean),
         observacao,
       });
       onCriado();
@@ -211,6 +220,7 @@ export function NovoAgendamento({
             value={servicoId}
             onChange={(e) => {
               setServicoId(e.target.value);
+              setAreasSel([]);
               setInicio(null);
             }}
             className={campo}
@@ -231,15 +241,45 @@ export function NovoAgendamento({
           onValor={setInicio}
         />
 
-        <div>
-          <label className={rotulo}>Áreas (opcional, separe por vírgula)</label>
-          <input
-            value={areas}
-            onChange={(e) => setAreas(e.target.value)}
-            placeholder="Virilha, axilas"
-            className={campo}
-          />
-        </div>
+        {opcoes.length > 0 ? (
+          <div>
+            <label className={rotulo}>Áreas</label>
+            <div className="flex flex-wrap gap-1.5">
+              {opcoes.map((a) => {
+                const marcada = areasSel.includes(a);
+                return (
+                  <button
+                    key={a}
+                    type="button"
+                    aria-pressed={marcada}
+                    onClick={() =>
+                      setAreasSel((atual) =>
+                        atual.includes(a) ? atual.filter((x) => x !== a) : [...atual, a],
+                      )
+                    }
+                    className={`rounded-full border px-3 py-1.5 text-xs font-medium transition-colors ${
+                      marcada
+                        ? "border-painel-primary bg-painel-primary text-white"
+                        : "border-white/20 text-white/80 hover:border-white/50"
+                    }`}
+                  >
+                    {a}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        ) : (
+          <div>
+            <label className={rotulo}>Áreas (opcional, separe por vírgula)</label>
+            <input
+              value={areas}
+              onChange={(e) => setAreas(e.target.value)}
+              placeholder="Virilha, axilas"
+              className={campo}
+            />
+          </div>
+        )}
         <div>
           <label className={rotulo}>Observação (opcional)</label>
           <textarea
