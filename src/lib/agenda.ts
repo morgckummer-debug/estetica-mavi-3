@@ -283,3 +283,67 @@ async function atualizarOrdem(id: string, ordem: number): Promise<void> {
   });
   if (!res.ok) throw new Error("Não foi possível mudar a ordem.");
 }
+
+// ------------------------------------------------------------
+// Regras gerais e horário de atendimento (subjanela "Regras Gerais")
+// ------------------------------------------------------------
+
+export type AgendaConfig = {
+  // De quanto em quanto tempo começa um horário (minutos).
+  passo_min: number;
+  // Quanto tempo antes a cliente ainda consegue marcar online (horas).
+  antecedencia_horas: number;
+  // Até quantos dias à frente a agenda online fica aberta.
+  janela_dias: number;
+  // Prazo para a cliente cancelar/reagendar sozinha (horas) — contrato: 24h.
+  cancelamento_horas: number;
+  // Agendamentos futuros ativos permitidos por telefone.
+  max_futuros_por_telefone: number;
+};
+
+/** Faixa de atendimento. dia_semana: 0 = domingo ... 6 = sábado; horas "HH:MM". */
+export type FaixaHorario = { dia_semana: number; inicio: string; fim: string };
+
+export async function carregarConfigAgenda(): Promise<AgendaConfig> {
+  const res = await apiRest(
+    "agenda_config?select=passo_min,antecedencia_horas,janela_dias,cancelamento_horas,max_futuros_por_telefone&id=eq.1",
+  );
+  if (!res.ok) throw new Error("Não foi possível carregar as regras.");
+  const linha = ((await res.json()) as AgendaConfig[])[0];
+  if (!linha) throw new Error("Não foi possível carregar as regras.");
+  return linha;
+}
+
+export async function salvarConfigAgenda(cfg: AgendaConfig): Promise<void> {
+  const res = await apiRest("agenda_config?id=eq.1", {
+    method: "PATCH",
+    body: JSON.stringify(cfg),
+  });
+  if (!res.ok) throw new Error("Não foi possível salvar as regras.");
+}
+
+export async function listarFaixasHorario(): Promise<FaixaHorario[]> {
+  const res = await apiRest(
+    "agenda_horarios?select=dia_semana,inicio,fim&order=dia_semana.asc,inicio.asc",
+  );
+  if (!res.ok) throw new Error("Não foi possível carregar os horários.");
+  const linhas = (await res.json()) as FaixaHorario[];
+  // O banco devolve "13:00:00".
+  return linhas.map((l) => ({ ...l, inicio: l.inicio.slice(0, 5), fim: l.fim.slice(0, 5) }));
+}
+
+/** Troca a semana inteira de uma vez (tudo ou nada). */
+export async function salvarFaixasHorario(faixas: FaixaHorario[]): Promise<void> {
+  const res = await apiRest("rpc/agenda_salvar_horarios", {
+    method: "POST",
+    body: JSON.stringify({ p_faixas: faixas }),
+  });
+  if (!res.ok) {
+    const detalhe = await res.text().catch(() => "");
+    throw new Error(
+      /faixas_sobrepostas/.test(detalhe)
+        ? "Há faixas de horário se sobrepondo no mesmo dia."
+        : "Não foi possível salvar os horários.",
+    );
+  }
+}
