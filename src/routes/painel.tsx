@@ -554,6 +554,13 @@ function PainelLayout() {
                 Agenda
               </Link>
               <Link
+                to="/painel/lembretes"
+                className="rounded-full px-3.5 py-2 text-[13px] font-medium text-white/70 hover:text-white transition-colors"
+                activeProps={{ className: "text-white" }}
+              >
+                Lembretes
+              </Link>
+              <Link
                 to="/painel/pendentes"
                 className="rounded-full px-3.5 py-2 text-[13px] font-medium text-white/70 hover:text-white transition-colors"
                 activeProps={{ className: "text-white" }}
@@ -589,6 +596,13 @@ function PainelLayout() {
             activeProps={{ className: "bg-white/15 text-white" }}
           >
             Agenda
+          </Link>
+          <Link
+            to="/painel/lembretes"
+            className="rounded-full px-3.5 py-1.5 text-[13px] font-medium text-white/70 transition-colors"
+            activeProps={{ className: "bg-white/15 text-white" }}
+          >
+            Lembretes
           </Link>
           <Link
             to="/painel/pendentes"
