@@ -29,6 +29,8 @@ export type Agendamento = {
   fim: string;
   status: AgendaStatus;
   presenca_confirmada_em: string | null;
+  // Quando a secretária mandou o link de confirmação (página Lembretes).
+  lembrete_enviado_em: string | null;
   cancelado_em: string | null;
   cancelado_por: "cliente" | "clinica" | null;
   observacao: string | null;
@@ -202,6 +204,11 @@ export function cancelarAgendamento(id: string): Promise<void> {
 
 export function marcarStatus(id: string, status: "concluido" | "faltou" | "agendado") {
   return atualizar(id, { status });
+}
+
+/** Registra que o link de confirmação foi enviado à cliente (agora). */
+export function marcarLembreteEnviado(id: string): Promise<void> {
+  return atualizar(id, { lembrete_enviado_em: new Date().toISOString() });
 }
 
 /** A clínica precisou mexer no horário: a cliente deve escolher outro. */

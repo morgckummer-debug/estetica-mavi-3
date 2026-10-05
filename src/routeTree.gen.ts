@@ -28,6 +28,7 @@ import { Route as ConfirmarTokenRouteImport } from './routes/confirmar.$token'
 import { Route as PainelIndexRouteImport } from './routes/painel.index'
 import { Route as PainelIdRouteImport } from './routes/painel.$id'
 import { Route as PainelAgendaRouteImport } from './routes/painel.agenda'
+import { Route as PainelLembretesRouteImport } from './routes/painel.lembretes'
 import { Route as PainelNovaRouteImport } from './routes/painel.nova'
 import { Route as PainelPendentesRouteImport } from './routes/painel.pendentes'
 import { Route as RelatorioTokenRouteImport } from './routes/relatorio.$token'
@@ -136,6 +137,11 @@ const PainelAgendaRoute = PainelAgendaRouteImport.update({
   path: '/agenda',
   getParentRoute: () => PainelRoute,
 } as any)
+const PainelLembretesRoute = PainelLembretesRouteImport.update({
+  id: '/lembretes',
+  path: '/lembretes',
+  getParentRoute: () => PainelRoute,
+} as any)
 const PainelNovaRoute = PainelNovaRouteImport.update({
   id: '/nova',
   path: '/nova',
@@ -206,6 +212,7 @@ export interface FileRoutesByFullPath {
   '/confirmar/$token': typeof ConfirmarTokenRoute
   '/painel/$id': typeof PainelIdRoute
   '/painel/agenda': typeof PainelAgendaRoute
+  '/painel/lembretes': typeof PainelLembretesRoute
   '/painel/nova': typeof PainelNovaRoute
   '/painel/pendentes': typeof PainelPendentesRoute
   '/relatorio/$token': typeof RelatorioTokenRoute
@@ -236,6 +243,7 @@ export interface FileRoutesByTo {
   '/confirmar/$token': typeof ConfirmarTokenRoute
   '/painel/$id': typeof PainelIdRoute
   '/painel/agenda': typeof PainelAgendaRoute
+  '/painel/lembretes': typeof PainelLembretesRoute
   '/painel/nova': typeof PainelNovaRoute
   '/painel/pendentes': typeof PainelPendentesRoute
   '/relatorio/$token': typeof RelatorioTokenRoute
@@ -268,6 +276,7 @@ export interface FileRoutesById {
   '/confirmar/$token': typeof ConfirmarTokenRoute
   '/painel/$id': typeof PainelIdRoute
   '/painel/agenda': typeof PainelAgendaRoute
+  '/painel/lembretes': typeof PainelLembretesRoute
   '/painel/nova': typeof PainelNovaRoute
   '/painel/pendentes': typeof PainelPendentesRoute
   '/relatorio/$token': typeof RelatorioTokenRoute
@@ -301,6 +310,7 @@ export interface FileRouteTypes {
     | '/confirmar/$token'
     | '/painel/$id'
     | '/painel/agenda'
+    | '/painel/lembretes'
     | '/painel/nova'
     | '/painel/pendentes'
     | '/relatorio/$token'
@@ -331,6 +341,7 @@ export interface FileRouteTypes {
     | '/confirmar/$token'
     | '/painel/$id'
     | '/painel/agenda'
+    | '/painel/lembretes'
     | '/painel/nova'
     | '/painel/pendentes'
     | '/relatorio/$token'
@@ -362,6 +373,7 @@ export interface FileRouteTypes {
     | '/confirmar/$token'
     | '/painel/$id'
     | '/painel/agenda'
+    | '/painel/lembretes'
     | '/painel/nova'
     | '/painel/pendentes'
     | '/relatorio/$token'
@@ -536,6 +548,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PainelAgendaRouteImport
       parentRoute: typeof PainelRoute
     }
+    '/painel/lembretes': {
+      id: '/painel/lembretes'
+      path: '/lembretes'
+      fullPath: '/painel/lembretes'
+      preLoaderRoute: typeof PainelLembretesRouteImport
+      parentRoute: typeof PainelRoute
+    }
     '/painel/nova': {
       id: '/painel/nova'
       path: '/nova'
@@ -612,6 +631,7 @@ declare module '@tanstack/react-router' {
 interface PainelRouteChildren {
   PainelIdRoute: typeof PainelIdRoute
   PainelAgendaRoute: typeof PainelAgendaRoute
+  PainelLembretesRoute: typeof PainelLembretesRoute
   PainelNovaRoute: typeof PainelNovaRoute
   PainelPendentesRoute: typeof PainelPendentesRoute
   PainelIndexRoute: typeof PainelIndexRoute
@@ -622,6 +642,7 @@ interface PainelRouteChildren {
 const PainelRouteChildren: PainelRouteChildren = {
   PainelIdRoute: PainelIdRoute,
   PainelAgendaRoute: PainelAgendaRoute,
+  PainelLembretesRoute: PainelLembretesRoute,
   PainelNovaRoute: PainelNovaRoute,
   PainelPendentesRoute: PainelPendentesRoute,
   PainelIndexRoute: PainelIndexRoute,
