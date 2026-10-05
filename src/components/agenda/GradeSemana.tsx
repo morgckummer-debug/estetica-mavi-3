@@ -160,227 +160,200 @@ export function GradeSemana({
     return Math.max(ini, Math.min(fim - PASSO_CLIQUE, min));
   };
 
-  // Legenda: só os serviços que aparecem nesta semana, na ordem da lista de serviços.
-  const noPeriodo = new Set(colunas.flatMap((c) => c.blocos.map((b) => b.ag.servico_id)));
-  const legenda = servicos.filter((s) => noPeriodo.has(s.id));
-
   return (
-    <div>
-      {legenda.length > 0 && (
-        <div className="mb-3 flex flex-wrap gap-x-2 gap-y-1.5">
-          {legenda.map((s) => {
-            const p = paletaDe(s.cor);
-            return (
-              <span
-                key={s.id}
-                className="inline-flex items-center gap-1.5 rounded-full border border-painel-border bg-white py-1 pl-1.5 pr-2.5 text-[12px] text-painel-title"
-              >
-                <i
-                  className="block h-3.5 w-3.5 rounded-[5px] border-[1.5px]"
-                  style={{ background: p.fundo, borderColor: p.borda }}
-                />
-                {s.nome}
-              </span>
-            );
-          })}
+    <div className="overflow-x-auto rounded-2xl border border-painel-border bg-white">
+      <div className="flex" style={{ minWidth: 56 + colunas.length * MIN_COLUNA }}>
+        {/* Eixo das horas */}
+        <div className="w-14 shrink-0 border-r border-painel-border">
+          <div className="h-[62px] border-b border-painel-border" />
+          {horas.map((h) => (
+            <div
+              key={h}
+              className="pr-2 pt-1 text-right text-[11.5px] text-painel-chip-text"
+              style={{ height: HORA_PX }}
+            >
+              {hhmm(h)}
+            </div>
+          ))}
         </div>
-      )}
-      <div className="overflow-x-auto rounded-2xl border border-painel-border bg-white">
-        <div className="flex" style={{ minWidth: 56 + colunas.length * MIN_COLUNA }}>
-          {/* Eixo das horas */}
-          <div className="w-14 shrink-0 border-r border-painel-border">
-            <div className="h-[62px] border-b border-painel-border" />
-            {horas.map((h) => (
-              <div
-                key={h}
-                className="pr-2 pt-1 text-right text-[11.5px] text-painel-chip-text"
-                style={{ height: HORA_PX }}
+
+        {colunas.map((c) => {
+          const ehHoje = c.dia === hoje;
+          const ativos = c.blocos.filter((b) => STATUS_ATIVOS.includes(b.ag.status)).length;
+          const fechadoTodo = c.faixas.length === 0;
+          return (
+            <div
+              key={c.dia}
+              className="min-w-0 flex-1 border-r border-painel-border/60 last:border-r-0"
+              style={{ minWidth: MIN_COLUNA }}
+            >
+              <button
+                type="button"
+                onClick={() => onEscolherDia?.(c.dia)}
+                className={`flex h-[62px] w-full flex-col justify-center gap-0.5 border-b border-painel-border px-3 text-left transition-colors ${
+                  ehHoje
+                    ? "bg-painel-primary text-white"
+                    : "bg-painel-badge-bg/60 text-painel-title hover:bg-painel-badge-bg"
+                }`}
               >
-                {hhmm(h)}
-              </div>
-            ))}
-          </div>
+                <span className="text-[11px] font-semibold uppercase tracking-[.06em] opacity-85">
+                  {rotuloSemanaCurta(c.dia)}
+                </span>
+                <span className="font-display text-[20px] leading-none">{rotuloDiaMes(c.dia)}</span>
+                <span className="text-[11.5px] opacity-90">
+                  {fechadoTodo && ativos === 0
+                    ? "Fechado"
+                    : `${ativos} ${ativos === 1 ? "cliente" : "clientes"}`}
+                </span>
+              </button>
 
-          {colunas.map((c) => {
-            const ehHoje = c.dia === hoje;
-            const ativos = c.blocos.filter((b) => STATUS_ATIVOS.includes(b.ag.status)).length;
-            const fechadoTodo = c.faixas.length === 0;
-            return (
               <div
-                key={c.dia}
-                className="min-w-0 flex-1 border-r border-painel-border/60 last:border-r-0"
-                style={{ minWidth: MIN_COLUNA }}
+                className="relative"
+                style={{
+                  height: altura,
+                  backgroundImage: `repeating-linear-gradient(to bottom, transparent 0, transparent ${HORA_PX / 2 - 1}px, #f6eefa ${HORA_PX / 2 - 1}px, #f6eefa ${HORA_PX / 2}px, transparent ${HORA_PX / 2}px, transparent ${HORA_PX - 1}px, #ecdff4 ${HORA_PX - 1}px, #ecdff4 ${HORA_PX}px)`,
+                }}
+                onMouseMove={(e) => {
+                  const min = minutoDoClique(e);
+                  setPassando(passou(c.dia, min) ? null : { dia: c.dia, min });
+                }}
+                onMouseLeave={() => setPassando(null)}
+                onClick={(e) => {
+                  const min = minutoDoClique(e);
+                  if (!passou(c.dia, min)) onAgendarEm(c.dia, hhmm(min));
+                }}
               >
-                <button
-                  type="button"
-                  onClick={() => onEscolherDia?.(c.dia)}
-                  className={`flex h-[62px] w-full flex-col justify-center gap-0.5 border-b border-painel-border px-3 text-left transition-colors ${
-                    ehHoje
-                      ? "bg-painel-primary text-white"
-                      : "bg-painel-badge-bg/60 text-painel-title hover:bg-painel-badge-bg"
-                  }`}
-                >
-                  <span className="text-[11px] font-semibold uppercase tracking-[.06em] opacity-85">
-                    {rotuloSemanaCurta(c.dia)}
-                  </span>
-                  <span className="font-display text-[20px] leading-none">
-                    {rotuloDiaMes(c.dia)}
-                  </span>
-                  <span className="text-[11.5px] opacity-90">
-                    {fechadoTodo && ativos === 0
-                      ? "Fechado"
-                      : `${ativos} ${ativos === 1 ? "cliente" : "clientes"}`}
-                  </span>
-                </button>
+                {/* Horário fechado */}
+                {(fechadoTodo ? [{ ini, fim }] : fechadosDoDia(c.faixas, ini, fim)).map((f) => (
+                  <div
+                    key={f.ini}
+                    className="pointer-events-none absolute inset-x-0"
+                    style={{ top: y(f.ini), height: y(f.fim) - y(f.ini), background: FECHADO }}
+                  />
+                ))}
 
-                <div
-                  className="relative"
-                  style={{
-                    height: altura,
-                    backgroundImage: `repeating-linear-gradient(to bottom, transparent 0, transparent ${HORA_PX / 2 - 1}px, #f6eefa ${HORA_PX / 2 - 1}px, #f6eefa ${HORA_PX / 2}px, transparent ${HORA_PX / 2}px, transparent ${HORA_PX - 1}px, #ecdff4 ${HORA_PX - 1}px, #ecdff4 ${HORA_PX}px)`,
-                  }}
-                  onMouseMove={(e) => {
-                    const min = minutoDoClique(e);
-                    setPassando(passou(c.dia, min) ? null : { dia: c.dia, min });
-                  }}
-                  onMouseLeave={() => setPassando(null)}
-                  onClick={(e) => {
-                    const min = minutoDoClique(e);
-                    if (!passou(c.dia, min)) onAgendarEm(c.dia, hhmm(min));
-                  }}
-                >
-                  {/* Horário fechado */}
-                  {(fechadoTodo ? [{ ini, fim }] : fechadosDoDia(c.faixas, ini, fim)).map((f) => (
-                    <div
-                      key={f.ini}
-                      className="pointer-events-none absolute inset-x-0"
-                      style={{ top: y(f.ini), height: y(f.fim) - y(f.ini), background: FECHADO }}
-                    />
-                  ))}
+                {/* Sugestão do horário sob o mouse */}
+                {passando?.dia === c.dia && (
+                  <div
+                    className="pointer-events-none absolute inset-x-1 flex items-center justify-center rounded-lg border-[1.5px] border-dashed border-painel-primary bg-[#fbf5fd] text-[12px] font-semibold text-painel-primary-deep"
+                    style={{
+                      top: y(passando.min) + 1,
+                      height: (PASSO_CLIQUE / 60) * HORA_PX - 2,
+                    }}
+                  >
+                    + Agendar {hhmm(passando.min)}
+                  </div>
+                )}
 
-                  {/* Sugestão do horário sob o mouse */}
-                  {passando?.dia === c.dia && (
+                {/* Bloqueios */}
+                {c.bloqueios.map(({ b, ini: bi, fim: bf }) => {
+                  const topo = Math.max(bi, ini);
+                  const base = Math.min(bf, fim);
+                  if (base <= topo) return null;
+                  const alto = y(base) - y(topo);
+                  return (
                     <div
-                      className="pointer-events-none absolute inset-x-1 flex items-center justify-center rounded-lg border-[1.5px] border-dashed border-painel-primary bg-[#fbf5fd] text-[12px] font-semibold text-painel-primary-deep"
+                      key={b.id}
+                      onClick={(e) => e.stopPropagation()}
+                      onMouseMove={(e) => e.stopPropagation()}
+                      className="absolute inset-x-1 overflow-hidden rounded-lg border border-dashed border-[#D9788E] px-2 py-1 pr-7 text-[#8A3A4C]"
+                      style={{ top: y(topo) + 1, height: alto - 2, background: BLOQUEADO }}
+                    >
+                      <p className="flex items-center gap-1 text-[12.5px] font-semibold leading-tight">
+                        <Lock className="h-3 w-3 shrink-0" />
+                        {bf - bi >= 1439 ? "Dia bloqueado" : "Bloqueado"}
+                      </p>
+                      {alto > 48 && b.motivo && (
+                        <p className="mt-0.5 text-[11.5px] leading-snug">{b.motivo}</p>
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => onRemoverBloqueio(b)}
+                        title="Remover bloqueio"
+                        className="absolute right-1 top-1 rounded-full p-0.5 text-[#D9788E] transition-colors hover:text-[#8A3A4C]"
+                      >
+                        <X className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                  );
+                })}
+
+                {/* Atendimentos */}
+                {c.blocos.map(({ ag, ini: ai, fim: af }) => {
+                  const topo = Math.max(ai, ini);
+                  const base = Math.min(af, fim);
+                  if (base <= topo) return null;
+                  const alto = y(base) - y(topo);
+                  const confirmou = ag.status === "agendado" && ag.presenca_confirmada_em;
+                  const p = paletaDe(corPorServico.get(ag.servico_id));
+                  const alta = alto >= 44;
+                  const hora = `${horaSP(ag.inicio)}–${horaSP(ag.fim)}`;
+                  const cancelado = ag.status === "cancelado";
+                  const reagendar = ag.status === "remarcar";
+                  const faltou = ag.status === "faltou";
+                  // A cor é do serviço; a situação aparece em ícone, traço e brilho.
+                  const apagado = cancelado
+                    ? "opacity-50"
+                    : ag.status === "concluido"
+                      ? "opacity-60"
+                      : "";
+                  return (
+                    <button
+                      key={ag.id}
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onAbrir(ag);
+                      }}
+                      onMouseMove={(e) => e.stopPropagation()}
+                      onMouseEnter={() => setPassando(null)}
+                      title={`${hora} · ${ag.nome} · ${ag.servico_nome}`}
+                      className={`absolute inset-x-1 overflow-hidden rounded-lg border-l-4 px-2 py-0.5 text-left text-[#3d2a4c] transition-shadow hover:z-10 hover:shadow-[0_8px_24px_-14px_rgba(120,80,150,0.55)] ${
+                        reagendar ? "border-[1.5px] border-l-4 border-dashed" : ""
+                      } ${apagado}`}
                       style={{
-                        top: y(passando.min) + 1,
-                        height: (PASSO_CLIQUE / 60) * HORA_PX - 2,
+                        top: y(topo) + 1,
+                        height: alto - 2,
+                        background: p.fundo,
+                        borderColor: p.borda,
                       }}
                     >
-                      + Agendar {hhmm(passando.min)}
-                    </div>
-                  )}
-
-                  {/* Bloqueios */}
-                  {c.bloqueios.map(({ b, ini: bi, fim: bf }) => {
-                    const topo = Math.max(bi, ini);
-                    const base = Math.min(bf, fim);
-                    if (base <= topo) return null;
-                    const alto = y(base) - y(topo);
-                    return (
-                      <div
-                        key={b.id}
-                        onClick={(e) => e.stopPropagation()}
-                        onMouseMove={(e) => e.stopPropagation()}
-                        className="absolute inset-x-1 overflow-hidden rounded-lg border border-dashed border-[#D9788E] px-2 py-1 pr-7 text-[#8A3A4C]"
-                        style={{ top: y(topo) + 1, height: alto - 2, background: BLOQUEADO }}
-                      >
-                        <p className="flex items-center gap-1 text-[12.5px] font-semibold leading-tight">
-                          <Lock className="h-3 w-3 shrink-0" />
-                          {bf - bi >= 1439 ? "Dia bloqueado" : "Bloqueado"}
-                        </p>
-                        {alto > 48 && b.motivo && (
-                          <p className="mt-0.5 text-[11.5px] leading-snug">{b.motivo}</p>
+                      <span className="flex items-center gap-1 text-[12px] font-semibold leading-tight">
+                        {confirmou && <Check className="h-3 w-3 shrink-0" />}
+                        {reagendar && <RotateCw className="h-3 w-3 shrink-0" />}
+                        {faltou && (
+                          <span className="h-[7px] w-[7px] shrink-0 rounded-full bg-[#c0485f]" />
                         )}
-                        <button
-                          type="button"
-                          onClick={() => onRemoverBloqueio(b)}
-                          title="Remover bloqueio"
-                          className="absolute right-1 top-1 rounded-full p-0.5 text-[#D9788E] transition-colors hover:text-[#8A3A4C]"
-                        >
-                          <X className="h-3.5 w-3.5" />
-                        </button>
-                      </div>
-                    );
-                  })}
-
-                  {/* Atendimentos */}
-                  {c.blocos.map(({ ag, ini: ai, fim: af }) => {
-                    const topo = Math.max(ai, ini);
-                    const base = Math.min(af, fim);
-                    if (base <= topo) return null;
-                    const alto = y(base) - y(topo);
-                    const confirmou = ag.status === "agendado" && ag.presenca_confirmada_em;
-                    const p = paletaDe(corPorServico.get(ag.servico_id));
-                    const alta = alto >= 44;
-                    const hora = `${horaSP(ag.inicio)}–${horaSP(ag.fim)}`;
-                    const cancelado = ag.status === "cancelado";
-                    const reagendar = ag.status === "remarcar";
-                    const faltou = ag.status === "faltou";
-                    // A cor é do serviço; a situação aparece em ícone, traço e brilho.
-                    const apagado = cancelado
-                      ? "opacity-50"
-                      : ag.status === "concluido"
-                        ? "opacity-60"
-                        : "";
-                    return (
-                      <button
-                        key={ag.id}
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onAbrir(ag);
-                        }}
-                        onMouseMove={(e) => e.stopPropagation()}
-                        onMouseEnter={() => setPassando(null)}
-                        title={`${hora} · ${ag.nome} · ${ag.servico_nome}`}
-                        className={`absolute inset-x-1 overflow-hidden rounded-lg border-l-4 px-2 py-0.5 text-left text-[#3d2a4c] transition-shadow hover:z-10 hover:shadow-[0_8px_24px_-14px_rgba(120,80,150,0.55)] ${
-                          reagendar ? "border-[1.5px] border-l-4 border-dashed" : ""
-                        } ${apagado}`}
-                        style={{
-                          top: y(topo) + 1,
-                          height: alto - 2,
-                          background: p.fundo,
-                          borderColor: p.borda,
-                        }}
-                      >
-                        <span className="flex items-center gap-1 text-[12px] font-semibold leading-tight">
-                          {confirmou && <Check className="h-3 w-3 shrink-0" />}
-                          {reagendar && <RotateCw className="h-3 w-3 shrink-0" />}
-                          {faltou && (
-                            <span className="h-[7px] w-[7px] shrink-0 rounded-full bg-[#c0485f]" />
-                          )}
-                          <span className={`truncate ${cancelado || faltou ? "line-through" : ""}`}>
-                            {alta ? `${hora} · ${ag.nome}` : `${horaSP(ag.inicio)} · ${ag.nome}`}
-                          </span>
+                        <span className={`truncate ${cancelado || faltou ? "line-through" : ""}`}>
+                          {alta ? `${hora} · ${ag.nome}` : `${horaSP(ag.inicio)} · ${ag.nome}`}
                         </span>
-                        {alta && (
-                          <span className="block truncate text-[11.5px] leading-snug opacity-85">
-                            {ag.servico_nome}
-                            {!ag.cliente_id && " · pessoa nova"}
-                          </span>
-                        )}
-                        {alto >= 72 && reagendar && (
-                          <span className="block text-[11px] font-semibold">Precisa reagendar</span>
-                        )}
-                      </button>
-                    );
-                  })}
+                      </span>
+                      {alta && (
+                        <span className="block truncate text-[11.5px] leading-snug opacity-85">
+                          {ag.servico_nome}
+                          {!ag.cliente_id && " · pessoa nova"}
+                        </span>
+                      )}
+                      {alto >= 72 && reagendar && (
+                        <span className="block text-[11px] font-semibold">Precisa reagendar</span>
+                      )}
+                    </button>
+                  );
+                })}
 
-                  {/* Agora */}
-                  {ehHoje && agora >= ini && agora <= fim && (
-                    <div
-                      className="pointer-events-none absolute inset-x-0 z-20 border-t-2 border-painel-primary-deep"
-                      style={{ top: y(agora) }}
-                    >
-                      <span className="absolute -left-1 -top-[5px] h-2 w-2 rounded-full bg-painel-primary-deep" />
-                    </div>
-                  )}
-                </div>
+                {/* Agora */}
+                {ehHoje && agora >= ini && agora <= fim && (
+                  <div
+                    className="pointer-events-none absolute inset-x-0 z-20 border-t-2 border-painel-primary-deep"
+                    style={{ top: y(agora) }}
+                  >
+                    <span className="absolute -left-1 -top-[5px] h-2 w-2 rounded-full bg-painel-primary-deep" />
+                  </div>
+                )}
               </div>
-            );
-          })}
-        </div>
+            </div>
+          );
+        })}
       </div>
     </div>
   );
