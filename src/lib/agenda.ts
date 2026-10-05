@@ -107,11 +107,14 @@ export async function horariosLivres(
   servicoId: string,
   dia: string,
   ignorarId?: string,
+  // Duração escolhida na hora (só vai ao banco quando difere da do serviço).
+  duracaoMin?: number,
 ): Promise<string[]> {
   const rows = await rpc("agenda_horarios_livres", {
     p_servico_id: servicoId,
     p_dia: dia,
     p_ignorar_id: ignorarId ?? null,
+    ...(duracaoMin ? { p_duracao_min: duracaoMin } : {}),
   });
   return colunaUnica(rows, "horario");
 }
@@ -149,8 +152,11 @@ export async function criarAgendamentoManual(dados: {
   clienteId: string | null;
   areas: string[];
   observacao: string;
+  // Duração em minutos; sem ela, a do serviço.
+  duracaoMin?: number;
 }): Promise<Agendamento> {
-  const fim = new Date(new Date(dados.inicio).getTime() + dados.servico.duracao_min * 60000);
+  const duracao = dados.duracaoMin ?? dados.servico.duracao_min;
+  const fim = new Date(new Date(dados.inicio).getTime() + duracao * 60000);
   const res = await apiRest("agenda_agendamentos", {
     method: "POST",
     headers: { Prefer: "return=representation" },
