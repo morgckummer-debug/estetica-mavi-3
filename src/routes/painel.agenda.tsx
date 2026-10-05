@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { CalendarPlus, ChevronLeft, ChevronRight, Loader2, Lock, Settings2 } from "lucide-react";
 import {
@@ -71,6 +71,8 @@ function PaginaAgenda() {
   const [aviso, setAviso] = useState<string | null>(null);
   const [mostrarCancelados, setMostrarCancelados] = useState(false);
   const [recarga, setRecarga] = useState(0);
+  // Atualização automática: não pisca o "carregando" nem mexe na tela.
+  const silenciosa = useRef(false);
 
   const [aberto, setAberto] = useState<Agendamento | null>(null);
   // Dia (e hora, se clicou num horário vazio) do novo agendamento.
@@ -110,16 +112,20 @@ function PaginaAgenda() {
 
   useEffect(() => {
     let ativo = true;
-    setCarregando(true);
+    const quieta = silenciosa.current;
+    silenciosa.current = false;
+    if (!quieta) setCarregando(true);
     Promise.all([listarAgendamentos(de, ate), listarBloqueios(de, ate)])
       .then(([ags, blqs]) => {
         if (!ativo) return;
         setAgendamentos(ags);
         setBloqueios(blqs);
+        // O horário aberto no detalhe acompanha o que mudou (ex.: a cliente cancelou).
+        setAberto((atual) => (atual ? (ags.find((a) => a.id === atual.id) ?? atual) : atual));
         setErro(null);
       })
       .catch((e) => {
-        if (!ativo) return;
+        if (!ativo || quieta) return;
         setErro(
           /relation .*agenda.* does not exist|does not exist/i.test(String(e?.message))
             ? "Rode a migração 20261004120000_agenda_mavi.sql no Supabase para ativar a agenda."
@@ -135,6 +141,22 @@ function PaginaAgenda() {
   }, [de, ate, recarga]);
 
   const recarregar = useCallback(() => setRecarga((n) => n + 1), []);
+
+  // A cliente pode cancelar ou remarcar pelo link a qualquer hora: mantém a agenda
+  // em dia a cada 60s e ao voltar para a aba.
+  useEffect(() => {
+    const atualizar = () => {
+      if (document.visibilityState !== "visible") return;
+      silenciosa.current = true;
+      setRecarga((n) => n + 1);
+    };
+    const timer = window.setInterval(atualizar, 60_000);
+    document.addEventListener("visibilitychange", atualizar);
+    return () => {
+      window.clearInterval(timer);
+      document.removeEventListener("visibilitychange", atualizar);
+    };
+  }, []);
 
   const avisar = useCallback((mensagem: string) => {
     setAviso(mensagem);
