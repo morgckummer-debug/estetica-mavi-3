@@ -7,6 +7,7 @@
 
 import { apiRest } from "./painel";
 import { colunaUnica, rpc } from "./api/rpc";
+import type { Tipo } from "@/data/anamnese";
 import { instanteSP } from "./agenda-datas";
 
 export * from "./agenda-datas";
@@ -39,6 +40,8 @@ export type AgendaServico = {
   nome: string;
   tipo: "consulta" | "procedimento";
   duracao_min: number;
+  // Ficha enviada para a cliente antes do atendimento.
+  ficha: Tipo;
   ativo: boolean;
   ordem: number;
 };
@@ -83,6 +86,13 @@ export async function listarBloqueios(de: string, ate: string): Promise<Bloqueio
 
 export async function listarServicosAgenda(): Promise<AgendaServico[]> {
   const res = await apiRest("agenda_servicos?select=*&ativo=eq.true&order=ordem.asc,nome.asc");
+  if (!res.ok) throw new Error("Não foi possível carregar os serviços.");
+  return (await res.json()) as AgendaServico[];
+}
+
+/** Todos os serviços, inclusive os desativados (tela "Serviços"). */
+export async function listarTodosServicos(): Promise<AgendaServico[]> {
+  const res = await apiRest("agenda_servicos?select=*&order=ordem.asc,nome.asc");
   if (!res.ok) throw new Error("Não foi possível carregar os serviços.");
   return (await res.json()) as AgendaServico[];
 }
@@ -222,4 +232,54 @@ export async function excluirBloqueio(id: string): Promise<void> {
     method: "DELETE",
   });
   if (!res.ok) throw new Error("Não foi possível remover o bloqueio.");
+}
+
+// ------------------------------------------------------------
+// Serviços (tela "Serviços")
+// ------------------------------------------------------------
+
+export type DadosServico = {
+  nome: string;
+  duracao_min: number;
+  ficha: Tipo;
+  ativo: boolean;
+};
+
+const ERRO_SERVICO = "Não foi possível salvar o serviço.";
+
+/** Muda nome, duração, ficha ou situação. Agendamentos já marcados não mudam. */
+export async function atualizarServico(id: string, campos: Partial<DadosServico>): Promise<void> {
+  const res = await apiRest(`agenda_servicos?id=eq.${encodeURIComponent(id)}`, {
+    method: "PATCH",
+    body: JSON.stringify(campos),
+  });
+  if (!res.ok) throw new Error(ERRO_SERVICO);
+}
+
+/** Cria um procedimento novo, no fim da lista. */
+export async function criarServico(
+  dados: Omit<DadosServico, "ativo">,
+  ordem: number,
+): Promise<AgendaServico> {
+  const res = await apiRest("agenda_servicos", {
+    method: "POST",
+    headers: { Prefer: "return=representation" },
+    body: JSON.stringify({ ...dados, tipo: "procedimento", ativo: true, ordem }),
+  });
+  if (!res.ok) throw new Error(ERRO_SERVICO);
+  return ((await res.json()) as AgendaServico[])[0];
+}
+
+/** Troca a ordem de dois serviços na lista. */
+export async function trocarOrdemServicos(a: AgendaServico, b: AgendaServico): Promise<void> {
+  await atualizarOrdem(a.id, b.ordem);
+  await atualizarOrdem(b.id, a.ordem);
+}
+
+async function atualizarOrdem(id: string, ordem: number): Promise<void> {
+  const res = await apiRest(`agenda_servicos?id=eq.${encodeURIComponent(id)}`, {
+    method: "PATCH",
+    body: JSON.stringify({ ordem }),
+  });
+  if (!res.ok) throw new Error("Não foi possível mudar a ordem.");
 }

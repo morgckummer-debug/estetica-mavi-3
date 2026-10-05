@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import { CalendarPlus, ChevronLeft, ChevronRight, Loader2, Lock } from "lucide-react";
+import { CalendarPlus, ChevronLeft, ChevronRight, Loader2, Lock, Settings2 } from "lucide-react";
 import {
   dataSP,
   diasDoMes,
@@ -26,6 +26,7 @@ import { VisaoMes } from "@/components/agenda/VisaoMes";
 import { DetalheAgendamento } from "@/components/agenda/DetalheAgendamento";
 import { NovoAgendamento } from "@/components/agenda/NovoAgendamento";
 import { BloquearHorario } from "@/components/agenda/BloquearHorario";
+import { ServicosAgenda } from "@/components/agenda/ServicosAgenda";
 
 export const Route = createFileRoute("/painel/agenda")({
   component: PaginaAgenda,
@@ -72,17 +73,20 @@ function PaginaAgenda() {
   const [aberto, setAberto] = useState<Agendamento | null>(null);
   const [novo, setNovo] = useState(false);
   const [bloqueando, setBloqueando] = useState(false);
+  const [editandoServicos, setEditandoServicos] = useState(false);
 
   // No celular a semana não cabe em colunas: abre direto no dia.
   useEffect(() => {
     if (window.innerWidth < 640) setVisao("dia");
   }, []);
 
-  useEffect(() => {
+  const carregarServicos = useCallback(() => {
     listarServicosAgenda()
       .then(setServicos)
       .catch(() => setServicos([]));
   }, []);
+
+  useEffect(carregarServicos, [carregarServicos]);
 
   const { de, ate } = useMemo(() => intervalo(visao, ancora), [visao, ancora]);
 
@@ -161,6 +165,14 @@ function PaginaAgenda() {
       <div className="mb-1 flex flex-wrap items-baseline justify-between gap-3">
         <h2 className="font-display text-[34px] text-painel-title">Agenda</h2>
         <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setEditandoServicos(true)}
+            className="inline-flex items-center gap-1.5 rounded-full border border-painel-border bg-white px-4 py-2 text-[13px] font-medium text-painel-chip-text hover:border-painel-primary/40 transition-colors"
+          >
+            <Settings2 className="h-3.5 w-3.5" />
+            Serviços
+          </button>
           <button
             type="button"
             onClick={() => setBloqueando(true)}
@@ -314,6 +326,9 @@ function PaginaAgenda() {
             recarregar();
           }}
         />
+      )}
+      {editandoServicos && (
+        <ServicosAgenda onFechar={() => setEditandoServicos(false)} onAlterado={carregarServicos} />
       )}
       {bloqueando && (
         <BloquearHorario

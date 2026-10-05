@@ -6,8 +6,9 @@ import type { Tipo } from "@/data/anamnese";
 //   limpeza de pele, hidragloss  → facial
 //   os demais (Power Redux, drenagens, corrente russa, pós-operatório,
 //   taping)                      → corporal
-// Decide pelo nome do serviço. Quando a tela de configuração dos serviços
-// existir, isso deve virar uma coluna do serviço, para sobreviver a renomeações.
+// A ficha vem da coluna `ficha` do serviço (ajustável na tela "Serviços").
+// Só quando o serviço não existe mais ou foi desativado e não está na lista,
+// cai na dedução pelo nome gravado no agendamento.
 export function tipoFichaDoServico(nomeServico: string): Tipo {
   const nome = nomeServico.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
   if (/consulta|avalia/.test(nome)) return "cadastro";
