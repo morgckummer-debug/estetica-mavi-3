@@ -1,6 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
 import { Check, Loader2, Search, X } from "lucide-react";
-import { criarAgendamentoManual, hojeSP, instanteSP, type AgendaServico } from "@/lib/agenda";
+import {
+  criarAgendamentoManual,
+  hojeSP,
+  horaSP,
+  instanteSP,
+  type AgendaServico,
+} from "@/lib/agenda";
 import { listarClientes, type Cliente } from "@/lib/painel";
 import { digitos } from "@/lib/clientes";
 import { mascaraTelefone } from "@/lib/mascaras";
@@ -37,6 +43,8 @@ export function NovoAgendamento({
   );
   const [areas, setAreas] = useState("");
   const [areasSel, setAreasSel] = useState<string[]>([]);
+  // Duração em minutos (texto enquanto digita); começa na do serviço.
+  const [duracao, setDuracao] = useState(() => String(servicos[0]?.duracao_min ?? 60));
   const [observacao, setObservacao] = useState("");
   const [salvando, setSalvando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
@@ -78,12 +86,21 @@ export function NovoAgendamento({
 
   const servico = servicos.find((s) => s.id === servicoId);
   const opcoes = servico?.areas_opcoes ?? [];
+  const duracaoMin = Number(duracao);
+  const duracaoValida = Number.isInteger(duracaoMin) && duracaoMin >= 5 && duracaoMin <= 480;
+  // Só vai ao banco quando difere do padrão do serviço.
+  const duracaoDiferente =
+    servico && duracaoValida && duracaoMin !== servico.duracao_min ? duracaoMin : undefined;
 
   const salvar = async (e: React.FormEvent) => {
     e.preventDefault();
     setErro(null);
     if (!servico || !inicio) {
       setErro("Escolha o serviço e o horário.");
+      return;
+    }
+    if (!duracaoValida) {
+      setErro("A duração deve ser entre 5 e 480 minutos.");
       return;
     }
     if (nome.trim().length < 2) {
@@ -115,6 +132,7 @@ export function NovoAgendamento({
                 .map((a) => a.trim())
                 .filter(Boolean),
         observacao,
+        duracaoMin: duracaoValida ? duracaoMin : undefined,
       });
       onCriado();
     } catch (err) {
@@ -221,6 +239,8 @@ export function NovoAgendamento({
             onChange={(e) => {
               setServicoId(e.target.value);
               setAreasSel([]);
+              const novo = servicos.find((s) => s.id === e.target.value);
+              if (novo) setDuracao(String(novo.duracao_min));
               setInicio(null);
             }}
             className={campo}
@@ -233,13 +253,42 @@ export function NovoAgendamento({
           </select>
         </div>
 
+        <div>
+          <label className={rotulo}>Duração (minutos)</label>
+          <div className="flex items-center gap-3">
+            <input
+              type="number"
+              inputMode="numeric"
+              min={5}
+              max={480}
+              step={5}
+              value={duracao}
+              onChange={(e) => {
+                setDuracao(e.target.value);
+                setInicio(null);
+              }}
+              className={`${campo} !w-28`}
+            />
+            <span className="text-xs text-white/60">
+              {servico ? `Padrão do serviço: ${servico.duracao_min} min. ` : ""}
+              Aumente se for fazer mais de uma área na mesma sessão.
+            </span>
+          </div>
+        </div>
+
         <SeletorHorario
           servico={servico}
           dia={dia}
           onDia={setDia}
           valor={inicio}
           onValor={setInicio}
+          duracaoMin={duracaoDiferente}
         />
+        {inicio && duracaoValida && (
+          <p className="-mt-1 text-xs text-white/60">
+            Termina às {horaSP(new Date(new Date(inicio).getTime() + duracaoMin * 60000))}.
+          </p>
+        )}
 
         {opcoes.length > 0 ? (
           <div>

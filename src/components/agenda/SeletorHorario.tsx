@@ -15,6 +15,7 @@ export function SeletorHorario({
   valor,
   onValor,
   ignorarId,
+  duracaoMin,
 }: {
   servico: AgendaServico | undefined;
   dia: string;
@@ -22,6 +23,8 @@ export function SeletorHorario({
   valor: string | null;
   onValor: (iso: string | null) => void;
   ignorarId?: string;
+  // Duração diferente da do serviço (os horários livres se ajustam a ela).
+  duracaoMin?: number;
 }) {
   const [livres, setLivres] = useState<string[] | null>(null);
   const [erro, setErro] = useState<string | null>(null);
@@ -37,7 +40,7 @@ export function SeletorHorario({
     let ativo = true;
     setLivres(null);
     setErro(null);
-    horariosLivres(servicoId, dia, ignorarId)
+    horariosLivres(servicoId, dia, ignorarId, duracaoMin)
       .then((h) => ativo && setLivres(h))
       .catch(() => {
         if (!ativo) return;
@@ -47,7 +50,7 @@ export function SeletorHorario({
     return () => {
       ativo = false;
     };
-  }, [servicoId, dia, ignorarId]);
+  }, [servicoId, dia, ignorarId, duracaoMin]);
 
   // Hora que já veio escolhida (clique na grade) e não está entre os horários
   // livres: vira encaixe, com a hora preenchida no campo.

@@ -25,6 +25,11 @@ export function ReagendarPainel({
   const [erro, setErro] = useState<string | null>(null);
 
   const servico = servicos.find((s) => s.id === ag.servico_id);
+  // O atendimento pode ter duração diferente da do serviço (escolhida ao agendar).
+  const duracaoReal = Math.round(
+    (new Date(ag.fim).getTime() - new Date(ag.inicio).getTime()) / 60000,
+  );
+  const duracaoMin = servico && duracaoReal !== servico.duracao_min ? duracaoReal : undefined;
 
   const salvar = async () => {
     if (!novo) return;
@@ -52,6 +57,7 @@ export function ReagendarPainel({
         valor={novo}
         onValor={setNovo}
         ignorarId={ag.id}
+        duracaoMin={duracaoMin}
       />
       {erro && <p className="text-sm text-rose-300">{erro}</p>}
       <div className="flex items-center gap-2">
