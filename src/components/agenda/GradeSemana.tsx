@@ -23,7 +23,7 @@ import { paletaDe } from "@/lib/agenda-cores";
 // o que está em branco é horário livre (clique para agendar), o listrado é
 // horário fechado.
 
-const HORA_PX_SEMANA = 56; // altura de uma hora na semana
+const HORA_PX_SEMANA = 88; // altura de uma hora na semana: um atendimento de 30 min já mostra o procedimento
 const HORA_PX_DIA = 104; // no dia sobra espaço: cabem 3 linhas até no atendimento de 30 min
 const PASSO_CLIQUE = 30; // o clique no horário vazio "gruda" de 30 em 30 min
 const MIN_COLUNA = 132; // largura mínima de cada dia (a semana rola de lado no celular)
