@@ -175,8 +175,8 @@ export async function recuperarSenha(email: string): Promise<void> {
     throw new Error("Supabase não configurado. Verifique as variáveis de ambiente.");
   }
   // Domínio fixo (não window.location.origin) — senão o link do e-mail
-  // pode sair apontando pra um domínio de preview temporário (Vercel/
-  // Lovable) em vez do site publicado, se alguém acessar o painel por lá.
+  // pode sair apontando pra um domínio de preview temporário da Vercel
+  // em vez do site publicado, se alguém acessar o painel por lá.
   const redirectTo = `${SITE_URL}/redefinir-senha`;
   const res = await fetch(
     `${SUPABASE_URL}/auth/v1/recover?redirect_to=${encodeURIComponent(redirectTo)}`,

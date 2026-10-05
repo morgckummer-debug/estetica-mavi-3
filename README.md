@@ -5,8 +5,6 @@ Estética.
 
 - Site: https://www.maviestetica.com.br
 - Painel (login da Marina/Morgana): https://www.maviestetica.com.br/painel
-- Editado ao vivo pelo [Lovable](https://lovable.dev) — por isso o histórico tem
-  muitos commits genéricos ("Changes", "Work in progress").
 - Conectado à Vercel: todo push em `main` dispara deploy automático.
 - É este código que a Marina e as clientes realmente usam no dia a dia.
 
