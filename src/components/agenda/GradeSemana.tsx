@@ -23,7 +23,8 @@ import { paletaDe } from "@/lib/agenda-cores";
 // o que está em branco é horário livre (clique para agendar), o listrado é
 // horário fechado.
 
-const HORA_PX = 56; // altura de uma hora
+const HORA_PX_SEMANA = 56; // altura de uma hora na semana
+const HORA_PX_DIA = 104; // no dia sobra espaço: cabem 3 linhas até no atendimento de 30 min
 const PASSO_CLIQUE = 30; // o clique no horário vazio "gruda" de 30 em 30 min
 const MIN_COLUNA = 132; // largura mínima de cada dia (a semana rola de lado no celular)
 
@@ -118,6 +119,7 @@ export function GradeSemana({
   const hoje = hojeSP();
   const agora = minutosNoDia(new Date().toISOString(), hoje);
   const semana = dias.length > 1;
+  const HORA_PX = semana ? HORA_PX_SEMANA : HORA_PX_DIA;
 
   let colunas = dias.map((d) => montarDia(d, agendamentos, bloqueios, faixas, mostrarCancelados));
   // Na semana, dias fechados e sem nada (ex.: domingo) não ocupam espaço.
@@ -286,7 +288,7 @@ export function GradeSemana({
                   const alto = y(base) - y(topo);
                   const confirmou = ag.status === "agendado" && ag.presenca_confirmada_em;
                   const p = paletaDe(corPorServico.get(ag.servico_id));
-                  const alta = alto >= 44;
+                  const alta = semana ? alto >= 44 : true;
                   const hora = `${horaSP(ag.inicio)}–${horaSP(ag.fim)}`;
                   const cancelado = ag.status === "cancelado";
                   const reagendar = ag.status === "remarcar";
@@ -330,10 +332,20 @@ export function GradeSemana({
                           <span className="h-[7px] w-[7px] shrink-0 rounded-full bg-[#c0485f]" />
                         )}
                         <span className={`truncate ${cancelado || faltou ? "line-through" : ""}`}>
-                          {alta ? `${hora} · ${ag.nome}` : `${horaSP(ag.inicio)} · ${ag.nome}`}
-                          {!alta && dias.length === 1 && ` · ${ag.servico_nome}`}
+                          {semana
+                            ? alta
+                              ? `${hora} · ${ag.nome}`
+                              : `${horaSP(ag.inicio)} · ${ag.nome}`
+                            : hora}
                         </span>
                       </span>
+                      {!semana && (
+                        <span
+                          className={`block truncate text-[12px] font-semibold leading-tight ${cancelado || faltou ? "line-through" : ""}`}
+                        >
+                          {ag.nome}
+                        </span>
+                      )}
                       {alta && (
                         <span className="block truncate text-[11.5px] leading-snug opacity-85">
                           {ag.servico_nome}
