@@ -5,6 +5,7 @@ import {
   Check,
   Loader2,
   MessageCircle,
+  Pencil,
   Send,
   UserRound,
   X,
@@ -29,6 +30,7 @@ import { PAINEL_URL } from "@/data/services";
 import { mascaraTelefone } from "@/lib/mascaras";
 import { PainelModal } from "@/components/PainelModal";
 import { EtiquetaCadastro, EtiquetaStatus } from "./AgendamentoCard";
+import { EditarPainel } from "./EditarPainel";
 import { ReagendarPainel } from "./ReagendarPainel";
 import { btnPerigo, btnSecundario } from "./estilos";
 
@@ -43,7 +45,7 @@ export function DetalheAgendamento({
   onFechar: () => void;
   onAlterado: (mensagem: string) => void;
 }) {
-  const [modo, setModo] = useState<"ver" | "reagendar">("ver");
+  const [modo, setModo] = useState<"ver" | "reagendar" | "editar">("ver");
   const [trabalhando, setTrabalhando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
 
@@ -113,7 +115,14 @@ export function DetalheAgendamento({
         </button>
       </div>
 
-      {modo === "reagendar" ? (
+      {modo === "editar" ? (
+        <EditarPainel
+          ag={ag}
+          servicos={servicos}
+          onConcluido={() => onAlterado("Agendamento atualizado.")}
+          onVoltar={() => setModo("ver")}
+        />
+      ) : modo === "reagendar" ? (
         <ReagendarPainel
           ag={ag}
           servicos={servicos}
@@ -229,6 +238,15 @@ export function DetalheAgendamento({
 
           {ativo && (
             <div className="flex flex-wrap items-center gap-2 border-t border-white/10 pt-4">
+              <button
+                type="button"
+                disabled={trabalhando}
+                onClick={() => setModo("editar")}
+                className={btnSecundario}
+              >
+                <Pencil className="h-4 w-4" />
+                Editar
+              </button>
               <button
                 type="button"
                 disabled={trabalhando}
