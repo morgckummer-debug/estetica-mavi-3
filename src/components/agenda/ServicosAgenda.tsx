@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { ArrowDown, ArrowUp, Check, Loader2, Plus, X } from "lucide-react";
+import { ArrowDown, ArrowUp, Check, Loader2, Plus, SlidersHorizontal, X } from "lucide-react";
 import {
   atualizarServico,
   criarServico,
@@ -9,6 +9,7 @@ import {
 } from "@/lib/agenda";
 import { nomeCurto, type Tipo } from "@/data/anamnese";
 import { PainelModal } from "@/components/PainelModal";
+import { RegrasGerais } from "./RegrasGerais";
 import { btnPrimario, btnSecundario, campo, rotulo } from "./estilos";
 
 // Fichas que a cliente pode receber antes do atendimento.
@@ -40,6 +41,7 @@ export function ServicosAgenda({
   const [ocupado, setOcupado] = useState<string | null>(null);
   const [erro, setErro] = useState<string | null>(null);
   const [novo, setNovo] = useState<Rascunho | null>(null);
+  const [regrasGerais, setRegrasGerais] = useState(false);
 
   const carregar = async () => {
     const lista = await listarTodosServicos();
@@ -118,6 +120,10 @@ export function ServicosAgenda({
   const editar = (id: string, campos: Partial<Rascunho>) =>
     setRascunhos((r) => ({ ...r, [id]: { ...r[id], ...campos } }));
 
+  if (regrasGerais) {
+    return <RegrasGerais onVoltar={() => setRegrasGerais(false)} onFechar={onFechar} />;
+  }
+
   return (
     <PainelModal onFechar={onFechar} maxWidth="max-w-xl">
       <div className="mb-1 flex items-center justify-between gap-2">
@@ -136,6 +142,14 @@ export function ServicosAgenda({
         duração vale só para os próximos agendamentos. Serviço desativado some da agenda, mas o
         histórico fica.
       </p>
+      <button
+        type="button"
+        onClick={() => setRegrasGerais(true)}
+        className={`${btnSecundario} mb-4`}
+      >
+        <SlidersHorizontal className="h-4 w-4" />
+        Regras gerais (horários e prazos)
+      </button>
 
       {!servicos ? (
         <div className="flex justify-center py-8">

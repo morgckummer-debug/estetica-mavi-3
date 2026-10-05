@@ -1,6 +1,14 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import { CalendarPlus, ChevronLeft, ChevronRight, Loader2, Lock, Settings2 } from "lucide-react";
+import {
+  CalendarPlus,
+  ChevronLeft,
+  ChevronRight,
+  Loader2,
+  Lock,
+  Palmtree,
+  Settings2,
+} from "lucide-react";
 import {
   dataSP,
   diasDoMes,
@@ -72,7 +80,7 @@ function PaginaAgenda() {
 
   const [aberto, setAberto] = useState<Agendamento | null>(null);
   const [novo, setNovo] = useState(false);
-  const [bloqueando, setBloqueando] = useState(false);
+  const [bloqueando, setBloqueando] = useState<"bloqueio" | "ferias" | null>(null);
   const [editandoServicos, setEditandoServicos] = useState(false);
 
   // No celular a semana não cabe em colunas: abre direto no dia.
@@ -175,7 +183,15 @@ function PaginaAgenda() {
           </button>
           <button
             type="button"
-            onClick={() => setBloqueando(true)}
+            onClick={() => setBloqueando("ferias")}
+            className="inline-flex items-center gap-1.5 rounded-full border border-painel-border bg-white px-4 py-2 text-[13px] font-medium text-painel-chip-text hover:border-painel-primary/40 transition-colors"
+          >
+            <Palmtree className="h-3.5 w-3.5" />
+            Férias
+          </button>
+          <button
+            type="button"
+            onClick={() => setBloqueando("bloqueio")}
             className="inline-flex items-center gap-1.5 rounded-full border border-painel-border bg-white px-4 py-2 text-[13px] font-medium text-painel-chip-text hover:border-painel-primary/40 transition-colors"
           >
             <Lock className="h-3.5 w-3.5" />
@@ -334,9 +350,10 @@ function PaginaAgenda() {
         <BloquearHorario
           diaInicial={visao === "dia" ? ancora : hojeSP()}
           servicos={servicos}
-          onFechar={() => setBloqueando(false)}
+          ferias={bloqueando === "ferias"}
+          onFechar={() => setBloqueando(null)}
           onConcluido={(mensagem) => {
-            setBloqueando(false);
+            setBloqueando(null);
             avisar(mensagem);
             recarregar();
           }}

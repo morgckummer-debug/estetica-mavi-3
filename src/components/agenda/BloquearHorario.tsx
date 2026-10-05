@@ -20,18 +20,22 @@ import { PainelModal } from "@/components/PainelModal";
 import { ReagendarPainel } from "./ReagendarPainel";
 import { btnPrimario, btnSecundario, campo, rotulo } from "./estilos";
 
-// Bloqueia um horário, um dia inteiro ou um período (férias, feriado).
+// Bloqueia um horário, um dia inteiro ou um período (férias, feriado). Com
+// `ferias`, vira o atalho "Férias": sempre dias inteiros, motivo "Férias", e
+// pode ser cadastrado com bastante antecedência.
 // Se já houver cliente agendada no período, o bloqueio é criado mas NADA é
 // cancelado sozinho: a Marina decide, cliente por cliente, entre reagendar
 // agora, pedir que a cliente escolha outro horário, ou manter.
 export function BloquearHorario({
   diaInicial,
   servicos,
+  ferias = false,
   onFechar,
   onConcluido,
 }: {
   diaInicial: string;
   servicos: AgendaServico[];
+  ferias?: boolean;
   onFechar: () => void;
   onConcluido: (mensagem: string) => void;
 }) {
@@ -41,7 +45,8 @@ export function BloquearHorario({
   const [diaInteiro, setDiaInteiro] = useState(true);
   const [horaDe, setHoraDe] = useState("12:00");
   const [horaAte, setHoraAte] = useState("13:00");
-  const [motivo, setMotivo] = useState("");
+  const [motivo, setMotivo] = useState(ferias ? "Férias" : "");
+  const textoConcluido = ferias ? "Férias registradas." : "Bloqueio criado.";
   const [salvando, setSalvando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
 
@@ -57,8 +62,9 @@ export function BloquearHorario({
     e.preventDefault();
     setErro(null);
     const fimDia = ate < de ? de : ate;
-    const inicio = diaInteiro ? instanteSP(de) : instanteSP(de, horaDe);
-    const fim = diaInteiro ? instanteSP(somarDias(fimDia, 1)) : instanteSP(fimDia, horaAte);
+    const inicio = diaInteiro || ferias ? instanteSP(de) : instanteSP(de, horaDe);
+    const fim =
+      diaInteiro || ferias ? instanteSP(somarDias(fimDia, 1)) : instanteSP(fimDia, horaAte);
     if (new Date(fim) <= new Date(inicio)) {
       setErro("O fim precisa ser depois do início.");
       return;
@@ -68,7 +74,7 @@ export function BloquearHorario({
       await criarBloqueio({ inicio, fim, motivo });
       const atingidos = await agendamentosNoPeriodo(inicio, fim);
       if (atingidos.length === 0) {
-        onConcluido("Bloqueio criado.");
+        onConcluido(textoConcluido);
         return;
       }
       setConflitos(atingidos);
@@ -96,15 +102,17 @@ export function BloquearHorario({
   if (conflitos) {
     const pendentes = conflitos.filter((c) => !resolvidos[c.id]);
     return (
-      <PainelModal onFechar={() => onConcluido("Bloqueio criado.")} maxWidth="max-w-md">
+      <PainelModal onFechar={() => onConcluido(textoConcluido)} maxWidth="max-w-md">
         <div className="flex items-center justify-between gap-2 mb-3">
           <div className="flex items-center gap-2">
             <Lock className="h-4 w-4 text-painel-lilac-soft" />
-            <h3 className="font-medium text-white">Bloqueio criado</h3>
+            <h3 className="font-medium text-white">
+              {ferias ? "Férias registradas" : "Bloqueio criado"}
+            </h3>
           </div>
           <button
             type="button"
-            onClick={() => onConcluido("Bloqueio criado.")}
+            onClick={() => onConcluido(textoConcluido)}
             title="Fechar"
             className="text-white/50 hover:text-white transition-colors"
           >
@@ -199,7 +207,7 @@ export function BloquearHorario({
             <div className="mt-5">
               <button
                 type="button"
-                onClick={() => onConcluido("Bloqueio criado.")}
+                onClick={() => onConcluido(textoConcluido)}
                 className={btnPrimario}
               >
                 {pendentes.length > 0 ? "Resolver depois" : "Concluir"}
@@ -216,7 +224,7 @@ export function BloquearHorario({
       <div className="flex items-center justify-between gap-2 mb-4">
         <div className="flex items-center gap-2">
           <Lock className="h-4 w-4 text-painel-lilac-soft" />
-          <h3 className="font-medium text-white">Bloquear horário</h3>
+          <h3 className="font-medium text-white">{ferias ? "Férias" : "Bloquear horário"}</h3>
         </div>
         <button
           type="button"
@@ -255,7 +263,17 @@ export function BloquearHorario({
           </div>
         </div>
 
-        <label className="flex items-center gap-2 text-sm text-white/80">
+        {ferias && (
+          <p className="text-xs leading-relaxed text-white/60">
+            Os dias de férias ficam fechados na agenda online. Pode cadastrar com bastante
+            antecedência: se já houver clientes marcadas nesse período, você escolhe o que fazer com
+            cada uma.
+          </p>
+        )}
+
+        <label
+          className={`flex items-center gap-2 text-sm text-white/80 ${ferias ? "hidden" : ""}`}
+        >
           <input
             type="checkbox"
             checked={diaInteiro}
@@ -265,7 +283,7 @@ export function BloquearHorario({
           Dia inteiro
         </label>
 
-        {!diaInteiro && (
+        {!diaInteiro && !ferias && (
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className={rotulo}>Das</label>
@@ -295,7 +313,7 @@ export function BloquearHorario({
           <input
             value={motivo}
             onChange={(e) => setMotivo(e.target.value)}
-            placeholder="Férias, feriado, consulta médica…"
+            placeholder={ferias ? "Férias" : "Férias, feriado, consulta médica…"}
             className={campo}
           />
         </div>
@@ -304,7 +322,7 @@ export function BloquearHorario({
         <div className="flex items-center gap-2">
           <button type="submit" disabled={salvando} className={btnPrimario}>
             {salvando ? <Loader2 className="h-4 w-4 animate-spin" /> : <Lock className="h-4 w-4" />}
-            Bloquear
+            {ferias ? "Registrar férias" : "Bloquear"}
           </button>
           <button type="button" onClick={onFechar} disabled={salvando} className={btnSecundario}>
             Cancelar
