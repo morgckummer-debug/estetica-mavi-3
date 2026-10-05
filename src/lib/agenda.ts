@@ -8,6 +8,7 @@
 import { apiRest } from "./painel";
 import { colunaUnica, rpc } from "./api/rpc";
 import type { Tipo } from "@/data/anamnese";
+import type { CorServico } from "./agenda-cores";
 import { instanteSP } from "./agenda-datas";
 
 export * from "./agenda-datas";
@@ -42,6 +43,8 @@ export type AgendaServico = {
   duracao_min: number;
   // Ficha enviada para a cliente antes do atendimento.
   ficha: Tipo;
+  // Cor pastel na agenda.
+  cor: CorServico;
   ativo: boolean;
   ordem: number;
 };
@@ -242,6 +245,7 @@ export type DadosServico = {
   nome: string;
   duracao_min: number;
   ficha: Tipo;
+  cor: CorServico;
   ativo: boolean;
 };
 

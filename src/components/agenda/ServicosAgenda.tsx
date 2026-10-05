@@ -19,6 +19,13 @@ import {
 import { nomeCurto, type Tipo } from "@/data/anamnese";
 import { PainelModal } from "@/components/PainelModal";
 import { RegrasGerais } from "./RegrasGerais";
+import {
+  CORES_SERVICO,
+  PALETA,
+  paletaDe,
+  proximaCorLivre,
+  type CorServico,
+} from "@/lib/agenda-cores";
 import { btnPrimario, btnSecundario, campo, rotulo } from "./estilos";
 
 // Fichas que a cliente pode receber antes do atendimento.
@@ -26,12 +33,13 @@ const FICHAS: Tipo[] = ["corporal", "facial", "laser"];
 
 const rotuloFicha = (f: Tipo) => (f === "cadastro" ? "Cadastro" : nomeCurto(f));
 
-type Rascunho = { nome: string; duracao: string; ficha: Tipo };
+type Rascunho = { nome: string; duracao: string; ficha: Tipo; cor: CorServico };
 
 const rascunhoDe = (s: AgendaServico): Rascunho => ({
   nome: s.nome,
   duracao: String(s.duracao_min),
   ficha: s.ficha,
+  cor: (s.cor ?? "lilas") as CorServico,
 });
 
 // Tela da Marina para escolher quais serviços aparecem na agenda, quanto tempo
@@ -96,6 +104,7 @@ export function ServicosAgenda({
       atualizarServico(s.id, {
         nome: r.nome.trim(),
         duracao_min: Number(r.duracao),
+        ...(r.cor !== (s.cor ?? "lilas") ? { cor: r.cor } : {}),
         ...(s.tipo === "consulta" ? {} : { ficha: r.ficha }),
       }),
     );
@@ -115,7 +124,12 @@ export function ServicosAgenda({
     const proxima = servicos.reduce((m, s) => Math.max(m, s.ordem), -1) + 1;
     void executar("novo", async () => {
       await criarServico(
-        { nome: novo.nome.trim(), duracao_min: Number(novo.duracao), ficha: novo.ficha },
+        {
+          nome: novo.nome.trim(),
+          duracao_min: Number(novo.duracao),
+          ficha: novo.ficha,
+          cor: novo.cor,
+        },
         proxima,
       );
       setNovo(null);
@@ -125,7 +139,11 @@ export function ServicosAgenda({
   const mudou = (s: AgendaServico) => {
     const r = rascunhos[s.id];
     return (
-      r && (r.nome.trim() !== s.nome || Number(r.duracao) !== s.duracao_min || r.ficha !== s.ficha)
+      r &&
+      (r.nome.trim() !== s.nome ||
+        Number(r.duracao) !== s.duracao_min ||
+        r.ficha !== s.ficha ||
+        r.cor !== (s.cor ?? "lilas"))
     );
   };
 
@@ -242,6 +260,7 @@ export function ServicosAgenda({
                         </div>
                       )}
                     </div>
+                    <SeletorCor valor={r.cor} onChange={(cor) => editar(s.id, { cor })} />
                     <div className="flex flex-wrap items-center gap-2">
                       {mudou(s) && (
                         <button
@@ -326,6 +345,7 @@ export function ServicosAgenda({
                   </select>
                 </div>
               </div>
+              <SeletorCor valor={novo.cor} onChange={(cor) => setNovo({ ...novo, cor })} />
               <div className="flex gap-2">
                 <button
                   type="button"
@@ -344,7 +364,14 @@ export function ServicosAgenda({
           ) : (
             <button
               type="button"
-              onClick={() => setNovo({ nome: "", duracao: "60", ficha: "corporal" })}
+              onClick={() =>
+                setNovo({
+                  nome: "",
+                  duracao: "60",
+                  ficha: "corporal",
+                  cor: proximaCorLivre((servicos ?? []).map((s) => s.cor)),
+                })
+              }
               className={btnSecundario}
             >
               <Plus className="h-4 w-4" />
@@ -354,5 +381,34 @@ export function ServicosAgenda({
         </div>
       )}
     </PainelModal>
+  );
+}
+
+// Fileira de cores pastel para escolher a cor do serviço na agenda.
+function SeletorCor({ valor, onChange }: { valor: CorServico; onChange: (c: CorServico) => void }) {
+  return (
+    <div>
+      <label className={rotulo}>Cor na agenda</label>
+      <div className="flex flex-wrap gap-2">
+        {CORES_SERVICO.map((c) => {
+          const p = paletaDe(c);
+          const escolhida = c === valor;
+          return (
+            <button
+              key={c}
+              type="button"
+              title={PALETA[c].nome}
+              aria-label={PALETA[c].nome}
+              aria-pressed={escolhida}
+              onClick={() => onChange(c)}
+              className={`h-7 w-7 rounded-full border-2 transition-transform hover:scale-110 ${
+                escolhida ? "ring-2 ring-white ring-offset-2 ring-offset-painel-hero-bg" : ""
+              }`}
+              style={{ background: p.fundo, borderColor: p.borda }}
+            />
+          );
+        })}
+      </div>
+    </div>
   );
 }

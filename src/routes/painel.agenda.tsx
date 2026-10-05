@@ -11,6 +11,7 @@ import {
   listarBloqueios,
   listarFaixasHorario,
   listarServicosAgenda,
+  listarTodosServicos,
   rotuloDiaLongo,
   rotuloDiaMes,
   rotuloMesAno,
@@ -75,6 +76,8 @@ function PaginaAgenda() {
   // Dia (e hora, se clicou num horário vazio) do novo agendamento.
   const [novo, setNovo] = useState<{ dia: string; hora?: string } | null>(null);
   const [faixas, setFaixas] = useState<FaixaHorario[]>([]);
+  // Todos os serviços (inclusive desativados): dão a cor de cada atendimento.
+  const [todosServicos, setTodosServicos] = useState<AgendaServico[]>([]);
   const [bloqueando, setBloqueando] = useState<"bloqueio" | "ferias" | null>(null);
   const [editandoServicos, setEditandoServicos] = useState(false);
 
@@ -98,6 +101,9 @@ function PaginaAgenda() {
     listarFaixasHorario()
       .then(setFaixas)
       .catch(() => setFaixas([]));
+    listarTodosServicos()
+      .then(setTodosServicos)
+      .catch(() => setTodosServicos([]));
   }, [editandoServicos]);
 
   const { de, ate } = useMemo(() => intervalo(visao, ancora), [visao, ancora]);
@@ -291,6 +297,7 @@ function PaginaAgenda() {
           mes={ancora}
           agendamentos={agendamentos}
           bloqueios={bloqueios}
+          servicos={todosServicos}
           onEscolherDia={escolherDia}
         />
       ) : (
@@ -300,6 +307,7 @@ function PaginaAgenda() {
             agendamentos={agendamentos}
             bloqueios={bloqueios}
             faixas={faixas}
+            servicos={todosServicos}
             mostrarCancelados={mostrarCancelados}
             onAbrir={setAberto}
             onRemoverBloqueio={removerBloqueio}
