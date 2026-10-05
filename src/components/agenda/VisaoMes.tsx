@@ -8,8 +8,10 @@ import {
   somarDias,
   STATUS_ATIVOS,
   type Agendamento,
+  type AgendaServico,
   type Bloqueio,
 } from "@/lib/agenda";
+import { paletaDe } from "@/lib/agenda-cores";
 
 const SEMANA = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"];
 
@@ -17,13 +19,16 @@ export function VisaoMes({
   mes,
   agendamentos,
   bloqueios,
+  servicos,
   onEscolherDia,
 }: {
   mes: string;
   agendamentos: Agendamento[];
   bloqueios: Bloqueio[];
+  servicos: AgendaServico[];
   onEscolherDia: (dia: string) => void;
 }) {
+  const corPorServico = new Map(servicos.map((s) => [s.id, s.cor]));
   const hoje = hojeSP();
   const mesAtual = mes.slice(0, 7);
 
@@ -73,7 +78,7 @@ export function VisaoMes({
               onClick={() => onEscolherDia(dia)}
               className={`flex min-h-[64px] flex-col items-stretch rounded-xl border p-1.5 text-left transition-colors sm:min-h-[96px] sm:p-2 ${
                 bloqueio === "inteiro"
-                  ? "border-painel-gold/40 bg-painel-gold-soft/25"
+                  ? "border-[#D9788E]/50 bg-[#FCE4E8]"
                   : "border-painel-border bg-white hover:border-painel-primary/50"
               } ${doMes ? "" : "opacity-45"}`}
             >
@@ -85,7 +90,7 @@ export function VisaoMes({
                 >
                   {Number(dia.slice(8))}
                 </span>
-                {bloqueio && <Lock className="h-3 w-3 text-painel-gold" />}
+                {bloqueio && <Lock className="h-3 w-3 text-[#D9788E]" />}
               </span>
               {lista.length > 0 && (
                 <>
@@ -93,14 +98,18 @@ export function VisaoMes({
                     {lista.length}
                   </span>
                   <span className="mt-1 hidden space-y-0.5 sm:block">
-                    {lista.slice(0, 2).map((ag) => (
-                      <span
-                        key={ag.id}
-                        className="block truncate rounded-md bg-painel-badge-bg px-1.5 py-0.5 text-[11px] text-painel-title"
-                      >
-                        {horaSP(ag.inicio)} {ag.nome.split(" ")[0]}
-                      </span>
-                    ))}
+                    {lista.slice(0, 2).map((ag) => {
+                      const p = paletaDe(corPorServico.get(ag.servico_id));
+                      return (
+                        <span
+                          key={ag.id}
+                          className="block truncate rounded-md border-l-[3px] px-1.5 py-0.5 text-[11px] text-[#3d2a4c]"
+                          style={{ background: p.fundo, borderColor: p.borda }}
+                        >
+                          {horaSP(ag.inicio)} {ag.nome.split(" ")[0]}
+                        </span>
+                      );
+                    })}
                     {lista.length > 2 && (
                       <span className="block px-1 text-[11px] font-medium text-painel-muted">
                         +{lista.length - 2}
