@@ -186,12 +186,31 @@ function PaginaAgenda() {
   const aReagendar = agendamentos.filter((a) => a.status === "remarcar").length;
   const ehHoje = ancora === hojeSP();
 
+  const seletorVisao = (classe: string) => (
+    <div className={`${classe} rounded-full border border-painel-border bg-white p-1`}>
+      {VISOES.map((v) => (
+        <button
+          key={v.id}
+          type="button"
+          onClick={() => setVisao(v.id)}
+          className={`rounded-full px-4 py-1.5 text-[13px] font-medium transition-colors ${
+            visao === v.id
+              ? "bg-painel-primary text-white"
+              : "text-painel-chip-text hover:text-painel-title"
+          }`}
+        >
+          {v.rotulo}
+        </button>
+      ))}
+    </div>
+  );
+
   return (
     <div>
-      <div className="lg:flex lg:items-start lg:gap-6">
+      <div className="flex flex-col lg:flex-row lg:items-start lg:gap-6">
         <div className="min-w-0 flex-1">
           <div className="mb-1 flex flex-wrap items-baseline justify-between gap-3">
-            <h2 className="font-display text-[34px] text-painel-title">Agenda</h2>
+            <h2 className="font-display text-[34px] text-painel-title">Agenda MAVI</h2>
             <div className="flex items-center gap-2">
               <button
                 type="button"
@@ -242,180 +261,164 @@ function PaginaAgenda() {
             <CalendarDays className="h-3.5 w-3.5" />
             {mostrarCalendario ? "Esconder calendário" : "Calendário do mês"}
           </button>
+
+          {seletorVisao("mb-4 inline-flex lg:hidden")}
+
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+            <div className="flex flex-wrap items-center gap-2.5">
+              <div className="flex items-center gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => mover(-1)}
+                  title="Anterior"
+                  className="rounded-full border border-painel-border bg-white p-2 text-painel-chip-text hover:border-painel-primary/40 transition-colors"
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setAncora(hojeSP())}
+                  disabled={ehHoje && visao === "dia"}
+                  className="rounded-full border border-painel-border bg-white px-3.5 py-1.5 text-[13px] font-medium text-painel-chip-text hover:border-painel-primary/40 transition-colors disabled:opacity-40"
+                >
+                  Hoje
+                </button>
+                <button
+                  type="button"
+                  onClick={() => mover(1)}
+                  title="Próximo"
+                  className="rounded-full border border-painel-border bg-white p-2 text-painel-chip-text hover:border-painel-primary/40 transition-colors"
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </button>
+              </div>
+              <h3 className="font-display text-[26px] text-painel-title first-letter:uppercase">
+                {rotuloPeriodo(visao, ancora)}
+              </h3>
+              <button
+                type="button"
+                onClick={recarregar}
+                disabled={carregando}
+                title="Atualizar"
+                className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-painel-muted hover:bg-painel-badge-bg/40 hover:text-painel-primary transition-colors disabled:opacity-40"
+              >
+                <RefreshCw className={`h-4 w-4 ${carregando ? "animate-spin" : ""}`} />
+              </button>
+            </div>
+            <label className="flex items-center gap-2 text-[12.5px] text-painel-muted">
+              <input
+                type="checkbox"
+                checked={mostrarCancelados}
+                onChange={(e) => setMostrarCancelados(e.target.checked)}
+                className="h-3.5 w-3.5 accent-painel-primary"
+              />
+              Mostrar cancelados
+            </label>
+          </div>
+
+          {aviso && (
+            <div className="mb-4 rounded-xl border border-painel-green/30 bg-painel-green/10 px-4 py-3 text-sm text-painel-green">
+              {aviso}
+            </div>
+          )}
+          {erro && (
+            <div className="mb-4 rounded-xl border border-painel-alert-border bg-painel-alert-bg px-4 py-3 text-sm text-painel-alert-text">
+              {erro}
+            </div>
+          )}
+
+          {carregando && agendamentos.length === 0 && bloqueios.length === 0 ? (
+            <div className="flex justify-center py-16">
+              <Loader2 className="h-6 w-6 animate-spin text-painel-muted" />
+            </div>
+          ) : visao === "mes" ? (
+            <VisaoMes
+              mes={ancora}
+              agendamentos={agendamentos}
+              bloqueios={bloqueios}
+              servicos={todosServicos}
+              onEscolherDia={escolherDia}
+            />
+          ) : (
+            <>
+              <GradeSemana
+                dias={dias}
+                agendamentos={agendamentos}
+                bloqueios={bloqueios}
+                faixas={faixas}
+                servicos={todosServicos}
+                mostrarCancelados={mostrarCancelados}
+                onAbrir={setAberto}
+                onRemoverBloqueio={removerBloqueio}
+                onEscolherDia={escolherDia}
+                onAgendarEm={(dia, hora) => setNovo({ dia, hora })}
+              />
+            </>
+          )}
+
+          {aberto && (
+            <DetalheAgendamento
+              ag={aberto}
+              servicos={servicos}
+              onFechar={() => setAberto(null)}
+              onAlterado={(mensagem) => {
+                setAberto(null);
+                avisar(mensagem);
+                recarregar();
+              }}
+            />
+          )}
+          {novo && (
+            <NovoAgendamento
+              diaInicial={novo.dia}
+              horaInicial={novo.hora}
+              servicos={servicos}
+              onFechar={() => setNovo(null)}
+              onCriado={() => {
+                setNovo(null);
+                avisar("Agendamento criado.");
+                recarregar();
+              }}
+            />
+          )}
+          {editandoServicos && (
+            <ServicosAgenda
+              onFechar={() => setEditandoServicos(false)}
+              onAlterado={carregarServicos}
+              onFerias={() => {
+                setEditandoServicos(false);
+                setBloqueando("ferias");
+              }}
+            />
+          )}
+          {bloqueando && (
+            <BloquearHorario
+              diaInicial={visao === "dia" ? ancora : hojeSP()}
+              servicos={servicos}
+              ferias={bloqueando === "ferias"}
+              onFechar={() => setBloqueando(null)}
+              onConcluido={(mensagem) => {
+                setBloqueando(null);
+                avisar(mensagem);
+                recarregar();
+              }}
+            />
+          )}
         </div>
 
-        <div
-          className={`mb-5 w-full lg:block lg:w-[272px] lg:shrink-0 ${mostrarCalendario ? "block" : "hidden"}`}
-        >
-          <MiniCalendario
-            ancora={ancora}
-            semanaInteira={visao === "semana"}
-            recarga={recarga}
-            onEscolher={escolherDia}
-          />
-        </div>
+        {/* Fica parado enquanto a agenda rola. No celular vai para o topo e só mostra o calendário se pedir. */}
+        <aside className="order-first mb-4 w-full lg:order-last lg:sticky lg:top-4 lg:mb-0 lg:w-[272px] lg:shrink-0">
+          <div className={`${mostrarCalendario ? "block" : "hidden"} lg:block`}>
+            <MiniCalendario
+              ancora={ancora}
+              semanaInteira={visao === "semana"}
+              recarga={recarga}
+              onEscolher={escolherDia}
+            />
+          </div>
+          <div className="mt-3 hidden justify-center lg:flex">{seletorVisao("inline-flex")}</div>
+        </aside>
       </div>
-
-      <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
-        <div className="inline-flex rounded-full border border-painel-border bg-white p-1">
-          {VISOES.map((v) => (
-            <button
-              key={v.id}
-              type="button"
-              onClick={() => setVisao(v.id)}
-              className={`rounded-full px-4 py-1.5 text-[13px] font-medium transition-colors ${
-                visao === v.id
-                  ? "bg-painel-primary text-white"
-                  : "text-painel-chip-text hover:text-painel-title"
-              }`}
-            >
-              {v.rotulo}
-            </button>
-          ))}
-        </div>
-
-        <div className="flex items-center gap-1.5">
-          <button
-            type="button"
-            onClick={() => mover(-1)}
-            title="Anterior"
-            className="rounded-full border border-painel-border bg-white p-2 text-painel-chip-text hover:border-painel-primary/40 transition-colors"
-          >
-            <ChevronLeft className="h-4 w-4" />
-          </button>
-          <button
-            type="button"
-            onClick={() => setAncora(hojeSP())}
-            disabled={ehHoje && visao === "dia"}
-            className="rounded-full border border-painel-border bg-white px-3.5 py-1.5 text-[13px] font-medium text-painel-chip-text hover:border-painel-primary/40 transition-colors disabled:opacity-40"
-          >
-            Hoje
-          </button>
-          <button
-            type="button"
-            onClick={() => mover(1)}
-            title="Próximo"
-            className="rounded-full border border-painel-border bg-white p-2 text-painel-chip-text hover:border-painel-primary/40 transition-colors"
-          >
-            <ChevronRight className="h-4 w-4" />
-          </button>
-        </div>
-      </div>
-
-      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-2.5">
-          <h3 className="font-display text-[26px] text-painel-title first-letter:uppercase">
-            {rotuloPeriodo(visao, ancora)}
-          </h3>
-          <button
-            type="button"
-            onClick={recarregar}
-            disabled={carregando}
-            title="Atualizar"
-            className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-painel-muted hover:bg-painel-badge-bg/40 hover:text-painel-primary transition-colors disabled:opacity-40"
-          >
-            <RefreshCw className={`h-4 w-4 ${carregando ? "animate-spin" : ""}`} />
-          </button>
-        </div>
-        <label className="flex items-center gap-2 text-[12.5px] text-painel-muted">
-          <input
-            type="checkbox"
-            checked={mostrarCancelados}
-            onChange={(e) => setMostrarCancelados(e.target.checked)}
-            className="h-3.5 w-3.5 accent-painel-primary"
-          />
-          Mostrar cancelados
-        </label>
-      </div>
-
-      {aviso && (
-        <div className="mb-4 rounded-xl border border-painel-green/30 bg-painel-green/10 px-4 py-3 text-sm text-painel-green">
-          {aviso}
-        </div>
-      )}
-      {erro && (
-        <div className="mb-4 rounded-xl border border-painel-alert-border bg-painel-alert-bg px-4 py-3 text-sm text-painel-alert-text">
-          {erro}
-        </div>
-      )}
-
-      {carregando && agendamentos.length === 0 && bloqueios.length === 0 ? (
-        <div className="flex justify-center py-16">
-          <Loader2 className="h-6 w-6 animate-spin text-painel-muted" />
-        </div>
-      ) : visao === "mes" ? (
-        <VisaoMes
-          mes={ancora}
-          agendamentos={agendamentos}
-          bloqueios={bloqueios}
-          servicos={todosServicos}
-          onEscolherDia={escolherDia}
-        />
-      ) : (
-        <>
-          <GradeSemana
-            dias={dias}
-            agendamentos={agendamentos}
-            bloqueios={bloqueios}
-            faixas={faixas}
-            servicos={todosServicos}
-            mostrarCancelados={mostrarCancelados}
-            onAbrir={setAberto}
-            onRemoverBloqueio={removerBloqueio}
-            onEscolherDia={escolherDia}
-            onAgendarEm={(dia, hora) => setNovo({ dia, hora })}
-          />
-        </>
-      )}
-
-      {aberto && (
-        <DetalheAgendamento
-          ag={aberto}
-          servicos={servicos}
-          onFechar={() => setAberto(null)}
-          onAlterado={(mensagem) => {
-            setAberto(null);
-            avisar(mensagem);
-            recarregar();
-          }}
-        />
-      )}
-      {novo && (
-        <NovoAgendamento
-          diaInicial={novo.dia}
-          horaInicial={novo.hora}
-          servicos={servicos}
-          onFechar={() => setNovo(null)}
-          onCriado={() => {
-            setNovo(null);
-            avisar("Agendamento criado.");
-            recarregar();
-          }}
-        />
-      )}
-      {editandoServicos && (
-        <ServicosAgenda
-          onFechar={() => setEditandoServicos(false)}
-          onAlterado={carregarServicos}
-          onFerias={() => {
-            setEditandoServicos(false);
-            setBloqueando("ferias");
-          }}
-        />
-      )}
-      {bloqueando && (
-        <BloquearHorario
-          diaInicial={visao === "dia" ? ancora : hojeSP()}
-          servicos={servicos}
-          ferias={bloqueando === "ferias"}
-          onFechar={() => setBloqueando(null)}
-          onConcluido={(mensagem) => {
-            setBloqueando(null);
-            avisar(mensagem);
-            recarregar();
-          }}
-        />
-      )}
     </div>
   );
 }
