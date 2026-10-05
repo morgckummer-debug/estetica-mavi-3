@@ -209,6 +209,25 @@ export function pedirRemarcacao(id: string): Promise<void> {
   return atualizar(id, { status: "remarcar" });
 }
 
+/** Muda procedimento, áreas, duração e observação; o dia e a hora de início ficam. */
+export function editarAgendamento(
+  ag: Agendamento,
+  dados: {
+    servico: AgendaServico;
+    areas: string[];
+    duracaoMin: number;
+    observacao: string;
+  },
+): Promise<void> {
+  return atualizar(ag.id, {
+    servico_id: dados.servico.id,
+    servico_nome: dados.servico.nome,
+    areas: dados.areas,
+    fim: new Date(new Date(ag.inicio).getTime() + dados.duracaoMin * 60000).toISOString(),
+    observacao: dados.observacao.trim() || null,
+  });
+}
+
 /** Move o agendamento para outro horário (mesma duração). */
 export function reagendar(ag: Agendamento, novoInicio: string): Promise<void> {
   const duracao = new Date(ag.fim).getTime() - new Date(ag.inicio).getTime();
