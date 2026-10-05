@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import { CalendarPlus, ChevronLeft, ChevronRight, Loader2, Lock, Settings2 } from "lucide-react";
+import { CalendarPlus, ChevronLeft, ChevronRight, Loader2, Lock, RefreshCw, Settings2 } from "lucide-react";
 import {
   diasDoMes,
   excluirBloqueio,
@@ -263,9 +263,20 @@ function PaginaAgenda() {
       </div>
 
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-        <h3 className="font-display text-[26px] text-painel-title first-letter:uppercase">
-          {rotuloPeriodo(visao, ancora)}
-        </h3>
+        <div className="flex items-center gap-2.5">
+          <h3 className="font-display text-[26px] text-painel-title first-letter:uppercase">
+            {rotuloPeriodo(visao, ancora)}
+          </h3>
+          <button
+            type="button"
+            onClick={recarregar}
+            disabled={carregando}
+            title="Atualizar"
+            className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-painel-muted hover:bg-painel-badge-bg/40 hover:text-painel-primary transition-colors disabled:opacity-40"
+          >
+            <RefreshCw className={`h-4 w-4 ${carregando ? "animate-spin" : ""}`} />
+          </button>
+        </div>
         <label className="flex items-center gap-2 text-[12.5px] text-painel-muted">
           <input
             type="checkbox"
