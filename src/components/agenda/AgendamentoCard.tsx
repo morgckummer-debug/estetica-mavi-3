@@ -63,7 +63,7 @@ export function EtiquetaStatus({ ag, curta = false }: { ag: Agendamento; curta?:
   );
 }
 
-// Quem agendou: cliente já cadastrada (reconhecida pelo telefone) ou pessoa nova.
+// Quem agendou: cliente já cadastrada (reconhecida pelo telefone) ou cliente nova.
 // Mostra se o telefone bateu com um cadastro existente.
 export function EtiquetaCadastro({ ag }: { ag: Agendamento }) {
   const cadastrada = Boolean(ag.cliente_id);
@@ -75,7 +75,7 @@ export function EtiquetaCadastro({ ag }: { ag: Agendamento }) {
           : "bg-painel-gold-soft/60 text-painel-gold"
       }`}
     >
-      <span className="truncate">{cadastrada ? "Cliente cadastrada" : "Pessoa nova"}</span>
+      <span className="truncate">{cadastrada ? "Cliente cadastrada" : "Cliente novo(a)"}</span>
     </span>
   );
 }

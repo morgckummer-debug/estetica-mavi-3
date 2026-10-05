@@ -350,7 +350,7 @@ export function GradeSemana({
                         <span className="block truncate text-[11.5px] leading-snug opacity-85">
                           {ag.servico_nome}
                           {ag.areas.length > 0 && ` · ${ag.areas.join(", ")}`}
-                          {!ag.cliente_id && " · pessoa nova"}
+                          {!ag.cliente_id && " · cliente novo(a)"}
                         </span>
                       )}
                       {alto >= 72 && reagendar && (
