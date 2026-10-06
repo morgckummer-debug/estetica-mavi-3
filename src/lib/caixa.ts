@@ -221,3 +221,102 @@ export async function salvarConfigCaixa(cfg: CaixaConfig): Promise<void> {
   });
   if (!res.ok) return falha(res, "Não foi possível salvar as taxas.");
 }
+
+// ------------------------------------------------------------
+// Tabela de preços
+// ------------------------------------------------------------
+
+export type PacotePreco = {
+  sessoes: number;
+  valor: number;
+  // Nome opcional para pacotes fora do padrão (ex.: "3 áreas de laser").
+  rotulo?: string;
+};
+
+export type Preco = {
+  id: string;
+  nome: string;
+  preco_sessao: number | null;
+  pacotes: PacotePreco[];
+  ordem: number;
+};
+
+const semAcento = (t: string) => t.normalize("NFD").replace(/[̀-ͯ]/g, "").trim().toLowerCase();
+
+/** O preço cadastrado para um procedimento (compara sem acento e sem maiúsculas). */
+export function precoDe(precos: Preco[], nome: string): Preco | undefined {
+  const alvo = semAcento(nome);
+  return alvo ? precos.find((p) => semAcento(p.nome) === alvo) : undefined;
+}
+
+export type OpcaoDePreco = { chave: string; descricao: string; valor: number };
+
+/** Cada jeito de vender um procedimento: sessão avulsa e cada pacote. */
+export function opcoesDoPreco(p: Preco): OpcaoDePreco[] {
+  const opcoes: OpcaoDePreco[] = [];
+  if (p.preco_sessao != null) {
+    opcoes.push({
+      chave: `${p.id}:1`,
+      descricao: `${p.nome} (sessão avulsa)`,
+      valor: p.preco_sessao,
+    });
+  }
+  for (const pc of [...p.pacotes].sort((a, b) => a.sessoes - b.sessoes)) {
+    opcoes.push({
+      chave: `${p.id}:p${pc.sessoes}:${pc.valor}`,
+      descricao: `${p.nome} (${pc.rotulo?.trim() || `pacote de ${pc.sessoes} sessões`})`,
+      valor: pc.valor,
+    });
+  }
+  return opcoes;
+}
+
+/**
+ * Valor sugerido para `quantidade` sessões de um procedimento: o pacote de
+ * exatamente esse tamanho, senão a quantidade × o preço da sessão. null se a
+ * tabela não tem como calcular.
+ */
+export function valorSugerido(p: Preco | undefined, quantidade: number): number | null {
+  if (!p || !(quantidade > 0)) return null;
+  const pacote = p.pacotes.find((x) => x.sessoes === quantidade);
+  if (pacote) return pacote.valor;
+  if (p.preco_sessao != null) return Math.round(p.preco_sessao * quantidade * 100) / 100;
+  return null;
+}
+
+export async function listarPrecos(): Promise<Preco[]> {
+  const res = await apiRest("caixa_precos?select=*&order=ordem.asc,nome.asc");
+  if (!res.ok) return [];
+  return ((await res.json()) as Preco[]).map((p) => ({
+    ...p,
+    preco_sessao: p.preco_sessao == null ? null : Number(p.preco_sessao),
+    pacotes: (p.pacotes ?? []).map((x) => ({
+      ...x,
+      sessoes: Number(x.sessoes),
+      valor: Number(x.valor),
+    })),
+  }));
+}
+
+/** Grava a tabela inteira: cria/atualiza as linhas e apaga as que saíram. */
+export async function salvarPrecos(itens: Preco[], removidos: string[]): Promise<void> {
+  for (const id of removidos) {
+    const del = await apiRest(`caixa_precos?id=eq.${encodeURIComponent(id)}`, { method: "DELETE" });
+    if (!del.ok) return falha(del, "Não foi possível salvar os preços.");
+  }
+  if (itens.length === 0) return;
+  const res = await apiRest("caixa_precos?on_conflict=id", {
+    method: "POST",
+    headers: { Prefer: "resolution=merge-duplicates" },
+    body: JSON.stringify(
+      itens.map((p, i) => ({
+        id: p.id,
+        nome: p.nome.trim(),
+        preco_sessao: p.preco_sessao,
+        pacotes: p.pacotes,
+        ordem: i,
+      })),
+    ),
+  });
+  if (!res.ok) return falha(res, "Não foi possível salvar os preços.");
+}

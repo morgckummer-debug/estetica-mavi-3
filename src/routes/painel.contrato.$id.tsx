@@ -12,6 +12,10 @@ import {
   FORMAS,
   CONFIG_PADRAO,
   carregarConfigCaixa,
+  listarPrecos,
+  precoDe,
+  valorSugerido,
+  type Preco,
   criarLancamento,
   lerValor,
   reais,
@@ -148,6 +152,7 @@ function GerarContrato() {
   const [parcelasPg, setParcelasPg] = useState(1);
   const [textoEditado, setTextoEditado] = useState(false);
   const [lancarNoCaixa, setLancarNoCaixa] = useState(false);
+  const [precos, setPrecos] = useState<Preco[]>([]);
   const [autorizaFoto, setAutorizaFoto] = useState(false);
   const [dataDia, setDataDia] = useState("");
   const [dataMes, setDataMes] = useState("");
@@ -193,6 +198,30 @@ function GerarContrato() {
     setAutorizaFoto(cliente.autoriza_foto);
     setHidratado(true);
   }, [cliente, hidratado]);
+
+  useEffect(() => {
+    listarPrecos()
+      .then(setPrecos)
+      .catch(() => setPrecos([]));
+  }, []);
+
+  // Valor pela tabela de preços: pacote do mesmo tamanho, senão sessões × preço.
+  const sugestao = useMemo(() => {
+    const linhas: { texto: string; valor: number | null }[] = [];
+    for (const i of itens) {
+      if (!i.descricao.trim() || !i.quantidade.trim()) continue;
+      const qtd = Number(i.quantidade);
+      const valor = valorSugerido(precoDe(precos, i.descricao), qtd);
+      linhas.push({ texto: `${i.quantidade} ${i.descricao}`, valor });
+    }
+    const comValor = linhas.filter((l) => l.valor !== null);
+    if (comValor.length === 0) return null;
+    return {
+      linhas,
+      total: Math.round(comValor.reduce((t, l) => t + (l.valor ?? 0), 0) * 100) / 100,
+      faltam: linhas.filter((l) => l.valor === null).map((l) => l.texto),
+    };
+  }, [itens, precos]);
 
   // Enquanto a Marina não mexer no texto da forma de pagamento, ele
   // acompanha o valor, a forma e as parcelas.
@@ -591,6 +620,27 @@ function GerarContrato() {
 
           <div>
             <label className={labelCls}>Valor do pacote (opcional)</label>
+            {sugestao && (
+              <div className="mb-2 rounded-xl border border-painel-border bg-painel-badge-bg/40 px-3.5 py-2.5 text-[12.5px] text-painel-chip-text">
+                <p>
+                  Pela tabela de preços: <strong>{reais(sugestao.total)}</strong>
+                </p>
+                <ul className="mt-0.5 text-[11.5px] text-painel-muted">
+                  {sugestao.linhas.map((l) => (
+                    <li key={l.texto}>
+                      {l.texto}: {l.valor === null ? "sem preço cadastrado" : reais(l.valor)}
+                    </li>
+                  ))}
+                </ul>
+                <button
+                  type="button"
+                  onClick={() => setValorTxt(sugestao.total.toFixed(2).replace(".", ","))}
+                  className="mt-1.5 rounded-full border border-painel-primary/40 bg-white px-3 py-1 text-[12px] font-medium text-painel-primary hover:bg-painel-badge-bg/60 transition-colors"
+                >
+                  Usar este valor
+                </button>
+              </div>
+            )}
             <input
               value={valorTxt}
               onChange={(e) => setValorTxt(e.target.value)}
