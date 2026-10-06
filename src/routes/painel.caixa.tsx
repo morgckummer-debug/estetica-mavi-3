@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import {
   ArrowDownCircle,
   ArrowUpCircle,
@@ -11,6 +11,7 @@ import {
   Tag,
   Trash2,
 } from "lucide-react";
+import { podeVerCaixa, sessaoValida } from "@/lib/painel";
 import { hojeSP, inicioDoMes, rotuloMesAno, somarMeses, ultimoDiaDoMes } from "@/lib/agenda";
 import {
   CONFIG_PADRAO,
@@ -34,6 +35,23 @@ export const Route = createFileRoute("/painel/caixa")({
   component: PaginaCaixa,
 });
 
+// TEMPORÁRIO (Caixa em desenvolvimento): quem não puder vê-lo é mandada de volta.
+function PaginaCaixa() {
+  const [permitido, setPermitido] = useState<boolean | null>(null);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    sessaoValida().then((s) => {
+      const ok = podeVerCaixa(s?.email);
+      setPermitido(ok);
+      if (!ok) navigate({ to: "/painel", replace: true });
+    });
+  }, [navigate]);
+
+  if (!permitido) return null;
+  return <CaixaConteudo />;
+}
+
 type Filtro = "todos" | "entradas" | "saidas";
 
 const FILTROS: { id: Filtro; rotulo: string }[] = [
@@ -48,7 +66,7 @@ const botaoSuave =
 const dataBR = (ymd: string) => ymd.split("-").reverse().join("/");
 const rotuloForma = (id: string) => FORMAS.find((f) => f.id === id)?.rotulo ?? id;
 
-function PaginaCaixa() {
+function CaixaConteudo() {
   const [mes, setMes] = useState(() => inicioDoMes(hojeSP()));
   const [lancamentos, setLancamentos] = useState<Lancamento[]>([]);
   const [config, setConfig] = useState<CaixaConfig>(CONFIG_PADRAO);

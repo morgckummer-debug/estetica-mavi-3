@@ -271,6 +271,14 @@ export async function sessaoValida(): Promise<Sessao | null> {
   return s;
 }
 
+// TEMPORÁRIO: o Caixa ainda está em desenvolvimento e só a Morgana o vê.
+// Quando for liberado para a Marina, basta fazer podeVerCaixa devolver true.
+export const EMAIL_CAIXA = "morgckummer@gmail.com";
+
+export function podeVerCaixa(email?: string): boolean {
+  return email?.trim().toLowerCase() === EMAIL_CAIXA;
+}
+
 export function sair(): void {
   salvarSessao(null);
 }

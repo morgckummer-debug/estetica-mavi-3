@@ -10,6 +10,7 @@ import {
   trocarSenha,
   recuperarSenha,
   gerarBackupCompleto,
+  podeVerCaixa,
   type Sessao,
 } from "@/lib/painel";
 import logo from "@/assets/logo-mavi.png";
@@ -570,13 +571,15 @@ function PainelLayout() {
               >
                 Lembretes
               </Link>
-              <Link
-                to="/painel/caixa"
-                className="rounded-full px-3.5 py-2 text-[13px] font-medium text-white/70 hover:text-white transition-colors"
-                activeProps={{ className: "text-white" }}
-              >
-                Caixa
-              </Link>
+              {podeVerCaixa(email) && (
+                <Link
+                  to="/painel/caixa"
+                  className="rounded-full px-3.5 py-2 text-[13px] font-medium text-white/70 hover:text-white transition-colors"
+                  activeProps={{ className: "text-white" }}
+                >
+                  Caixa
+                </Link>
+              )}
               <Link
                 to="/painel/pendentes"
                 className="rounded-full px-3.5 py-2 text-[13px] font-medium text-white/70 hover:text-white transition-colors"
@@ -621,13 +624,15 @@ function PainelLayout() {
           >
             Lembretes
           </Link>
-          <Link
-            to="/painel/caixa"
-            className="rounded-full px-3.5 py-1.5 text-[13px] font-medium text-white/70 transition-colors"
-            activeProps={{ className: "bg-white/15 text-white" }}
-          >
-            Caixa
-          </Link>
+          {podeVerCaixa(email) && (
+            <Link
+              to="/painel/caixa"
+              className="rounded-full px-3.5 py-1.5 text-[13px] font-medium text-white/70 transition-colors"
+              activeProps={{ className: "bg-white/15 text-white" }}
+            >
+              Caixa
+            </Link>
+          )}
           <Link
             to="/painel/pendentes"
             className="rounded-full px-3.5 py-1.5 text-[13px] font-medium text-white/70 transition-colors"
