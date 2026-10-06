@@ -207,7 +207,7 @@ function PaginaAgenda() {
 
   return (
     <div>
-      <div className="flex flex-col lg:flex-row lg:items-start lg:gap-6">
+      <div className="flex flex-col xl:flex-row xl:items-start xl:gap-6">
         <div className="min-w-0 flex-1">
           <div className="mb-1 flex flex-wrap items-baseline justify-between gap-3">
             <h2 className="font-display text-[34px] text-painel-title">Agenda MAVI</h2>
@@ -256,13 +256,13 @@ function PaginaAgenda() {
             type="button"
             onClick={() => setMostrarCalendario((v) => !v)}
             aria-expanded={mostrarCalendario}
-            className="mb-4 inline-flex items-center gap-1.5 rounded-full border border-painel-border bg-white px-4 py-2 text-[13px] font-medium text-painel-chip-text hover:border-painel-primary/40 transition-colors lg:hidden"
+            className="mb-4 inline-flex items-center gap-1.5 rounded-full border border-painel-border bg-white px-4 py-2 text-[13px] font-medium text-painel-chip-text hover:border-painel-primary/40 transition-colors xl:hidden"
           >
             <CalendarDays className="h-3.5 w-3.5" />
             {mostrarCalendario ? "Esconder calendário" : "Calendário do mês"}
           </button>
 
-          {seletorVisao("mb-4 inline-flex lg:hidden")}
+          {seletorVisao("mb-4 inline-flex xl:hidden")}
 
           <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
             <div className="flex flex-wrap items-center gap-2.5">
@@ -407,8 +407,8 @@ function PaginaAgenda() {
         </div>
 
         {/* Fica parado enquanto a agenda rola. No celular vai para o topo e só mostra o calendário se pedir. */}
-        <aside className="order-first mb-4 w-full lg:order-last lg:sticky lg:top-4 lg:mb-0 lg:w-[272px] lg:shrink-0">
-          <div className={`${mostrarCalendario ? "block" : "hidden"} lg:block`}>
+        <aside className="order-first mb-4 w-full xl:order-last xl:sticky xl:top-4 xl:mb-0 xl:w-[272px] xl:shrink-0">
+          <div className={`${mostrarCalendario ? "block" : "hidden"} xl:block`}>
             <MiniCalendario
               ancora={ancora}
               semanaInteira={visao === "semana"}
@@ -416,7 +416,7 @@ function PaginaAgenda() {
               onEscolher={escolherDia}
             />
           </div>
-          <div className="mt-3 hidden justify-center lg:flex">{seletorVisao("inline-flex")}</div>
+          <div className="mt-3 hidden justify-center xl:flex">{seletorVisao("inline-flex")}</div>
         </aside>
       </div>
     </div>
