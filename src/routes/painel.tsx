@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { createFileRoute, Outlet, useNavigate, Link } from "@tanstack/react-router";
+import { createFileRoute, Outlet, useNavigate, useRouterState, Link } from "@tanstack/react-router";
 import { LogOut, Loader2, KeyRound, Check, X, ChevronDown, Download } from "lucide-react";
 import { SITE_URL } from "@/data/services";
 import { supabaseConfigurado } from "@/lib/supabase";
@@ -238,7 +238,11 @@ function EsqueciSenhaForm({ onFechar }: { onFechar: () => void }) {
               disabled={enviando || !email}
               className="inline-flex items-center gap-1.5 rounded-full bg-painel-primary text-white px-4 py-2 text-sm font-medium hover:bg-painel-primary/90 transition-colors disabled:opacity-40"
             >
-              {enviando ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
+              {enviando ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Check className="h-4 w-4" />
+              )}
               Enviar link
             </button>
             <button
@@ -456,6 +460,10 @@ function PainelLayout() {
   const [trocandoSenha, setTrocandoSenha] = useState(false);
   const [fazendoBackup, setFazendoBackup] = useState(false);
   const navigate = useNavigate();
+  // A agenda precisa de mais largura (calendário ao lado + seis dias lado a lado).
+  const larguraTotal = useRouterState({
+    select: (st) => st.location.pathname.startsWith("/painel/agenda"),
+  });
   const { next } = Route.useSearch();
 
   const baixarBackup = async () => {
@@ -532,7 +540,9 @@ function PainelLayout() {
               "radial-gradient(circle at 8% 0%, rgba(154,111,176,.5), transparent 55%), radial-gradient(circle at 96% 100%, rgba(179,146,76,.38), transparent 50%)",
           }}
         />
-        <div className="relative mx-auto max-w-5xl px-4 sm:px-6 py-6 flex items-center justify-between gap-4">
+        <div
+          className={`relative mx-auto px-4 sm:px-6 py-6 flex items-center justify-between gap-4 ${larguraTotal ? "max-w-[1440px]" : "max-w-5xl"}`}
+        >
           <Link to="/painel">
             <img src={logo} alt="Painel MAVI" className="h-11 w-auto brightness-0 invert" />
           </Link>
@@ -613,7 +623,7 @@ function PainelLayout() {
           </Link>
         </nav>
       </header>
-      <div className="mx-auto max-w-5xl px-4 sm:px-6 py-8">
+      <div className={`mx-auto px-4 sm:px-6 py-8 ${larguraTotal ? "max-w-[1440px]" : "max-w-5xl"}`}>
         {trocandoSenha && <TrocarSenhaForm onFechar={() => setTrocandoSenha(false)} />}
         <Outlet />
       </div>
