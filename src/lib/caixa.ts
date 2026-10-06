@@ -284,18 +284,24 @@ export function valorSugerido(p: Preco | undefined, quantidade: number): number 
   return null;
 }
 
+/** Ordem alfabética pelo nome, ignorando acento e maiúsculas. */
+const porNome = (a: { nome: string }, b: { nome: string }) =>
+  a.nome.localeCompare(b.nome, "pt-BR", { sensitivity: "base" });
+
 export async function listarPrecos(): Promise<Preco[]> {
   const res = await apiRest("caixa_precos?select=*&order=ordem.asc,nome.asc");
   if (!res.ok) return [];
-  return ((await res.json()) as Preco[]).map((p) => ({
-    ...p,
-    preco_sessao: p.preco_sessao == null ? null : Number(p.preco_sessao),
-    pacotes: (p.pacotes ?? []).map((x) => ({
-      ...x,
-      sessoes: Number(x.sessoes),
-      valor: Number(x.valor),
-    })),
-  }));
+  return ((await res.json()) as Preco[])
+    .map((p) => ({
+      ...p,
+      preco_sessao: p.preco_sessao == null ? null : Number(p.preco_sessao),
+      pacotes: (p.pacotes ?? []).map((x) => ({
+        ...x,
+        sessoes: Number(x.sessoes),
+        valor: Number(x.valor),
+      })),
+    }))
+    .sort(porNome);
 }
 
 /** Grava a tabela inteira: cria/atualiza as linhas e apaga as que saíram. */
@@ -309,7 +315,7 @@ export async function salvarPrecos(itens: Preco[], removidos: string[]): Promise
     method: "POST",
     headers: { Prefer: "resolution=merge-duplicates" },
     body: JSON.stringify(
-      itens.map((p, i) => ({
+      [...itens].sort(porNome).map((p, i) => ({
         id: p.id,
         nome: p.nome.trim(),
         preco_sessao: p.preco_sessao,
