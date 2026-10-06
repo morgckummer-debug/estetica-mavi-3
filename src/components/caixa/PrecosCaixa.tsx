@@ -8,7 +8,9 @@ import { btnPrimario, btnSecundario, campo, rotulo } from "@/components/agenda/e
 const centavos = (n: number) => n.toFixed(2).replace(".", ",");
 
 // Nomes que a Marina já usa nas fichas e nos contratos, para sugerir ao cadastrar.
-const NOMES_CONHECIDOS = Array.from(new Set(TIPOS.flatMap((t) => OPCOES_SESSAO[t])));
+const NOMES_CONHECIDOS = Array.from(new Set(TIPOS.flatMap((t) => OPCOES_SESSAO[t]))).sort((a, b) =>
+  a.localeCompare(b, "pt-BR", { sensitivity: "base" }),
+);
 
 type Linha = {
   id: string;
@@ -221,7 +223,13 @@ export function PrecosCaixa({
               <button
                 key={n}
                 type="button"
-                onClick={() => setLinhas((ls) => [...ls, linhaNova(n)])}
+                onClick={() =>
+                  setLinhas((ls) =>
+                    [...ls, linhaNova(n)].sort((a, b) =>
+                      a.nome.localeCompare(b.nome, "pt-BR", { sensitivity: "base" }),
+                    ),
+                  )
+                }
                 className="rounded-full border border-white/20 px-3 py-1 text-[12.5px] text-white/70 transition-colors hover:border-white/40 hover:text-white"
               >
                 + {n}
