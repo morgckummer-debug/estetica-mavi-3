@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
+import { rotulosDePacote } from "@/lib/agenda-pacotes";
 import {
   CalendarDays,
   CalendarPlus,
@@ -75,6 +76,8 @@ function PaginaAgenda() {
   const [visao, setVisao] = useState<Visao>("semana");
   const [ancora, setAncora] = useState(hojeSP);
   const [agendamentos, setAgendamentos] = useState<Agendamento[]>([]);
+  // "4/10" de quem está em pacote, por id do agendamento.
+  const [pacotes, setPacotes] = useState<Map<string, string>>(new Map());
   const [bloqueios, setBloqueios] = useState<Bloqueio[]>([]);
   const [servicos, setServicos] = useState<AgendaServico[]>([]);
   const [carregando, setCarregando] = useState(true);
@@ -146,6 +149,17 @@ function PaginaAgenda() {
       ativo = false;
     };
   }, [de, ate, recarga]);
+
+  // O número do pacote é um extra: se falhar, a agenda segue sem ele.
+  useEffect(() => {
+    let ativo = true;
+    rotulosDePacote(agendamentos)
+      .then((m) => ativo && setPacotes(m))
+      .catch(() => ativo && setPacotes(new Map()));
+    return () => {
+      ativo = false;
+    };
+  }, [agendamentos]);
 
   const recarregar = useCallback(() => setRecarga((n) => n + 1), []);
 
@@ -347,6 +361,7 @@ function PaginaAgenda() {
                 bloqueios={bloqueios}
                 faixas={faixas}
                 servicos={todosServicos}
+                pacotes={pacotes}
                 mostrarCancelados={mostrarCancelados}
                 onAbrir={setAberto}
                 onRemoverBloqueio={removerBloqueio}
@@ -360,6 +375,7 @@ function PaginaAgenda() {
             <DetalheAgendamento
               ag={aberto}
               servicos={servicos}
+              pacote={pacotes.get(aberto.id)}
               onFechar={() => setAberto(null)}
               onAlterado={(mensagem) => {
                 setAberto(null);

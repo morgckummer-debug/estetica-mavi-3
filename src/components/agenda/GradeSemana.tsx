@@ -93,6 +93,7 @@ export function GradeSemana({
   bloqueios,
   faixas,
   servicos,
+  pacotes,
   mostrarCancelados,
   onAbrir,
   onRemoverBloqueio,
@@ -106,6 +107,8 @@ export function GradeSemana({
   faixas: FaixaHorario[];
   // Todos os serviços (inclusive os desativados): é de onde vem a cor de cada atendimento.
   servicos: AgendaServico[];
+  // "4/10" de quem está em pacote, por id do agendamento.
+  pacotes?: Map<string, string>;
   mostrarCancelados: boolean;
   onAbrir: (ag: Agendamento) => void;
   onRemoverBloqueio: (b: Bloqueio) => void;
@@ -370,6 +373,9 @@ export function GradeSemana({
                         <span className="block truncate text-[11.5px] leading-snug opacity-85">
                           {ag.servico_nome}
                           {ag.areas.length > 0 && ` · ${ag.areas.join(", ")}`}
+                          {pacotes?.get(ag.id) && (
+                            <span className="font-semibold"> · {pacotes.get(ag.id)}</span>
+                          )}
                           {!ag.cliente_id && " · cliente novo(a)"}
                         </span>
                       )}

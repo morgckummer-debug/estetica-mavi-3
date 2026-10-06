@@ -38,7 +38,7 @@ const MENSAGEM_ERRO: Partial<Record<ErroAgenda, string>> = {
   dados_invalidos: "Confira seu nome, WhatsApp (com DDD), CPF e e-mail.",
   areas_obrigatorias: "Escolha ao menos uma área.",
   cpf_nao_confere:
-    "O CPF não confere com o cadastro desse WhatsApp. Confira os números ou fale com a gente pelo WhatsApp.",
+    "O CPF não confere com o seu cadastro. Confira os números ou fale com a gente pelo WhatsApp.",
   limite_agendamentos:
     "Você já tem horários marcados. Para marcar mais um, fale com a gente pelo WhatsApp.",
   servico_invalido: "Esse serviço não está disponível agora. Escolha outro.",

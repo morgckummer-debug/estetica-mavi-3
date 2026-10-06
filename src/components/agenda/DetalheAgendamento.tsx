@@ -37,11 +37,14 @@ import { btnPerigo, btnSecundario } from "./estilos";
 export function DetalheAgendamento({
   ag,
   servicos,
+  pacote,
   onFechar,
   onAlterado,
 }: {
   ag: Agendamento;
   servicos: AgendaServico[];
+  // "4/10" se a cliente está em pacote nessa área.
+  pacote?: string;
   onFechar: () => void;
   onAlterado: (mensagem: string) => void;
 }) {
@@ -159,6 +162,12 @@ export function DetalheAgendamento({
                 {ag.origem === "online" ? "Agendou pelo site" : "Marcado no painel"}
               </dd>
             </div>
+            {pacote && (
+              <div className="flex gap-2">
+                <dt className="w-20 shrink-0 text-white/50">Pacote</dt>
+                <dd className="font-medium text-white">{pacote}</dd>
+              </div>
+            )}
             {ag.observacao && (
               <div className="flex gap-2">
                 <dt className="w-20 shrink-0 text-white/50">Obs.</dt>

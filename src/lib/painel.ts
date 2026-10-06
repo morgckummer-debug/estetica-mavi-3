@@ -495,6 +495,15 @@ export async function listarFichasDoCliente(clienteId: string): Promise<Ficha[]>
   return (await res.json()) as Ficha[];
 }
 
+// Fichas de várias clientes de uma vez (pacotes de quem está na agenda).
+export async function listarFichasDeClientes(clienteIds: string[]): Promise<Ficha[]> {
+  if (clienteIds.length === 0) return [];
+  const lista = clienteIds.map((id) => encodeURIComponent(id)).join(",");
+  const res = await apiRest(`fichas?select=*&cliente_id=in.(${lista})&excluida=eq.false`);
+  if (!res.ok) throw new Error("Não foi possível carregar as fichas das clientes.");
+  return (await res.json()) as Ficha[];
+}
+
 export async function atualizarCliente(
   id: string,
   patch: Partial<
