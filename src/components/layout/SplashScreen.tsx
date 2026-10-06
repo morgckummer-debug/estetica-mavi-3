@@ -42,7 +42,12 @@ export function SplashScreen() {
   return (
     <div className={`mavi-splash${saindo ? " mavi-splash-out" : ""}`} aria-hidden="true">
       <div className="mavi-splash-glow" />
-      <img src={logo} alt="" className="mavi-splash-logo" width={900} height={860} />
+      <div className="mavi-splash-stage">
+        <div className="mavi-splash-logo" style={{ ["--logo" as string]: `url(${logo})` }}>
+          <img src={logo} alt="" width={900} height={860} />
+          <span className="mavi-splash-shine" />
+        </div>
+      </div>
       <div className="mavi-splash-bar">
         <span style={{ animationDuration: `${DURACAO_MS - FADE_MS}ms` }} />
       </div>
