@@ -14,6 +14,7 @@ import type { ReactNode } from "react";
 import appCss from "../styles.css?url";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
+import { SplashScreen, SPLASH_BOOT_SCRIPT } from "@/components/layout/SplashScreen";
 import { SITE_URL } from "@/data/services";
 import ogSocial from "@/assets/og-social.png.asset.json";
 
@@ -124,6 +125,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { rel: "icon", type: "image/png", href: "/icon-512.png" },
     ],
     scripts: [
+      { children: SPLASH_BOOT_SCRIPT },
       {
         src: "https://www.googletagmanager.com/gtag/js?id=G-S3GDQ5D7V6",
         async: true,
@@ -171,6 +173,7 @@ function RootShell({ children }: { children: ReactNode }) {
         <HeadContent />
       </head>
       <body>
+        <SplashScreen />
         {children}
         <Scripts />
       </body>
