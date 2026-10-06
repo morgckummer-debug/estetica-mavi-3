@@ -7,10 +7,12 @@ import {
   criarLancamento,
   dividirParcelas,
   lerValor,
+  opcoesDoPreco,
   reais,
   taxaSugerida,
   valorLiquido,
   type CaixaConfig,
+  type Preco,
   type FormaPagamento,
 } from "@/lib/caixa";
 import { PainelModal } from "@/components/PainelModal";
@@ -29,11 +31,14 @@ const chip = (ativo: boolean) =>
 export function NovoLancamento({
   tipo,
   config,
+  precos = [],
   onFechar,
   onSalvo,
 }: {
   tipo: "entrada" | "saida";
   config: CaixaConfig;
+  // Tabela de preços: na venda, oferece os procedimentos e pacotes cadastrados.
+  precos?: Preco[];
   onFechar: () => void;
   onSalvo: () => void;
 }) {
@@ -50,6 +55,7 @@ export function NovoLancamento({
   const [salvando, setSalvando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
 
+  const opcoes = useMemo(() => precos.flatMap(opcoesDoPreco), [precos]);
   const valor = lerValor(valorTxt);
   const taxaAuto = taxaSugerida(config, forma, parcelas);
   const taxa = taxaTxt === null ? taxaAuto : lerValor(taxaTxt);
@@ -99,6 +105,27 @@ export function NovoLancamento({
           <label className={rotulo}>{venda ? "Data da venda" : "Data do gasto"}</label>
           <SeletorData valor={data} onChange={setData} rotulo="Data" />
         </div>
+
+        {venda && opcoes.length > 0 && (
+          <div>
+            <label className={rotulo}>Da tabela de preços (opcional)</label>
+            <div className="flex max-h-32 flex-wrap gap-1.5 overflow-y-auto">
+              {opcoes.map((o) => (
+                <button
+                  key={o.chave}
+                  type="button"
+                  onClick={() => {
+                    setDescricao(o.descricao);
+                    setValorTxt(String(o.valor.toFixed(2)).replace(".", ","));
+                  }}
+                  className={chip(descricao === o.descricao && lerValor(valorTxt) === o.valor)}
+                >
+                  {o.descricao} · {reais(o.valor)}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
 
         <div>
           <label className={rotulo}>Descrição</label>

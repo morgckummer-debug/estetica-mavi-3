@@ -8,6 +8,7 @@ import {
   Download,
   Loader2,
   Percent,
+  Tag,
   Trash2,
 } from "lucide-react";
 import { hojeSP, inicioDoMes, rotuloMesAno, somarMeses, ultimoDiaDoMes } from "@/lib/agenda";
@@ -17,13 +18,16 @@ import {
   carregarConfigCaixa,
   excluirLancamento,
   listarLancamentos,
+  listarPrecos,
   recebimentosDe,
   reais,
   type CaixaConfig,
   type Lancamento,
+  type Preco,
   type Recebimento,
 } from "@/lib/caixa";
 import { NovoLancamento } from "@/components/caixa/NovoLancamento";
+import { PrecosCaixa } from "@/components/caixa/PrecosCaixa";
 import { TaxasCaixa } from "@/components/caixa/TaxasCaixa";
 
 export const Route = createFileRoute("/painel/caixa")({
@@ -48,6 +52,8 @@ function PaginaCaixa() {
   const [mes, setMes] = useState(() => inicioDoMes(hojeSP()));
   const [lancamentos, setLancamentos] = useState<Lancamento[]>([]);
   const [config, setConfig] = useState<CaixaConfig>(CONFIG_PADRAO);
+  const [precos, setPrecos] = useState<Preco[]>([]);
+  const [editandoPrecos, setEditandoPrecos] = useState(false);
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState<string | null>(null);
   const [aviso, setAviso] = useState<string | null>(null);
@@ -57,9 +63,14 @@ function PaginaCaixa() {
 
   const carregar = useCallback(async () => {
     try {
-      const [ls, cfg] = await Promise.all([listarLancamentos(), carregarConfigCaixa()]);
+      const [ls, cfg, ps] = await Promise.all([
+        listarLancamentos(),
+        carregarConfigCaixa(),
+        listarPrecos(),
+      ]);
       setLancamentos(ls);
       setConfig(cfg);
+      setPrecos(ps);
       setErro(null);
     } catch (e) {
       setErro(e instanceof Error ? e.message : "Não foi possível carregar o caixa.");
@@ -162,6 +173,10 @@ function PaginaCaixa() {
       <div className="mb-1 flex flex-wrap items-baseline justify-between gap-3">
         <h2 className="font-display text-[34px] text-painel-title">Caixa MAVI</h2>
         <div className="flex flex-wrap items-center gap-2">
+          <button type="button" onClick={() => setEditandoPrecos(true)} className={botaoSuave}>
+            <Tag className="h-3.5 w-3.5" />
+            Preços
+          </button>
           <button type="button" onClick={() => setTaxas(true)} className={botaoSuave}>
             <Percent className="h-3.5 w-3.5" />
             Taxas
@@ -295,10 +310,22 @@ function PaginaCaixa() {
         <NovoLancamento
           tipo={novo}
           config={config}
+          precos={precos}
           onFechar={() => setNovo(null)}
           onSalvo={() => {
             setNovo(null);
             avisar(novo === "entrada" ? "Venda lançada." : "Saída lançada.");
+            carregar();
+          }}
+        />
+      )}
+      {editandoPrecos && (
+        <PrecosCaixa
+          precos={precos}
+          onFechar={() => setEditandoPrecos(false)}
+          onSalvo={() => {
+            setEditandoPrecos(false);
+            avisar("Preços salvos.");
             carregar();
           }}
         />
