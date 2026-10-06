@@ -35,7 +35,7 @@ export const Route = createFileRoute("/painel/caixa")({
   component: PaginaCaixa,
 });
 
-// Só a Morgana vê o Caixa: quem chegar aqui pela URL é mandada de volta.
+// TEMPORÁRIO (Caixa em desenvolvimento): quem não puder vê-lo é mandada de volta.
 function PaginaCaixa() {
   const [permitido, setPermitido] = useState<boolean | null>(null);
   const navigate = useNavigate();
