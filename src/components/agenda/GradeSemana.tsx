@@ -303,7 +303,11 @@ export function GradeSemana({
                   if (base <= topo) return null;
                   const alto = y(base) - y(topo);
                   const confirmou = ag.status === "agendado" && ag.presenca_confirmada_em;
-                  const p = paletaDe(corPorServico.get(ag.servico_id));
+                  // Cliente já atendida: o card fica cinza, sem a cor do serviço.
+                  const p =
+                    ag.status === "concluido"
+                      ? { fundo: "#ececee", borda: "#a8a8b0" }
+                      : paletaDe(corPorServico.get(ag.servico_id));
                   const alta = semana ? alto >= 44 : true;
                   const hora = `${horaSP(ag.inicio)}–${horaSP(ag.fim)}`;
                   const cancelado = ag.status === "cancelado";

@@ -99,7 +99,10 @@ export function VisaoMes({
                   </span>
                   <span className="mt-1 hidden space-y-0.5 sm:block">
                     {lista.slice(0, 2).map((ag) => {
-                      const p = paletaDe(corPorServico.get(ag.servico_id));
+                      const p =
+                        ag.status === "concluido"
+                          ? { fundo: "#ececee", borda: "#a8a8b0" }
+                          : paletaDe(corPorServico.get(ag.servico_id));
                       return (
                         <span
                           key={ag.id}
