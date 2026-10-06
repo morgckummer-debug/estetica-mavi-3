@@ -250,3 +250,153 @@
     transform: none !important;
   }
 }
+
+/* Abertura do app (splash) — só aparece quando o html tem .mavi-splash-on,
+   ou seja, ao abrir pelo ícone da tela inicial. Fundo creme → lilás suave,
+   logo transparente (sem retângulo) e barra fina de progresso. */
+.mavi-splash {
+  display: none;
+}
+.mavi-splash-on .mavi-splash {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  background:
+    radial-gradient(120% 80% at 50% 0%, oklch(0.99 0.015 70) 0%, transparent 60%),
+    radial-gradient(100% 70% at 50% 110%, oklch(0.84 0.09 296) 0%, transparent 65%),
+    linear-gradient(180deg, oklch(0.975 0.015 70) 0%, oklch(0.9 0.05 296) 100%);
+  opacity: 1;
+  transition: opacity 600ms ease;
+}
+.mavi-splash-on .mavi-splash.mavi-splash-out {
+  opacity: 0;
+}
+.mavi-splash-glow {
+  position: absolute;
+  width: 140vmin;
+  height: 140vmin;
+  border-radius: 9999px;
+  background: radial-gradient(closest-side, oklch(1 0 0 / 0.75), transparent);
+  animation: mavi-splash-glow 4.5s ease-in-out both;
+}
+.mavi-splash-stage {
+  position: relative;
+  perspective: 900px;
+}
+.mavi-splash-logo {
+  position: relative;
+  width: min(68vw, 320px);
+  filter: drop-shadow(0 6px 18px oklch(0.38 0.13 296 / 0.18));
+  transform-style: preserve-3d;
+  animation:
+    mavi-splash-logo 1.4s cubic-bezier(0.22, 1, 0.36, 1) 0.15s both,
+    mavi-splash-tilt 3.2s ease-in-out 1.2s both;
+}
+.mavi-splash-logo img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+/* Brilho que atravessa o logo da esquerda para a direita, recortado no
+   formato do próprio logo (mask) — nada vaza para o fundo. */
+.mavi-splash-shine {
+  position: absolute;
+  inset: 0;
+  -webkit-mask: var(--logo) center / 100% 100% no-repeat;
+  mask: var(--logo) center / 100% 100% no-repeat;
+  background: linear-gradient(
+    105deg,
+    transparent 44%,
+    oklch(0.99 0.04 85 / 0.95) 50%,
+    transparent 56%
+  );
+  background-size: 300% 100%;
+  background-repeat: no-repeat;
+  background-position: 130% 0;
+  animation: mavi-splash-shine 1.6s ease-in-out 1.3s 2 both;
+}
+.mavi-splash-bar {
+  position: absolute;
+  left: 50%;
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 48px);
+  width: 96px;
+  height: 2px;
+  transform: translateX(-50%);
+  border-radius: 2px;
+  background: oklch(0.38 0.13 296 / 0.15);
+  overflow: hidden;
+}
+.mavi-splash-bar span {
+  display: block;
+  height: 100%;
+  width: 100%;
+  transform-origin: left;
+  background: oklch(0.38 0.13 296 / 0.75);
+  animation-name: mavi-splash-bar;
+  animation-timing-function: linear;
+  animation-fill-mode: both;
+}
+@keyframes mavi-splash-logo {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.92);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes mavi-splash-shine {
+  from {
+    background-position: 130% 0;
+  }
+  to {
+    background-position: -30% 0;
+  }
+}
+@keyframes mavi-splash-tilt {
+  0% {
+    transform: rotateY(0deg);
+  }
+  35% {
+    transform: rotateY(-9deg);
+  }
+  70% {
+    transform: rotateY(9deg);
+  }
+  100% {
+    transform: rotateY(0deg);
+  }
+}
+@keyframes mavi-splash-glow {
+  0% {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  40% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0.8;
+    transform: scale(1.05);
+  }
+}
+@keyframes mavi-splash-bar {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .mavi-splash-glow,
+  .mavi-splash-logo,
+  .mavi-splash-shine {
+    animation: none;
+  }
+}
