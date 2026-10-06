@@ -336,7 +336,6 @@ export function GradeSemana({
                           }}
                           onMouseMove={(e) => e.stopPropagation()}
                           onMouseEnter={() => setPassando(null)}
-                          title={`${hora} · ${ag.nome} · ${ag.servico_nome}${ag.areas.length > 0 ? ` (${ag.areas.join(", ")})` : ""}`}
                           className={`absolute inset-x-1 overflow-hidden rounded-lg border-l-4 px-2 py-0.5 text-left text-[#3d2a4c] transition-shadow hover:z-10 hover:shadow-[0_8px_24px_-14px_rgba(120,80,150,0.55)] ${
                             reagendar ? "border-[1.5px] border-l-4 border-dashed" : ""
                           } ${apagado}`}
@@ -397,15 +396,35 @@ export function GradeSemana({
                           side="right"
                           align="start"
                           collisionPadding={12}
-                          className="w-60 space-y-1 border-[#e7dcef] bg-white p-3 text-[#3d2a4c]"
+                          className="w-64 overflow-hidden rounded-xl border-[#e7dcef] bg-white p-0 text-[#3d2a4c] shadow-[0_12px_32px_-12px_rgba(120,80,150,0.45)]"
                         >
-                          <p className="text-[13px] font-semibold leading-tight">{ag.nome}</p>
-                          <p className="text-[12px] leading-snug">
-                            {ag.servico_nome}
-                            {ag.areas.length > 0 && ` · ${ag.areas.join(", ")}`}
-                          </p>
-                          <p className="text-[12px] opacity-80">{hora.replace("–", " – ")}</p>
-                          {sessao && <p className="text-[12px] font-semibold">Sessão {sessao}</p>}
+                          <div className="h-1.5" style={{ background: p.borda }} />
+                          <div className="space-y-2 px-4 py-3">
+                            <p className="text-[15px] font-semibold leading-tight">{ag.nome}</p>
+                            <div>
+                              <p className="text-[10px] font-semibold uppercase tracking-wide opacity-60">
+                                Procedimento
+                              </p>
+                              <p className="text-[13px] leading-snug">
+                                {ag.servico_nome}
+                                {ag.areas.length > 0 && ` · ${ag.areas.join(", ")}`}
+                              </p>
+                            </div>
+                            <div>
+                              <p className="text-[10px] font-semibold uppercase tracking-wide opacity-60">
+                                Horário
+                              </p>
+                              <p className="text-[13px]">{hora.replace("–", " – ")}</p>
+                            </div>
+                            {sessao && (
+                              <div>
+                                <p className="text-[10px] font-semibold uppercase tracking-wide opacity-60">
+                                  Sessão
+                                </p>
+                                <p className="text-[13px] font-semibold">{sessao}</p>
+                              </div>
+                            )}
+                          </div>
                         </HoverCardContent>
                       </HoverCardPrimitive.Portal>
                     </HoverCard>
