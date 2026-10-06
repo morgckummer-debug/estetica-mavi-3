@@ -8,6 +8,17 @@ import {
   type Cliente,
   type Contrato,
 } from "@/lib/painel";
+import {
+  FORMAS,
+  CONFIG_PADRAO,
+  carregarConfigCaixa,
+  criarLancamento,
+  lerValor,
+  reais,
+  taxaSugerida,
+  dividirParcelas,
+  type FormaPagamento,
+} from "@/lib/caixa";
 import { OPCOES_SESSAO, TIPOS, nomeCurto, type Tipo } from "@/data/anamnese";
 import { aplicarMascara, formatarDataBRBarra } from "@/lib/mascaras";
 import { ESTADOS_CIVIS, MESES_PT, type ItemContratado } from "@/data/contrato";
@@ -32,6 +43,24 @@ export const Route = createFileRoute("/painel/contrato/$id")({
 function hojeDMY(): { dia: string; mes: string; ano: string } {
   const d = new Date();
   return { dia: String(d.getDate()), mes: String(d.getMonth() + 1), ano: String(d.getFullYear()) };
+}
+
+// Texto da forma de pagamento montado a partir do valor, da forma e das
+// parcelas (a Marina ainda pode editar à mão depois).
+function textoPagamento(valor: number, forma: FormaPagamento | "", parcelas: number): string {
+  if (!(valor > 0) || !forma) return "";
+  const total = reais(valor);
+  if (forma === "credito" && parcelas > 1) {
+    const [parcela] = dividirParcelas(valor, parcelas);
+    return `${total} em ${parcelas}x de ${reais(parcela)} no cartão de crédito`;
+  }
+  const como = {
+    pix: "à vista no Pix",
+    debito: "à vista no cartão de débito",
+    credito: "à vista no cartão de crédito",
+    dinheiro: "à vista em dinheiro",
+  }[forma];
+  return `${total} ${como}`;
 }
 
 let proximoIdItem = 0;
@@ -112,6 +141,13 @@ function GerarContrato() {
   const [endereco, setEndereco] = useState("");
   const [itens, setItens] = useState<ItemContratado[]>([novoItem()]);
   const [formaPagamento, setFormaPagamento] = useState("");
+  // Valor do pacote (opcional): preenche a forma de pagamento sozinho e, se
+  // marcado, vira uma venda no Caixa ao imprimir.
+  const [valorTxt, setValorTxt] = useState("");
+  const [formaPg, setFormaPg] = useState<FormaPagamento | "">("");
+  const [parcelasPg, setParcelasPg] = useState(1);
+  const [textoEditado, setTextoEditado] = useState(false);
+  const [lancarNoCaixa, setLancarNoCaixa] = useState(false);
   const [autorizaFoto, setAutorizaFoto] = useState(false);
   const [dataDia, setDataDia] = useState("");
   const [dataMes, setDataMes] = useState("");
@@ -157,6 +193,13 @@ function GerarContrato() {
     setAutorizaFoto(cliente.autoriza_foto);
     setHidratado(true);
   }, [cliente, hidratado]);
+
+  // Enquanto a Marina não mexer no texto da forma de pagamento, ele
+  // acompanha o valor, a forma e as parcelas.
+  useEffect(() => {
+    if (textoEditado) return;
+    setFormaPagamento(textoPagamento(lerValor(valorTxt), formaPg, parcelasPg));
+  }, [valorTxt, formaPg, parcelasPg, textoEditado]);
 
   const atualizarItem = (chave: string, patch: Partial<ItemContratado>) =>
     setItens((prev) => prev.map((i) => (i.chave === chave ? { ...i, ...patch } : i)));
@@ -239,6 +282,37 @@ function GerarContrato() {
       } catch (e) {
         setErroSalvar(
           e instanceof Error ? e.message : "Contrato salvo, mas não deu pra guardar o PDF no app.",
+        );
+      }
+    }
+
+    // Venda no Caixa (opcional). Falhar aqui não impede a impressão: o
+    // contrato já está salvo e a venda pode ser lançada depois no Caixa.
+    const valorPacote = lerValor(valorTxt);
+    if (contrato && lancarNoCaixa && valorPacote > 0 && formaPg) {
+      try {
+        const cfg = await carregarConfigCaixa().catch(() => CONFIG_PADRAO);
+        const nomeItens = itens
+          .filter((i) => i.descricao.trim() && i.quantidade.trim())
+          .map((i) => `${i.quantidade} ${i.descricao}`)
+          .join(", ");
+        await criarLancamento({
+          data: `${ano}-${mes}-${dia}`,
+          tipo: "entrada",
+          descricao: `Pacote: ${nomeItens || "contrato"}`,
+          valor: valorPacote,
+          forma: formaPg,
+          parcelas: parcelasPg,
+          taxa_pct: taxaSugerida(cfg, formaPg, parcelasPg),
+          cliente_id: cliente.id,
+          cliente_nome: cliente.nome,
+          contrato_id: contrato.id,
+        });
+      } catch (e) {
+        setErroSalvar(
+          e instanceof Error
+            ? `Contrato salvo, mas a venda não foi para o Caixa: ${e.message}`
+            : "Contrato salvo, mas a venda não foi para o Caixa.",
         );
       }
     }
@@ -516,10 +590,73 @@ function GerarContrato() {
           </div>
 
           <div>
+            <label className={labelCls}>Valor do pacote (opcional)</label>
+            <input
+              value={valorTxt}
+              onChange={(e) => setValorTxt(e.target.value)}
+              inputMode="decimal"
+              placeholder="Ex.: 1.200,00"
+              className={inputCls}
+            />
+            <div className="mt-2 flex flex-wrap gap-1.5">
+              {FORMAS.map((f) => (
+                <button
+                  key={f.id}
+                  type="button"
+                  onClick={() => setFormaPg(formaPg === f.id ? "" : f.id)}
+                  className={[
+                    "rounded-full border px-3.5 py-1.5 text-[13px] transition-colors",
+                    formaPg === f.id
+                      ? "bg-painel-primary border-painel-primary text-white font-medium"
+                      : "bg-white border-painel-border text-painel-title hover:border-painel-primary/40",
+                  ].join(" ")}
+                >
+                  {f.rotulo}
+                </button>
+              ))}
+            </div>
+            {formaPg === "credito" && (
+              <div className="mt-2 grid grid-cols-6 gap-1.5 sm:grid-cols-12">
+                {Array.from({ length: 12 }, (_, i) => i + 1).map((n) => (
+                  <button
+                    key={n}
+                    type="button"
+                    onClick={() => setParcelasPg(n)}
+                    className={[
+                      "rounded-full border py-1.5 text-center text-[12.5px] transition-colors",
+                      parcelasPg === n
+                        ? "bg-painel-primary border-painel-primary text-white font-medium"
+                        : "bg-white border-painel-border text-painel-title hover:border-painel-primary/40",
+                    ].join(" ")}
+                  >
+                    {n}x
+                  </button>
+                ))}
+              </div>
+            )}
+            <label className="mt-3 flex items-center gap-2 text-[13px] text-painel-chip-text">
+              <input
+                type="checkbox"
+                checked={lancarNoCaixa}
+                onChange={(e) => setLancarNoCaixa(e.target.checked)}
+                disabled={!(lerValor(valorTxt) > 0) || !formaPg}
+                className="h-3.5 w-3.5 accent-painel-primary"
+              />
+              Lançar esta venda no Caixa ao imprimir
+            </label>
+            <p className="text-[11px] text-painel-muted mt-1">
+              Preenche a forma de pagamento abaixo. Se não for usar o Caixa, pode deixar em branco.
+            </p>
+          </div>
+
+          <div>
             <label className={labelCls}>Forma de pagamento</label>
             <textarea
               value={formaPagamento}
-              onChange={(e) => setFormaPagamento(e.target.value)}
+              onChange={(e) => {
+                setTextoEditado(true);
+                setFormaPagamento(e.target.value);
+              }}
               rows={3}
               placeholder="Ex.: R$ 1.200,00 em 3x de R$ 400,00 no cartão de crédito"
               className={inputCls}
