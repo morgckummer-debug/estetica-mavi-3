@@ -271,6 +271,13 @@ export async function sessaoValida(): Promise<Sessao | null> {
   return s;
 }
 
+// A aba Caixa é só da Morgana; a Marina entra no painel mas não a vê.
+export const EMAIL_CAIXA = "morgckummer@gmail.com";
+
+export function podeVerCaixa(email?: string): boolean {
+  return email?.trim().toLowerCase() === EMAIL_CAIXA;
+}
+
 export function sair(): void {
   salvarSessao(null);
 }
