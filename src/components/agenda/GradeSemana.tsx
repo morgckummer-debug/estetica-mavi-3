@@ -16,6 +16,8 @@ import {
   type FaixaHorario,
 } from "@/lib/agenda";
 import { paletaDe } from "@/lib/agenda-cores";
+import * as HoverCardPrimitive from "@radix-ui/react-hover-card";
+import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
 
 // Agenda em grade de horas: uma coluna por dia (a semana inteira, ou um dia só)
 // e uma linha por hora, do primeiro ao último horário de atendimento da semana.
@@ -322,67 +324,91 @@ export function GradeSemana({
                     : ag.status === "concluido"
                       ? "opacity-60"
                       : "";
+                  const sessao = pacotes?.get(ag.id);
                   return (
-                    <button
-                      key={ag.id}
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onAbrir(ag);
-                      }}
-                      onMouseMove={(e) => e.stopPropagation()}
-                      onMouseEnter={() => setPassando(null)}
-                      title={`${hora} · ${ag.nome} · ${ag.servico_nome}${ag.areas.length > 0 ? ` (${ag.areas.join(", ")})` : ""}`}
-                      className={`absolute inset-x-1 overflow-hidden rounded-lg border-l-4 px-2 py-0.5 text-left text-[#3d2a4c] transition-shadow hover:z-10 hover:shadow-[0_8px_24px_-14px_rgba(120,80,150,0.55)] ${
-                        reagendar ? "border-[1.5px] border-l-4 border-dashed" : ""
-                      } ${apagado}`}
-                      style={{
-                        top: y(topo) + 1,
-                        height: alto - 2,
-                        background: p.fundo,
-                        borderColor: p.borda,
-                      }}
-                    >
-                      <span className="flex items-center gap-1 text-[12px] font-semibold leading-tight">
-                        {confirmou && (
-                          <Check
-                            className="h-3.5 w-3.5 shrink-0 text-[#1f6b3a]"
-                            strokeWidth={3.5}
-                          />
-                        )}
-                        {reagendar && <RotateCw className="h-3 w-3 shrink-0" />}
-                        {faltou && (
-                          <span className="h-[7px] w-[7px] shrink-0 rounded-full bg-[#c0485f]" />
-                        )}
-                        <span className={`truncate ${cancelado || faltou ? "line-through" : ""}`}>
-                          {semana
-                            ? alta
-                              ? `${hora} · ${ag.nome}`
-                              : `${horaSP(ag.inicio)} · ${ag.nome}`
-                            : hora}
-                        </span>
-                      </span>
-                      {!semana && (
-                        <span
-                          className={`block truncate text-[12px] font-semibold leading-tight ${cancelado || faltou ? "line-through" : ""}`}
+                    <HoverCard key={ag.id} openDelay={300} closeDelay={80}>
+                      <HoverCardTrigger asChild>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onAbrir(ag);
+                          }}
+                          onMouseMove={(e) => e.stopPropagation()}
+                          onMouseEnter={() => setPassando(null)}
+                          title={`${hora} · ${ag.nome} · ${ag.servico_nome}${ag.areas.length > 0 ? ` (${ag.areas.join(", ")})` : ""}`}
+                          className={`absolute inset-x-1 overflow-hidden rounded-lg border-l-4 px-2 py-0.5 text-left text-[#3d2a4c] transition-shadow hover:z-10 hover:shadow-[0_8px_24px_-14px_rgba(120,80,150,0.55)] ${
+                            reagendar ? "border-[1.5px] border-l-4 border-dashed" : ""
+                          } ${apagado}`}
+                          style={{
+                            top: y(topo) + 1,
+                            height: alto - 2,
+                            background: p.fundo,
+                            borderColor: p.borda,
+                          }}
                         >
-                          {ag.nome}
-                        </span>
-                      )}
-                      {alta && (
-                        <span className="block truncate text-[11.5px] leading-snug opacity-85">
-                          {ag.servico_nome}
-                          {ag.areas.length > 0 && ` · ${ag.areas.join(", ")}`}
-                          {pacotes?.get(ag.id) && (
-                            <span className="font-semibold"> · {pacotes.get(ag.id)}</span>
+                          <span className="flex items-center gap-1 text-[12px] font-semibold leading-tight">
+                            {confirmou && (
+                              <Check
+                                className="h-3.5 w-3.5 shrink-0 text-[#1f6b3a]"
+                                strokeWidth={3.5}
+                              />
+                            )}
+                            {reagendar && <RotateCw className="h-3 w-3 shrink-0" />}
+                            {faltou && (
+                              <span className="h-[7px] w-[7px] shrink-0 rounded-full bg-[#c0485f]" />
+                            )}
+                            <span
+                              className={`truncate ${cancelado || faltou ? "line-through" : ""}`}
+                            >
+                              {semana
+                                ? alta
+                                  ? `${hora} · ${ag.nome}`
+                                  : `${horaSP(ag.inicio)} · ${ag.nome}`
+                                : hora}
+                            </span>
+                          </span>
+                          {!semana && (
+                            <span
+                              className={`block truncate text-[12px] font-semibold leading-tight ${cancelado || faltou ? "line-through" : ""}`}
+                            >
+                              {ag.nome}
+                            </span>
                           )}
-                          {!ag.cliente_id && " · cliente novo(a)"}
-                        </span>
-                      )}
-                      {alto >= 72 && reagendar && (
-                        <span className="block text-[11px] font-semibold">Precisa reagendar</span>
-                      )}
-                    </button>
+                          {alta && (
+                            <span className="block truncate text-[11.5px] leading-snug opacity-85">
+                              {ag.servico_nome}
+                              {ag.areas.length > 0 && ` · ${ag.areas.join(", ")}`}
+                              {pacotes?.get(ag.id) && (
+                                <span className="font-semibold"> · {pacotes.get(ag.id)}</span>
+                              )}
+                              {!ag.cliente_id && " · cliente novo(a)"}
+                            </span>
+                          )}
+                          {alto >= 72 && reagendar && (
+                            <span className="block text-[11px] font-semibold">
+                              Precisa reagendar
+                            </span>
+                          )}
+                        </button>
+                      </HoverCardTrigger>
+                      <HoverCardPrimitive.Portal>
+                        <HoverCardContent
+                          side="right"
+                          align="start"
+                          collisionPadding={12}
+                          className="w-60 space-y-1 border-[#e7dcef] bg-white p-3 text-[#3d2a4c]"
+                        >
+                          <p className="text-[13px] font-semibold leading-tight">{ag.nome}</p>
+                          <p className="text-[12px] leading-snug">
+                            {ag.servico_nome}
+                            {ag.areas.length > 0 && ` · ${ag.areas.join(", ")}`}
+                          </p>
+                          <p className="text-[12px] opacity-80">{hora.replace("–", " – ")}</p>
+                          {sessao && <p className="text-[12px] font-semibold">Sessão {sessao}</p>}
+                        </HoverCardContent>
+                      </HoverCardPrimitive.Portal>
+                    </HoverCard>
                   );
                 })}
 
