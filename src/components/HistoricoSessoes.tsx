@@ -41,6 +41,7 @@ import {
   linkWhatsappRelatorio,
 } from "@/lib/whatsapp";
 import { EnviarFicha } from "@/components/EnviarFicha";
+import { faixasDePacotes, normalizarPacotes, temPacoteEmAberto } from "@/lib/pacotes";
 import { PAINEL_URL } from "@/data/services";
 
 const CINCO_MINUTOS_MS = 5 * 60 * 1000;
@@ -62,16 +63,6 @@ export type Procedimento = {
 // tipos de procedimento sempre, mesmo os que a cliente ainda não tem ficha —
 // a ficha (se existir) só é resolvida na hora de salvar.
 type LinhaBonus = { chave: string; tipo: Tipo | ""; item: string; quantidade: string };
-
-// Normaliza o valor salvo (formato antigo — um número, ou uma lista de
-// números — ou já uma lista de pacotes) para sempre trabalhar com uma lista
-// de PacoteItem.
-function normalizarPacotes(v: number | number[] | PacoteItem[] | undefined): PacoteItem[] {
-  if (!Array.isArray(v)) return typeof v === "number" && v > 0 ? [{ tamanho: v }] : [];
-  return v
-    .map((x) => (typeof x === "number" ? { tamanho: x } : x))
-    .filter((p): p is PacoteItem => typeof p?.tamanho === "number" && p.tamanho > 0);
-}
 
 // Data de hoje em "YYYY-MM-DD" no fuso local (para o <input type="date">).
 function hojeISO(): string {
@@ -133,32 +124,6 @@ type Segmento = {
   bonus?: boolean;
   completo: boolean;
 };
-
-// A faixa [inicio, fim) que um pacote ocupa dentro da lista cronológica de
-// sessões de um item. `inicio` nunca fica antes de `inicioIndice` (o total
-// de sessões que já existiam quando o pacote foi registrado) — é isso que
-// impede uma sessão avulsa feita antes de existir o pacote de ser puxada
-// pra dentro dele.
-type FaixaPacote = { pacote: PacoteItem; numero: number; inicio: number; fim: number };
-
-function faixasDePacotes(pacotes: PacoteItem[]): FaixaPacote[] {
-  const faixas: FaixaPacote[] = [];
-  let indice = 0;
-  pacotes.forEach((p, i) => {
-    const inicio = Math.max(indice, p.inicioIndice ?? 0);
-    const fim = inicio + p.tamanho;
-    faixas.push({ pacote: p, numero: i + 1, inicio, fim });
-    indice = fim;
-  });
-  return faixas;
-}
-
-// Há um pacote em andamento (incompleto) para esse total de sessões já
-// registradas? Só o último pacote definido pode estar em aberto — os
-// anteriores são sempre concluídos antes de um novo poder ser cadastrado.
-function temPacoteEmAberto(faixas: FaixaPacote[], totalSessoes: number): boolean {
-  return faixas.some((f) => totalSessoes >= f.inicio && totalSessoes < f.fim);
-}
 
 // Divide as sessões (já em ordem cronológica) de um item nos pacotes
 // comprados, respeitando a faixa de cada um (ver `faixasDePacotes`). Sessões
