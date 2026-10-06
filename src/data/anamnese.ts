@@ -759,6 +759,7 @@ export const AREAS_DEPILACAO: string[] = [
   "Abdômen",
   "Axilas",
   "Buço",
+  "Canela",
   "Costas",
   "Coxa",
   "Dedos",
