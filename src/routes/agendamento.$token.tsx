@@ -49,6 +49,7 @@ const MENSAGEM_ERRO: Partial<Record<ErroAgenda, string>> = {
   horario_indisponivel: "Esse horário acabou de ser ocupado. Escolha outro, por favor.",
   indisponivel: "Este horário não pode mais ser alterado.",
   nao_encontrado: "Não encontramos este agendamento.",
+  muitas_tentativas: "Muitas tentativas em pouco tempo. Aguarde alguns minutos e tente de novo.",
 };
 
 function PaginaAgendamento() {
