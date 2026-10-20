@@ -16,6 +16,7 @@ import {
 import {
   agendar,
   listarServicosPublicos,
+  pedirCodigoAgenda,
   type ErroAgenda,
   type ResultadoAgendar,
   type ServicoPublico,
@@ -37,8 +38,8 @@ const btnPrincipal =
 const MENSAGEM_ERRO: Partial<Record<ErroAgenda, string>> = {
   dados_invalidos: "Confira seu nome, WhatsApp (com DDD), CPF e e-mail.",
   areas_obrigatorias: "Escolha ao menos uma área.",
-  cpf_nao_confere:
-    "O CPF não confere com o seu cadastro. Confira os números ou fale com a gente pelo WhatsApp.",
+  codigo_invalido: "Código inválido ou vencido. Confira o código no seu e-mail ou peça um novo.",
+  muitas_tentativas: "Muitas tentativas em pouco tempo. Aguarde alguns minutos e tente de novo.",
   limite_agendamentos:
     "Você já tem horários marcados. Para marcar mais um, fale com a gente pelo WhatsApp.",
   servico_invalido: "Esse serviço não está disponível agora. Escolha outro.",
@@ -75,6 +76,9 @@ export function PaginaAgendar() {
   const [copiado, setCopiado] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
   const [precisaConsulta, setPrecisaConsulta] = useState(false);
+  const [codigo, setCodigo] = useState("");
+  const [pedindoCodigo, setPedindoCodigo] = useState(false);
+  const [avisoCodigo, setAvisoCodigo] = useState<string | null>(null);
   const [resultado, setResultado] = useState<Extract<ResultadoAgendar, { ok: true }> | null>(null);
 
   useEffect(() => {
@@ -89,6 +93,8 @@ export function PaginaAgendar() {
   const escolherServico = (s: ServicoPublico) => {
     setServico(s);
     setAreas([]);
+    setCodigo("");
+    setAvisoCodigo(null);
     setInicio(null);
     setErro(null);
     setPrecisaConsulta(false);
@@ -106,6 +112,30 @@ export function PaginaAgendar() {
       setTimeout(() => setCopiado(false), 2500);
     } catch {
       /* sem permissão para copiar: o botão do WhatsApp continua disponível */
+    }
+  };
+
+  // Pede o código por e-mail. A resposta é a mesma existindo ou não cadastro.
+  const pedirCodigo = async () => {
+    if (cpf.replace(/\D/g, "").length !== 11) {
+      setErro("Digite seu CPF completo para receber o código.");
+      return;
+    }
+    setErro(null);
+    setPedindoCodigo(true);
+    try {
+      const r = await pedirCodigoAgenda({ data: { cpf } });
+      if (r.ok) {
+        setAvisoCodigo(
+          "Se o CPF estiver cadastrado com e-mail, enviamos um código para ele. Confira também o spam. Não chegou? Fale com a gente pelo WhatsApp.",
+        );
+      } else {
+        setErro(MENSAGEM_ERRO[r.erro] ?? "Não foi possível enviar o código agora.");
+      }
+    } catch {
+      setErro("Não foi possível enviar o código agora. Tente novamente em instantes.");
+    } finally {
+      setPedindoCodigo(false);
     }
   };
 
@@ -127,6 +157,7 @@ export function PaginaAgendar() {
           nome: nome.trim(),
           telefone,
           cpf: servico.tipo === "procedimento" ? cpf : undefined,
+          codigo: servico.tipo === "procedimento" ? codigo : undefined,
           areas: (servico.areas ?? []).length > 0 ? areas : undefined,
           email: email.trim(),
           website: isca,
@@ -139,9 +170,8 @@ export function PaginaAgendar() {
         setErro("Esse horário acabou de ser ocupado. Escolha outro, por favor.");
         setInicio(null);
         setPasso("horario");
-      } else if (r.erro === "consulta_primeiro") {
-        setPrecisaConsulta(true);
       } else {
+        if (r.erro === "codigo_invalido") setPrecisaConsulta(true);
         setErro(MENSAGEM_ERRO[r.erro] ?? "Não foi possível agendar agora. Tente novamente.");
       }
     } catch {
@@ -395,6 +425,40 @@ export function PaginaAgendar() {
                   </p>
                 </div>
               )}
+              {servico.tipo === "procedimento" && (
+                <div>
+                  <label className={rotulo} htmlFor="ag-codigo">
+                    Código de confirmação
+                  </label>
+                  <div className="flex flex-col gap-2 sm:flex-row">
+                    <input
+                      id="ag-codigo"
+                      value={codigo}
+                      onChange={(e) => setCodigo(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                      required
+                      inputMode="numeric"
+                      autoComplete="one-time-code"
+                      placeholder="000000"
+                      className={campo}
+                    />
+                    <button
+                      type="button"
+                      onClick={pedirCodigo}
+                      disabled={pedindoCodigo}
+                      className="inline-flex shrink-0 items-center justify-center gap-2 rounded-full border border-primary/30 bg-card px-5 py-3 text-sm font-medium text-primary transition-colors hover:bg-lavender-soft disabled:opacity-40"
+                    >
+                      {pedindoCodigo && <Loader2 className="h-4 w-4 animate-spin" />}
+                      Receber código
+                    </button>
+                  </div>
+                  <p className="mt-1.5 text-xs text-muted-foreground">
+                    Enviamos o código para o e-mail do seu cadastro. Ele vale por 10 minutos.
+                  </p>
+                  {avisoCodigo && (
+                    <p className="mt-2 text-xs text-muted-foreground">{avisoCodigo}</p>
+                  )}
+                </div>
+              )}
               <div>
                 <label className={rotulo} htmlFor="ag-email">
                   E-mail <span className="font-normal text-muted-foreground">(opcional)</span>
@@ -442,9 +506,8 @@ export function PaginaAgendar() {
               {precisaConsulta && consulta && (
                 <div className="rounded-2xl border border-primary/30 bg-lavender-soft/60 p-4 text-sm leading-relaxed text-foreground">
                   <p>
-                    Não encontramos seu cadastro. Para marcar procedimentos, o primeiro passo é a{" "}
-                    <strong>consulta de avaliação gratuita</strong> — assim a Marina conhece você e
-                    indica o melhor cuidado.
+                    Se você ainda não fez a <strong>consulta de avaliação gratuita</strong>, comece
+                    por ela: é o primeiro passo para os procedimentos, e a Marina conhece você ali.
                   </p>
                   <button
                     type="button"
