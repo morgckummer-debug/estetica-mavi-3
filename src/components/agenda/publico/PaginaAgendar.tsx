@@ -16,7 +16,6 @@ import {
 import {
   agendar,
   listarServicosPublicos,
-  pedirCodigoAgenda,
   type ErroAgenda,
   type ResultadoAgendar,
   type ServicoPublico,
@@ -36,9 +35,8 @@ const btnPrincipal =
   "inline-flex w-full items-center justify-center gap-2 rounded-full bg-primary px-7 py-4 text-base font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-40";
 
 const MENSAGEM_ERRO: Partial<Record<ErroAgenda, string>> = {
-  dados_invalidos: "Confira seu nome, WhatsApp (com DDD), CPF e e-mail.",
+  dados_invalidos: "Confira seu nome, WhatsApp (com DDD) e CPF.",
   areas_obrigatorias: "Escolha ao menos uma área.",
-  codigo_invalido: "Código inválido ou vencido. Confira o código no seu e-mail ou peça um novo.",
   muitas_tentativas: "Muitas tentativas em pouco tempo. Aguarde alguns minutos e tente de novo.",
   limite_agendamentos:
     "Você já tem horários marcados. Para marcar mais um, fale com a gente pelo WhatsApp.",
@@ -70,15 +68,11 @@ export function PaginaAgendar() {
   const [telefone, setTelefone] = useState("");
   const [cpf, setCpf] = useState("");
   const [areas, setAreas] = useState<string[]>([]);
-  const [email, setEmail] = useState("");
   const [isca, setIsca] = useState("");
   const [enviando, setEnviando] = useState(false);
   const [copiado, setCopiado] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
   const [precisaConsulta, setPrecisaConsulta] = useState(false);
-  const [codigo, setCodigo] = useState("");
-  const [pedindoCodigo, setPedindoCodigo] = useState(false);
-  const [avisoCodigo, setAvisoCodigo] = useState<string | null>(null);
   const [resultado, setResultado] = useState<Extract<ResultadoAgendar, { ok: true }> | null>(null);
 
   useEffect(() => {
@@ -93,16 +87,14 @@ export function PaginaAgendar() {
   const escolherServico = (s: ServicoPublico) => {
     setServico(s);
     setAreas([]);
-    setCodigo("");
-    setAvisoCodigo(null);
     setInicio(null);
     setErro(null);
     setPrecisaConsulta(false);
     setPasso("horario");
   };
 
-  // Sem e-mail, o link do agendamento é a única forma de a cliente cancelar ou
-  // reagendar sozinha: ela precisa guardá-lo.
+  // O link do agendamento é a única forma de a cliente cancelar ou reagendar
+  // sozinha: ela precisa guardá-lo.
   const linkDoAgendamento = (token: string) => `${window.location.origin}/agendamento/${token}`;
 
   const copiarLink = async (token: string) => {
@@ -112,30 +104,6 @@ export function PaginaAgendar() {
       setTimeout(() => setCopiado(false), 2500);
     } catch {
       /* sem permissão para copiar: o botão do WhatsApp continua disponível */
-    }
-  };
-
-  // Pede o código por e-mail. A resposta é a mesma existindo ou não cadastro.
-  const pedirCodigo = async () => {
-    if (cpf.replace(/\D/g, "").length !== 11) {
-      setErro("Digite seu CPF completo para receber o código.");
-      return;
-    }
-    setErro(null);
-    setPedindoCodigo(true);
-    try {
-      const r = await pedirCodigoAgenda({ data: { cpf } });
-      if (r.ok) {
-        setAvisoCodigo(
-          "Se o CPF estiver cadastrado com e-mail, enviamos um código para ele. Confira também o spam. Não chegou? Fale com a gente pelo WhatsApp.",
-        );
-      } else {
-        setErro(MENSAGEM_ERRO[r.erro] ?? "Não foi possível enviar o código agora.");
-      }
-    } catch {
-      setErro("Não foi possível enviar o código agora. Tente novamente em instantes.");
-    } finally {
-      setPedindoCodigo(false);
     }
   };
 
@@ -157,9 +125,7 @@ export function PaginaAgendar() {
           nome: nome.trim(),
           telefone,
           cpf: servico.tipo === "procedimento" ? cpf : undefined,
-          codigo: servico.tipo === "procedimento" ? codigo : undefined,
           areas: (servico.areas ?? []).length > 0 ? areas : undefined,
-          email: email.trim(),
           website: isca,
         },
       });
@@ -171,7 +137,7 @@ export function PaginaAgendar() {
         setInicio(null);
         setPasso("horario");
       } else {
-        if (r.erro === "codigo_invalido") setPrecisaConsulta(true);
+        if (r.erro === "dados_nao_conferem") setPrecisaConsulta(true);
         setErro(MENSAGEM_ERRO[r.erro] ?? "Não foi possível agendar agora. Tente novamente.");
       }
     } catch {
@@ -425,59 +391,6 @@ export function PaginaAgendar() {
                   </p>
                 </div>
               )}
-              {servico.tipo === "procedimento" && (
-                <div>
-                  <label className={rotulo} htmlFor="ag-codigo">
-                    Código de confirmação
-                  </label>
-                  <div className="flex flex-col gap-2 sm:flex-row">
-                    <input
-                      id="ag-codigo"
-                      value={codigo}
-                      onChange={(e) => setCodigo(e.target.value.replace(/\D/g, "").slice(0, 6))}
-                      required
-                      inputMode="numeric"
-                      autoComplete="one-time-code"
-                      placeholder="000000"
-                      className={campo}
-                    />
-                    <button
-                      type="button"
-                      onClick={pedirCodigo}
-                      disabled={pedindoCodigo}
-                      className="inline-flex shrink-0 items-center justify-center gap-2 rounded-full border border-primary/30 bg-card px-5 py-3 text-sm font-medium text-primary transition-colors hover:bg-lavender-soft disabled:opacity-40"
-                    >
-                      {pedindoCodigo && <Loader2 className="h-4 w-4 animate-spin" />}
-                      Receber código
-                    </button>
-                  </div>
-                  <p className="mt-1.5 text-xs text-muted-foreground">
-                    Enviamos o código para o e-mail do seu cadastro. Ele vale por 10 minutos.
-                  </p>
-                  {avisoCodigo && (
-                    <p className="mt-2 text-xs text-muted-foreground">{avisoCodigo}</p>
-                  )}
-                </div>
-              )}
-              <div>
-                <label className={rotulo} htmlFor="ag-email">
-                  E-mail <span className="font-normal text-muted-foreground">(opcional)</span>
-                </label>
-                <input
-                  id="ag-email"
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  maxLength={200}
-                  autoComplete="email"
-                  className={campo}
-                />
-                <p className="mt-1.5 text-xs text-muted-foreground">
-                  Se quiser, enviamos a confirmação para o seu e-mail, com o botão para cancelar ou
-                  reagendar.
-                </p>
-              </div>
-
               {/* Campo-isca: invisível para pessoas, robôs costumam preencher. */}
               <div aria-hidden="true" className="absolute -left-[9999px] h-0 w-0 overflow-hidden">
                 <label htmlFor="ag-site">Site</label>
@@ -549,11 +462,6 @@ export function PaginaAgendar() {
             <p className="mt-3 text-muted-foreground">
               Obrigada, {resultado.primeiro_nome}. Seu horário está reservado.
             </p>
-            {resultado.email_enviado && (
-              <p className="mt-2 text-sm text-muted-foreground">
-                Enviamos a confirmação para o seu e-mail. 💌
-              </p>
-            )}
 
             <div className="mt-6 rounded-2xl border border-border bg-card p-5 text-left">
               <p className="text-xs uppercase tracking-widest text-muted-foreground">Seu horário</p>
