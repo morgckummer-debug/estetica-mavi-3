@@ -2,8 +2,6 @@ import { createServerFn } from "@tanstack/react-start";
 import { getRequest } from "@tanstack/react-start/server";
 import { z } from "zod";
 
-import { enviarEmailConfirmacao } from "./agenda-email.server";
-import { chaveDoCpf, enviarCodigoAgenda } from "./agenda-codigo.server";
 import { cpfValido } from "../mascaras";
 import { colunaUnica, rpc } from "./rpc";
 
@@ -26,9 +24,9 @@ export type ServicoPublico = {
 export type ErroAgenda =
   | "dados_invalidos"
   | "servico_invalido"
-  // Procedimento sem cadastro, com CPF errado ou com código errado/vencido:
-  // a mesma resposta, para não revelar quem é paciente.
-  | "codigo_invalido"
+  // Procedimento sem cadastro ou com CPF que não confere: a mesma resposta,
+  // para não revelar quem é paciente.
+  | "dados_nao_conferem"
   | "areas_obrigatorias"
   | "limite_agendamentos"
   | "horario_indisponivel"
@@ -71,8 +69,6 @@ export type ResultadoAgendar =
       // Áreas escolhidas (serviços feitos por área, como o laser).
       areas?: string[];
       primeiro_nome: string;
-      // true quando o e-mail de confirmação foi enviado.
-      email_enviado?: boolean;
     }
   | { ok: false; erro: ErroAgenda };
 
@@ -127,13 +123,9 @@ export const agendar = createServerFn({ method: "POST" })
       inicio: z.string().datetime({ offset: true }),
       nome: z.string().min(2).max(120),
       telefone: z.string().min(10).max(25),
-      // A cliente não informa e-mail no agendamento online (só nome e WhatsApp).
-      email: z.union([z.literal(""), z.string().email().max(200)]).optional(),
       areas: z.array(z.string().max(60)).max(40).optional(),
       // CPF: só é pedido para procedimento, e precisa bater com o cadastro.
       cpf: z.string().max(20).optional(),
-      // Código de 6 dígitos enviado ao e-mail do cadastro (só procedimento).
-      codigo: z.union([z.literal(""), z.string().regex(/^\d{6}$/)]).optional(),
       // Campo-isca, escondido na tela: pessoas não preenchem, robôs sim.
       website: z.string().max(200).optional(),
     }),
@@ -161,53 +153,15 @@ export const agendar = createServerFn({ method: "POST" })
     }
     // CPF informado precisa ser um CPF de verdade (dígitos verificadores).
     if (data.cpf && !cpfValido(data.cpf)) return { ok: false, erro: "dados_invalidos" };
-    const r = (await rpc("agenda_agendar", {
+    return (await rpc("agenda_agendar", {
       p_servico_id: data.servicoId,
       p_inicio: data.inicio,
       p_nome: data.nome,
       p_telefone: data.telefone,
-      p_email: data.email ?? "",
+      p_email: "",
       p_areas: data.areas ?? [],
       p_cpf: data.cpf ?? "",
-      p_codigo: data.codigo ?? "",
     })) as ResultadoAgendar;
-
-    // E-mail de confirmação (opcional): se falhar, o agendamento continua valendo.
-    if (r.ok && r.token && data.email) {
-      const envio = await enviarEmailConfirmacao({
-        para: data.email,
-        primeiroNome: r.primeiro_nome,
-        servico: r.areas?.length ? `${r.servico} (${r.areas.join(", ")})` : r.servico,
-        inicio: r.inicio,
-        fim: r.fim,
-        token: r.token,
-      });
-      return { ...r, email_enviado: envio === "enviado" };
-    }
-    return r;
-  });
-
-// Manda o código de confirmação para o e-mail cadastrado da cliente. A resposta
-// é sempre a mesma, exista ou não cadastro com e-mail, para não revelar quem é
-// paciente. Limite por IP e por CPF.
-export const pedirCodigoAgenda = createServerFn({ method: "POST" })
-  .inputValidator(z.object({ cpf: z.string().max(20) }))
-  .handler(async ({ data }): Promise<{ ok: true } | { ok: false; erro: ErroAgenda }> => {
-    if (!(await dentroDoLimite(`agendar:ip:${ipDaRequisicao()}`, 20))) {
-      return { ok: false, erro: "muitas_tentativas" };
-    }
-    const digitos = data.cpf.replace(/\D/g, "");
-    if (!cpfValido(data.cpf)) return { ok: true };
-    if (!(await dentroDoLimite(`codigo:cpf:${await chaveDoCpf(digitos)}`, 3))) {
-      return { ok: false, erro: "muitas_tentativas" };
-    }
-    try {
-      await enviarCodigoAgenda(digitos);
-    } catch (e) {
-      // Falha de envio não pode revelar nada: a cliente vê a mesma mensagem.
-      console.error("Falha ao gerar o código da agenda", e instanceof Error ? e.message : e);
-    }
-    return { ok: true };
   });
 
 // Dados mínimos para a página do link da cliente. Null se o link não existe.
