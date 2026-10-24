@@ -360,20 +360,14 @@ export function GradeSemana({
                             <span
                               className={`truncate ${cancelado || faltou ? "line-through" : ""}`}
                             >
-                              {semana
-                                ? alta
-                                  ? `${hora} · ${ag.nome}`
-                                  : `${horaSP(ag.inicio)} · ${ag.nome}`
-                                : hora}
+                              {hora}
                             </span>
                           </span>
-                          {!semana && (
-                            <span
-                              className={`block truncate text-[12px] font-semibold leading-tight ${cancelado || faltou ? "line-through" : ""}`}
-                            >
-                              {ag.nome}
-                            </span>
-                          )}
+                          <span
+                            className={`block truncate text-[12px] font-semibold leading-tight ${cancelado || faltou ? "line-through" : ""}`}
+                          >
+                            {ag.nome}
+                          </span>
                           {alta && (
                             <span className="block truncate text-[11.5px] leading-snug opacity-85">
                               {ag.servico_nome}
