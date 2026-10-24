@@ -110,7 +110,7 @@ export function linkWhatsappLembrete(params: {
   hora: string;
 }): string {
   const primeiro = params.nomeCliente.trim().split(" ")[0] || "";
-  const msg = `Oi${primeiro ? ` ${primeiro}` : ""}! 💜 Lembrete do seu horário na MAVI: ${params.servico}, ${params.dia} às ${params.hora}. Confirme sua presença (ou reagende, se precisar) por aqui: ${linkAgendamento(params.origin, params.token)}`;
+  const msg = `Oi${primeiro ? ` ${primeiro}` : ""}! 💜 Seu horário na MAVI está agendado para, *${params.servico}, ${params.dia} às ${params.hora}.* Confirme sua presença por aqui: ${linkAgendamento(params.origin, params.token)}`;
   return `https://wa.me/${numeroWhatsapp(params.telefone)}?text=${encodeURIComponent(msg)}`;
 }
 
