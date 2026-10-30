@@ -957,7 +957,7 @@ export const FICHAS: Record<Tipo, DefinicaoFicha> = {
 // no campo de observação.
 export const OPCOES_SESSAO: Record<Tipo, string[]> = {
   laser: AREAS_DEPILACAO,
-  facial: ["Limpeza de Pele", "Hidragloss"],
+  facial: ["Limpeza de Pele", "Hidragloss", "Power Redux", "Jato de Plasma"],
   corporal: [
     "Drenagem Linfática",
     "Power Redux",
@@ -966,6 +966,8 @@ export const OPCOES_SESSAO: Record<Tipo, string[]> = {
     "Pós-Operatório",
     "Drenagem para Gestantes",
     "Max Pós-Parto",
+    "Jato de Plasma",
+    "Estrias",
   ],
   // Cadastro não é um tratamento — nunca vira sessão.
   cadastro: [],
